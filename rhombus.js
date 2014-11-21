@@ -85,6 +85,10 @@
 
     setLength: function(length) {
 
+    },
+
+    delete: function(length) {
+
     }
   };
 
