@@ -92,17 +92,8 @@
 
   // Id of the note scheduler "setTimeout" call
   var scheduleId;
-  var debugFn;
-
-  r.setDebugFunction = function(fn) {
-    debugFn = fn;
-  }
 
   function scheduleNotes() {
-    if (debugFn) {
-      debugFn();
-    }
-
     // TODO: Put some logic here
     scheduleId = root.setTimeout(scheduleNotes, 0);
   }
