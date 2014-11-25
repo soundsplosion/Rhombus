@@ -31,6 +31,60 @@
   };
 
   /////////////////////////////////////////////////////////////////////////////
+  // Instrument stuff
+  /////////////////////////////////////////////////////////////////////////////
+
+  // A simple instrument to test basic note playback
+  // Voice Structure: osc. --> gain --> filter --> gain --> output
+  var inst1 = {};
+  r.Instrument = inst1;
+
+  inst1.playNote = function(note) {
+
+    var start = ctx.currentTime + note.getStart();
+    var stop = start + note.getLength() + 1.0;
+    var noteFreq = nn2Freq(note.getPitch());
+
+    osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(noteFreq, ctx.currentTime);    
+    
+    // This gain will be swept by an envelope, VCA style
+    oscGain = ctx.createGain();
+    oscGain.gain.value = 0.0;    
+
+    filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 0;
+
+    // Reduce resonance for higher notes to reduce clipping
+    filter.Q.value = 3 + (1 - note.getPitch() / 127) * 9;
+
+    // Reduce the output from the filter
+    filterGain = ctx.createGain();
+    filterGain.gain.value = 0.5;
+    
+    // Make the audio graph connections
+    osc.connect(oscGain);
+    oscGain.connect(filter);
+    filter.connect(filterGain);
+    filterGain.connect(ctx.destination);
+
+    // Schedule the start and stop of the oscillator
+    osc.start(start);
+    osc.stop(stop);  
+    
+    // Produce a smoothly decaying volume envelope
+    oscGain.gain.linearRampToValueAtTime(0.3, start + 0.005);
+    oscGain.gain.linearRampToValueAtTime(0.1, start + 0.005 + note.getLength());
+    oscGain.gain.linearRampToValueAtTime(0.0, start + note.getLength() + 0.5);
+
+    // Sweep the cutoff frequency for spaced-out envelope effects!
+    filter.frequency.linearRampToValueAtTime(4000, start + 0.005);
+    filter.frequency.exponentialRampToValueAtTime(200, start + 0.010 + note.getLength() * 0.5);    
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
   // Song data stuff
   /////////////////////////////////////////////////////////////////////////////
 
@@ -46,16 +100,21 @@
   };
 
   r.insertNote = function(pitch, start, length) {
-    // TODO: impl
+    // TODO: this is a wonky implementation, just for testing/demo
+    var note = new Note(pitch, start, length);
+    inst1.playNote(note);
   };
 
   function Note(pitch, start, length) {
     // TODO: impl
+    this.pitch = pitch || 60;
+    this.start = start || 0;
+    this.length = length || 0;
   };
 
   Note.prototype = {
     getPitch: function() {
-      // TODO: impl
+      return this.pitch;
     },
 
     setPitch: function(pitch) {
@@ -63,7 +122,7 @@
     },
 
     getStart: function() {
-      // TODO: impl
+      return this.start;
     },
 
     setStart: function (start) {
@@ -71,7 +130,7 @@
     },
 
     getLength: function() {
-      // TODO: impl
+      return this.length;
     },
 
     setLength: function(length) {
@@ -200,5 +259,16 @@
   r.setLoopEnd = function() {
     // TODO: impl
   };
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Utilities
+  /////////////////////////////////////////////////////////////////////////////
+
+  // Converts a note-number (typical range 0-127) into a frequency value
+  // We'll probably just want to pre-compute a table...
+  function nn2Freq(nn) {
+    var freq =  Math.pow(2, (nn-69)/12) * 440;
+    return freq;
+  }
 
 })(this);
