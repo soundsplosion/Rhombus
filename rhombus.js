@@ -183,15 +183,35 @@
   // Scheduler stuff
   /////////////////////////////////////////////////////////////////////////////
 
+  function createScheduleWorker() {
+    var code =
+    "var scheduleId = false;\n" +
+    "self.onmessage = function(oEvent) {\n" +
+    "  if (oEvent.data.playing === false) {\n" +
+    "    if (scheduleId) {\n" +
+    "      clearTimeout(scheduleId);\n" +
+    "    }\n" +
+    "  } else {\n" +
+    "    triggerSchedule();\n" +
+    "  }\n" +
+    "}\n" +
+    "function triggerSchedule() {\n" +
+    "  postMessage(0);\n" +
+    "  scheduleId = setTimeout(triggerSchedule, 10);\n" +
+    "}\n";
+    var blob = new Blob([code], {type: "application/javascript"});
+    return new Worker(URL.createObjectURL(blob));
+  }
+
+  var scheduleWorker = createScheduleWorker();
+  scheduleWorker.onmessage = scheduleNotes;
+
   // Number of ms to schedule ahead
   var scheduleAhead = 100;
 
-  // Id of the note scheduler "setTimeout" call
-  var scheduleId;
-
   function scheduleNotes() {
+    console.log("called at: " + r.getPosition());
     // TODO: Put some logic here
-    scheduleId = root.setTimeout(scheduleNotes, 0);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -233,8 +253,7 @@
 
     playing = true;
     time = time - ctx.currentTime;
-    console.log("start time: " + time);
-    scheduleNotes();
+    scheduleWorker.postMessage({ playing: true });
   };
 
   r.stopPlayback = function() {
@@ -243,9 +262,8 @@
     }
 
     playing = false;
-    root.clearTimeout(scheduleId);
     time = getPosition(true);
-    console.log("end time: " + time);
+    scheduleWorker.postMessage({ playing: false });
   };
 
   function getPosition(playing) {
