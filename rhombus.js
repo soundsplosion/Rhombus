@@ -36,53 +36,87 @@
 
   // A simple instrument to test basic note playback
   // Voice Structure: osc. --> gain --> filter --> gain --> output
-  var inst1 = {};
-  r.Instrument = inst1;
-
-  inst1.playNote = function(note) {
-
-    var start = ctx.currentTime + note.getStart();
-    var stop = start + note.getLength() + 1.0;
-    var noteFreq = nn2Freq(note.getPitch());
-
-    osc = ctx.createOscillator();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(noteFreq, ctx.currentTime);    
+  function Instrument(ctx) {
     
-    // This gain will be swept by an envelope, VCA style
-    oscGain = ctx.createGain();
-    oscGain.gain.value = 0.0;    
+    // It might be handy to mainatain a handle on the AudioContext?
+    this.ctx = ctx;
 
-    filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 0;
+    // These variables are to keep track of the playback state
+    this.playing = false;
+    this.currentNote = undefined;
 
-    // Reduce resonance for higher notes to reduce clipping
-    filter.Q.value = 3 + (1 - note.getPitch() / 127) * 9;
+    // Instantiate the modules for the synth voice
+    this.osc = ctx.createOscillator();
+    this.oscGain = ctx.createGain();
+    this.filter = ctx.createBiquadFilter();
+    this.filterGain = ctx.createGain();
 
-    // Reduce the output from the filter
-    filterGain = ctx.createGain();
-    filterGain.gain.value = 0.5;
-    
+    // Initialize the synth voice
+    this.osc.type = 'square';
+    this.osc.start(0);
+    this.oscGain.gain.value = 0.0;
+    this.filter.type = "lowpass";
+    this.filter.frequency.value = 0;
+
     // Make the audio graph connections
-    osc.connect(oscGain);
-    oscGain.connect(filter);
-    filter.connect(filterGain);
-    filterGain.connect(ctx.destination);
+    this.osc.connect(this.oscGain);
+    this.oscGain.connect(this.filter);
+    this.filter.connect(this.filterGain);
+    this.filterGain.connect(this.ctx.destination);
 
-    // Schedule the start and stop of the oscillator
-    osc.start(start);
-    osc.stop(stop);  
-    
-    // Produce a smoothly decaying volume envelope
-    oscGain.gain.linearRampToValueAtTime(0.3, start + 0.005);
-    oscGain.gain.linearRampToValueAtTime(0.1, start + 0.005 + note.getLength());
-    oscGain.gain.linearRampToValueAtTime(0.0, start + note.getLength() + 0.5);
-
-    // Sweep the cutoff frequency for spaced-out envelope effects!
-    filter.frequency.linearRampToValueAtTime(4000, start + 0.005);
-    filter.frequency.exponentialRampToValueAtTime(200, start + 0.010 + note.getLength() * 0.5);    
+    // Attenuate the output from the filter
+    this.filterGain.gain.value = 0.5;
   }
+
+  Instrument.prototype = {
+
+    // Play back a simple synth voice at the pitch specified by the input note
+    noteOn: function(note) {
+
+      // Don't play out-of-range notes
+      if (note.getPitch() < 0 || note.getPitch() > 127)
+	return;
+
+      // Set the 'playing' flag to prevent retrigger before noteOff()
+      this.playing = true;
+      
+      // Keep track of the note that is currently sounding
+      this.currentNote = note;	
+
+      var start = this.ctx.currentTime;
+      var noteFreq = noteNum2Freq(note.getPitch());
+
+      // Cancel any of the scheduled AudioParam changes from previos Notes
+      this.osc.frequency.cancelScheduledValues(start);
+      this.filter.frequency.cancelScheduledValues(start);
+      this.oscGain.gain.cancelScheduledValues(start);
+
+      // Immediately set the frequency of the oscillator based on the note
+      this.osc.frequency.setValueAtTime(noteFreq, this.ctx.currentTime);
+
+      // Reduce resonance for higher notes to reduce clipping
+      this.filter.Q.value = 3 + (1 - note.getPitch() / 127) * 9;
+
+      // Produce a smoothly-decaying volume envelope
+      this.oscGain.gain.linearRampToValueAtTime(0.6, start + 0.005);
+      this.oscGain.gain.linearRampToValueAtTime(0.4, start + 0.100);
+
+      // Sweep the cutoff frequency for spaced-out envelope effects!
+      this.filter.frequency.linearRampToValueAtTime(4000, start + 0.005);
+      this.filter.frequency.exponentialRampToValueAtTime(200, start + 0.250);
+    },
+
+    // Stop the playback of the currently-sounding note
+    noteOff: function(note) {
+      this.playing = false;
+      this.currentNote = undefined;
+      this.oscGain.gain.linearRampToValueAtTime(0.0, this.ctx.currentTime + 0.125);
+    }
+  };
+
+  // I'm not quite sure how to "install" the default instrument...
+  var inst1 = new Instrument(ctx);
+  r.Instrument = inst1;
 
   /////////////////////////////////////////////////////////////////////////////
   // Song data stuff
@@ -100,13 +134,16 @@
   };
 
   r.insertNote = function(pitch, start, length) {
-    // TODO: this is a wonky implementation, just for testing/demo
-    var note = new Note(pitch, start, length);
-    inst1.playNote(note);
+    // TODO: impl
   };
 
+  r.makeNote = function(noteNum) {
+    var note = new Note(noteNum, 0, 0);
+    return note;
+  }
+
   function Note(pitch, start, length) {
-    // TODO: impl
+    // TODO: check implementation, and add more fields (?)
     this.pitch = pitch || 60;
     this.start = start || 0;
     this.length = length || 0;
@@ -171,7 +208,7 @@
   function beats2Ticks(beats) {
     return beats * TICKS_PER_SECOND;
   }
-  
+
   // This is fixed for now...
   var BPM = 120;
 
@@ -235,7 +272,7 @@
       time = seconds;
     };
   }
-  
+
   r.getLoopEnabled = function() {
     // TODO: impl
   };
@@ -266,8 +303,8 @@
 
   // Converts a note-number (typical range 0-127) into a frequency value
   // We'll probably just want to pre-compute a table...
-  function nn2Freq(nn) {
-    var freq =  Math.pow(2, (nn-69)/12) * 440;
+  function noteNum2Freq(noteNum) {
+    var freq =  Math.pow(2, (noteNum-69)/12) * 440;
     return freq;
   }
 
