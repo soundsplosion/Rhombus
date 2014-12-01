@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8" />
+<script src="../build/rhombus.js"></script>
+</head>
+<body>
+
+<p id="timeDisplay"></p>
+<button onclick="Rhombus.startPlayback()">Start</button>
+<button onclick="Rhombus.stopPlayback()">Stop</button>
+
+<br />
+<p>Enter new time here:</p>
+<input type="text" id="timeInput" /><br />
+<input type="radio" name="timeType" checked="checked" id="timeSeconds" />Seconds<br />
+<input type="radio" name="timeType" />Ticks<br />
+<button onclick="setNewTime()">Set new time</button>
+
+<script>
+var timeDisplay = document.getElementById("timeDisplay");
+function updateTime() {
+  var seconds = Rhombus.getPosition();
+  var ticks = Rhombus.seconds2Ticks(seconds);
+  timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
+  requestAnimationFrame(updateTime);
+}
+
+updateTime();
+
+var timeInput = document.getElementById("timeInput");
+var timeSeconds = document.getElementById("timeSeconds");
+function setNewTime() {
+  var newTime = +(timeInput.value);
+  if (timeSeconds.checked) {
+    Rhombus.moveToPositionSeconds(newTime);
+  } else {
+    Rhombus.moveToPositionTicks(newTime);
+  }
+
+  updateTime();
+}
+</script>
+
+</body>
+</html>
