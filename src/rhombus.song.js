@@ -45,14 +45,39 @@
   var song = r._song;
 
   // List of notes?
-  song.notes = {};
+  song.notes = new Array();
+
+  function appendArp(p1, p2, p3) {
+    // sixteenth note length
+    var interval = 240;
+    var startTime;
+    if (song.notes.length === 0) {
+      startTime = 960;
+    } else {
+      startTime = song.notes[song.notes.length-1].getStart() + interval;
+    }
+
+    song.notes.push(new r.Note(p1, startTime, interval*2));
+    song.notes.push(new r.Note(p2, startTime + interval, interval*2));
+    song.notes.push(new r.Note(p3, startTime + interval*2, interval*2));
+    song.notes.push(new r.Note(p2, startTime + interval*3, interval*2));
+  }
+
+  appendArp(60, 63, 67);
+  appendArp(60, 63, 67);
+  appendArp(60, 63, 68);
+  appendArp(60, 63, 68);
+  appendArp(60, 63, 67);
+  appendArp(60, 63, 67);
+  appendArp(59, 62, 67);
+  appendArp(59, 62, 67);
 
   r.getNoteCount = function() {
-    // TODO: impl
+    return song.notes.length;
   };
 
   r.getNote = function(index) {
-    // TODO: impl
+    return song.notes[index];
   };
 
   r.insertNote = function(note) {

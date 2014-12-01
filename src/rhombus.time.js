@@ -30,9 +30,39 @@
   // Number of ms to schedule ahead
   var scheduleAhead = 100;
 
+  var lastScheduled = 0;
   function scheduleNotes() {
-    console.log("called at: " + r.getPosition());
-    // TODO: Put some logic here
+    var notes = r._song.notes;
+
+    var nowTicks = r.seconds2Ticks(r.getPosition());
+    var scheduleStart = lastScheduled;
+    var scheduleEnd = nowTicks + scheduleAhead;
+    var scheduleTo = nowTicks + scheduleAhead;
+
+    var count = 0;
+    // May want to avoid iterating over all the notes every time
+    for (var i = 0; i < notes.length; i++) {
+      var note = notes[i];
+      var start = note.getStart();
+      var end = start + note.getLength();
+
+      if (start > scheduleStart && start < scheduleEnd) {
+        var delay = r.ticks2Seconds(start) - r.getPosition();
+        r.Instrument.noteOn(note, delay);
+        count += 1;
+      }
+
+      if (end > scheduleStart && end < scheduleEnd) {
+        var delay = r.ticks2Seconds(end) - r.getPosition();
+        r.Instrument.noteOff(note, delay);
+        count += 1;
+      }
+    }
+
+    lastScheduled = scheduleTo;
+    if (count > 0) {
+      console.log("scheduled (" + scheduleStart + ", " + scheduleEnd + "): " + count + " events");
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -80,6 +110,8 @@
       return;
     }
 
+    r.Instrument.killAllNotes();
+
     playing = false;
     time = getPosition(true);
     scheduleWorker.postMessage({ playing: false });
@@ -104,11 +136,12 @@
 
   r.moveToPositionSeconds = function(seconds) {
     if (playing) {
+      r.Instrument.killAllNotes();
       time = seconds - r._ctx.currentTime;
     } else {
       time = seconds;
     };
-  }
+  };
 
   r.getLoopEnabled = function() {
     // TODO: impl
