@@ -1,0 +1,25 @@
+{
+  "name": "Rhombus",
+  "version": "0.0.1",
+  "description": "JavaScript song editing and playback engine.",
+  "main": "rhombus.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/soundsplosion/Rhombus.git"
+  },
+  "author": "Spencer Phippen (spencer.phippen@gmail.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/soundsplosion/Rhombus/issues"
+  },
+  "homepage": "https://github.com/soundsplosion/Rhombus",
+  "devDependencies": {
+    "gulp": "^3.8.10",
+    "gulp-concat": "^2.4.2",
+    "gulp-rename": "^1.2.0",
+    "gulp-uglify": "^1.0.1"
+  }
+}
