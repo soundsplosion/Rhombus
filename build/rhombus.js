@@ -43,8 +43,8 @@
 
   // A simple instrument to test basic note playback
   // Voice Structure: osc. --> gain --> filter --> gain --> output
-  function Trigger(note) {
-    this._note = note;
+  function Trigger(pitch) {
+    this._pitch = pitch;
 
     // Instantiate the modules for this note trigger
     this._osc = r._ctx.createOscillator();
@@ -71,14 +71,14 @@
   Trigger.prototype = {
     noteOn: function(delay) {
       var start = r._ctx.currentTime + delay;
-      var noteFreq = r.Util.noteNum2Freq(this._note.getPitch());
+      var noteFreq = r.Util.noteNum2Freq(this._pitch);
 
       // Immediately set the frequency of the oscillator based on the note
       this._osc.frequency.setValueAtTime(noteFreq, r._ctx.currentTime);
       this._osc.start(start);
 
       // Reduce resonance for higher notes to reduce clipping
-      this._filter.Q.value = 3 + (1 - this._note.getPitch() / 127) * 9;
+      this._filter.Q.value = 3 + (1 - this._pitch / 127) * 9;
 
       // Produce a smoothly-decaying volume envelope
       this._oscGain.gain.linearRampToValueAtTime(0.6, start + 0.005);
@@ -89,9 +89,9 @@
       this._filter.frequency.exponentialRampToValueAtTime(200, start + 0.250);
     },
 
-    noteOff: function(delay, note) {
+    noteOff: function(delay, pitch) {
       // just a hack for now
-      if (!note || note.getPitch() === this._note.getPitch()) {
+      if (!pitch || pitch === this._pitch) {
         var stop = r._ctx.currentTime + 0.125 + delay;
         this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
         this._osc.stop(stop);
@@ -108,22 +108,22 @@
 
   Instrument.prototype = {
     // Play back a simple synth voice at the pitch specified by the input note
-    noteOn: function(note, delay) {
+    noteOn: function(pitch, delay) {
 
       // Don't play out-of-range notes
-      if (note.getPitch() < 0 || note.getPitch() > 127)
+      if (pitch < 0 || pitch > 127)
         return;
 
-      var trigger = new Trigger(note);
+      var trigger = new Trigger(pitch);
       trigger.noteOn(delay);
       this._triggers.push(trigger);
     },
 
     // Stop the playback of the currently-sounding note
-    noteOff: function(note, delay) {
+    noteOff: function(pitch, delay) {
       var newTriggers = [];
       for (var i = 0; i < this._triggers.length; i++) {
-        if (!this._triggers[i].noteOff(delay, note)) {
+        if (!this._triggers[i].noteOff(delay, pitch)) {
           newTriggers.push(this._triggers[i]);
         }
       }
@@ -290,13 +290,13 @@
 
       if (start > scheduleStart && start < scheduleEnd) {
         var delay = r.ticks2Seconds(start) - r.getPosition();
-        r.Instrument.noteOn(note, delay);
+        r.Instrument.noteOn(note.getPitch(), delay);
         count += 1;
       }
 
       if (end > scheduleStart && end < scheduleEnd) {
         var delay = r.ticks2Seconds(end) - r.getPosition();
-        r.Instrument.noteOff(note, delay);
+        r.Instrument.noteOff(note.getPitch(), delay);
         count += 1;
       }
     }
