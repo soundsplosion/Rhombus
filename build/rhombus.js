@@ -143,11 +143,11 @@
   r.Instrument = inst1;
 
   r.startPreviewNote = function(pitch) {
-    // TODO: impl
+    r.Instrument.noteOn(pitch, 0);
   };
 
   r.stopPreviewNote = function(pitch) {
-    // TODO: impl
+    r.Instrument.noteOff(pitch, 0);
   };
 
 })(this.Rhombus);
