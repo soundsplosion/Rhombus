@@ -337,6 +337,11 @@
   var playing = false;
   var time = 0;
 
+  function resetPlayback() {
+    lastScheduled = 0;
+    r.Instrument.killAllNotes();
+  }
+
   r.startPlayback = function() {
     if (playing) {
       return;
@@ -352,7 +357,7 @@
       return;
     }
 
-    r.Instrument.killAllNotes();
+    resetPlayback();
 
     playing = false;
     time = getPosition(true);
@@ -378,7 +383,7 @@
 
   r.moveToPositionSeconds = function(seconds) {
     if (playing) {
-      r.Instrument.killAllNotes();
+      resetPlayback();
       time = seconds - r._ctx.currentTime;
     } else {
       time = seconds;
