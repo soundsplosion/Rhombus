@@ -19,14 +19,18 @@
     value: ctx
   });
 
+  var curId = 0;
   r._setId = function(t, id) {
+    if (id >== curId) {
+      curId = id + 1;
+    }
+
     Object.defineProperty(t, 'id', {
       value: id,
       enumerable: true
     });
   };
 
-  var curId = 0;
   r._newId = function(t) {
     r._setId(t, curId);
     curId++;
