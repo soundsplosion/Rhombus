@@ -8,6 +8,7 @@ gulp.task("make", function() {
   return gulp.src([
     "src/rhombus.header.js",
     "src/rhombus.util.js",
+    "src/rhombus.graph.js",
     "src/rhombus.instrument.js",
     "src/rhombus.song.js",
     "src/rhombus.time.js"
