@@ -363,6 +363,10 @@
     // Number of ms to schedule ahead
     var scheduleAhead = 100;
 
+    // loop start and end position in ticks
+    var loopIn  = 0;
+    var loopOut = 1920;
+
     var lastScheduled = 0;
     function scheduleNotes() {
       var notes = r._song.notes;
@@ -371,6 +375,13 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = nowTicks + scheduleAhead;
       var scheduleTo = nowTicks + scheduleAhead;
+
+      // do loop stuff
+      var tickDiff = nowTicks - loopOut;
+      if (tickDiff >= 0) {
+        console.log("Overshot loopOut by " + tickDiff + " ticks @ " + r._ctx.currentTime);
+        r.moveToPositionTicks(loopIn + tickDiff);
+      }
 
       var count = 0;
       // May want to avoid iterating over all the notes every time
@@ -394,7 +405,7 @@
 
       lastScheduled = scheduleTo;
       if (count > 0) {
-        console.log("scheduled (" + scheduleStart + ", " + scheduleEnd + "): " + count + " events");
+        //console.log("scheduled (" + scheduleStart + ", " + scheduleEnd + "): " + count + " events");
       }
     }
 
