@@ -11,13 +11,18 @@
     var inGain = r._ctx.createGain();
     var delay = r._ctx.createDelay();
     delay.delayTime.value = 3/8;
+
+    var outGain = r._ctx.createGain();
+    outGain.gain.value = 0.2;
+
     var feedbackGain = r._ctx.createGain();
-    feedbackGain.gain.value = 0.7;
+    feedbackGain.gain.value = 0.4;
 
     inGain.connect(r._ctx.destination);
     delay.connect(feedbackGain);
     feedbackGain.connect(delay);
-    delay.connect(r._ctx.destination);
+    delay.connect(outGain);
+    outGain.connect(r._ctx.destination);
 
     graph.mainout = inGain;
     r._graph = graph;
