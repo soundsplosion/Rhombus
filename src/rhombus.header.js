@@ -14,6 +14,26 @@
   var r = {};
   root.Rhombus = r;
 
-  r._ctx = new AudioContext();
+  var ctx = new AudioContext();
+  Object.defineProperty(r, '_ctx', {
+    value: ctx
+  });
+
+  var curId = 0;
+  r._setId = function(t, id) {
+    if (id >== curId) {
+      curId = id + 1;
+    }
+
+    Object.defineProperty(t, 'id', {
+      value: id,
+      enumerable: true
+    });
+  };
+
+  r._newId = function(t) {
+    r._setId(t, curId);
+    curId++;
+  };
 
 })(this);
