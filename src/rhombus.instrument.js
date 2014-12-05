@@ -25,7 +25,7 @@
     this._osc.connect(this._oscGain);
     this._oscGain.connect(this._filter);
     this._filter.connect(this._filterGain);
-    this._filterGain.connect(r._ctx.destination);
+    this._filterGain.connect(r._graph.mainout);
 
     // Attenuate the output from the filter
     this._filterGain.gain.value = 0.5;

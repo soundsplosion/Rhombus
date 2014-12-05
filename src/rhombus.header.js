@@ -21,7 +21,7 @@
 
   var curId = 0;
   r._setId = function(t, id) {
-    if (id >== curId) {
+    if (id >= curId) {
       curId = id + 1;
     }
 
