@@ -10,10 +10,35 @@
     throw new Error("No Web Audio API support - cannot initialize Rhombus.");
   }
 
-  // Install Rhombus object
-  var r = {};
-  root.Rhombus = r;
+  // Add Rhombus constructor
+  root.Rhombus = function() {
 
-  r._ctx = new AudioContext();
+    var ctx = new AudioContext();
+    Object.defineProperty(this, '_ctx', {
+      value: ctx
+    });
+
+    var curId = 0;
+    this._setId = function(t, id) {
+      if (id >= curId) {
+        curId = id + 1;
+      }
+
+      Object.defineProperty(t, 'id', {
+        value: id,
+        enumerable: true
+      });
+    };
+
+    this._newId = function(t) {
+      this._setId(t, curId);
+      curId++;
+    };
+
+    root.Rhombus._graphSetup(this);
+    root.Rhombus._instrumentSetup(this);
+    root.Rhombus._songSetup(this);
+    root.Rhombus._timeSetup(this);
+  };
 
 })(this);

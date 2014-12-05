@@ -4,12 +4,15 @@
 <head>
 <meta charset="UTF-8" />
 <script src="../build/rhombus.js"></script>
+<script>
+var theRealRhombus = new Rhombus();
+</script>
 </head>
 <body>
 
 <p id="timeDisplay"></p>
-<button onclick="Rhombus.startPlayback()">Start</button>
-<button onclick="Rhombus.stopPlayback()">Stop</button>
+<button onclick="theRealRhombus.startPlayback()">Start</button>
+<button onclick="theRealRhombus.stopPlayback()">Stop</button>
 
 <br />
 <p>Enter new time here:</p>
@@ -21,8 +24,8 @@
 <script>
 var timeDisplay = document.getElementById("timeDisplay");
 function updateTime() {
-  var seconds = Rhombus.getPosition();
-  var ticks = Rhombus.seconds2Ticks(seconds);
+  var seconds = theRealRhombus.getPosition();
+  var ticks = theRealRhombus.seconds2Ticks(seconds);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
   requestAnimationFrame(updateTime);
 }
@@ -34,9 +37,9 @@ var timeSeconds = document.getElementById("timeSeconds");
 function setNewTime() {
   var newTime = +(timeInput.value);
   if (timeSeconds.checked) {
-    Rhombus.moveToPositionSeconds(newTime);
+    theRealRhombus.moveToPositionSeconds(newTime);
   } else {
-    Rhombus.moveToPositionTicks(newTime);
+    theRealRhombus.moveToPositionTicks(newTime);
   }
 
   updateTime();
