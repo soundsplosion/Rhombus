@@ -11,8 +11,10 @@ var theRealRhombus = new Rhombus();
 <body>
 
 <p id="timeDisplay"></p>
+<p id="loopEnabled"></p>
 <button onclick="theRealRhombus.startPlayback()">Start</button>
 <button onclick="theRealRhombus.stopPlayback()">Stop</button>
+<button onclick="toggleLoop()">Toggle Loop</button>
 
 <br />
 <p>Enter new time here:</p>
@@ -23,11 +25,17 @@ var theRealRhombus = new Rhombus();
 
 <script>
 var timeDisplay = document.getElementById("timeDisplay");
+var loopEnabled = document.getElementById("loopEnabled");
 function updateTime() {
   var seconds = theRealRhombus.getPosition();
   var ticks = theRealRhombus.seconds2Ticks(seconds);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
+  loopEnabled.innerHTML = "Loop Enabled: " + theRealRhombus.getLoopEnabled();
   requestAnimationFrame(updateTime);
+}
+
+function toggleLoop() {
+  theRealRhombus.setLoopEnabled(!theRealRhombus.getLoopEnabled());
 }
 
 updateTime();

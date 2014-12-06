@@ -28,27 +28,21 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of ms to schedule ahead
-    var scheduleAhead = 100;
-
-    // loop start and end position in ticks
-    var loopIn  = 0;
-    var loopOut = 1920;
+    var scheduleAhead = 50;
 
     var lastScheduled = 0;
     function scheduleNotes() {
       var notes = r._song.notes;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
-      var scheduleStart = lastScheduled;
-      var scheduleEnd = nowTicks + scheduleAhead;
-      var scheduleTo = nowTicks + scheduleAhead;
 
-      // do loop stuff
-      var tickDiff = nowTicks - loopOut;
-      if (tickDiff >= 0) {
-        console.log("Overshot loopOut by " + tickDiff + " ticks @ " + r._ctx.currentTime);
-        r.moveToPositionTicks(loopIn + tickDiff);
-      }
+      // determine if playback needs to loop around in this time window
+      var doWrap = r.getLoopEnabled && (r.getLoopEnd() - nowTicks < scheduleAhead);
+
+      // need to do this more cleanly -- maybe a single branch
+      var scheduleStart = (doWrap) ? r.getLoopEnd() : lastScheduled;
+      var scheduleEnd   = (doWrap) ? r.getLoopEnd() : nowTicks + scheduleAhead;
+      var scheduleTo    = (doWrap) ? r.getLoopEnd() : nowTicks + scheduleAhead;
 
       var count = 0;
       // May want to avoid iterating over all the notes every time
@@ -63,7 +57,7 @@
           count += 1;
         }
 
-        if (end > scheduleStart && end < scheduleEnd) {
+        if (end > scheduleStart) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
           r.Instrument.noteOff(note.getPitch(), delay);
           count += 1;
@@ -71,9 +65,14 @@
       }
 
       lastScheduled = scheduleTo;
-      if (count > 0) {
-        //console.log("scheduled (" + scheduleStart + ", " + scheduleEnd + "): " + count + " events");
-      }
+
+      //if (count > 0) {
+      //  console.log("scheduled (" + scheduleStart + ", " + scheduleEnd + "): " + count + " events");
+      //}
+      
+      // TODO: adjust scheduleStart/End/To to handle wraparound correctly
+      if (doWrap)
+        r.loopPlayback(nowTicks);
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -106,6 +105,11 @@
     var playing = false;
     var time = 0;
 
+    // loop start and end position in ticks
+    var loopStart   = 960;
+    var loopEnd     = 4800 - 1;
+    var loopEnabled = false;
+
     function resetPlayback() {
       lastScheduled = 0;
       r.Instrument.killAllNotes();
@@ -131,6 +135,17 @@
       playing = false;
       time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
+    };
+
+    r.loopPlayback = function (nowTicks) {
+      // do loop stuff
+      var tickDiff = nowTicks - loopEnd;
+      if (tickDiff >= 0 && loopEnabled === true) {
+        console.log("Overshot loopEnd by " + tickDiff.toFixed(3) + " ticks @ " + 
+                    r._ctx.currentTime.toFixed(3));
+        r.moveToPositionTicks(loopStart + tickDiff);
+        scheduleNotes();
+      }
     };
 
     function getPosition(playing) {
@@ -160,27 +175,27 @@
     };
 
     r.getLoopEnabled = function() {
-      // TODO: impl
+      return loopEnabled;
     };
 
     r.setLoopEnabled = function(enabled) {
-      // TODO: impl
+      loopEnabled = enabled;
     };
 
     r.getLoopStart = function() {
-      // TODO: impl
+      return loopStart;
     };
 
     r.setLoopStart = function(ticks) {
-      // TODO: impl
+      loopStart = ticks;
     };
 
     r.getLoopEnd = function() {
-      // TODO: impl
+      return loopEnd;
     };
 
-    r.setLoopEnd = function() {
-      // TODO: impl
+    r.setLoopEnd = function(ticks) {
+      loopEnd = ticks;
     };
   };
 })(this.Rhombus);
