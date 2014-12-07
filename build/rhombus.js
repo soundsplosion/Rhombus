@@ -35,6 +35,8 @@
       curId++;
     };
 
+    this._volume = 0.5;
+
     root.Rhombus._graphSetup(this);
     root.Rhombus._instrumentSetup(this);
     root.Rhombus._songSetup(this);
@@ -138,7 +140,7 @@
       this._filterGain.connect(r._graph.mainout);
 
       // Attenuate the output from the filter
-      this._filterGain.gain.value = 0.5;
+      this._filterGain.gain.value = r._volume;
     }
 
     Trigger.prototype = {
@@ -428,6 +430,10 @@
     var playing = false;
     var time = 0;
 
+    r.setTime = function(t) {
+      time = t;
+    }
+
     function resetPlayback() {
       lastScheduled = 0;
       r.Instrument.killAllNotes();
@@ -480,6 +486,10 @@
         time = seconds;
       };
     };
+
+    r.setVolume = function(vol) {
+      r._volume = vol;
+    }
 
     r.getLoopEnabled = function() {
       // TODO: impl
