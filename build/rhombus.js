@@ -430,10 +430,6 @@
     var playing = false;
     var time = 0;
 
-    r.setTime = function(t) {
-      time = t;
-    }
-
     function resetPlayback() {
       lastScheduled = 0;
       r.Instrument.killAllNotes();
