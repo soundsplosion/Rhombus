@@ -80,11 +80,20 @@
     var feedbackGain = r._ctx.createGain();
     feedbackGain.gain.value = 0.4;
 
-    inGain.connect(r._ctx.destination);
+    var masterOutGain = r._ctx.createGain();
+    r.getMasterGain = function() {
+      return masterOutGain.gain.value;
+    };
+    r.setMasterGain = function(gain) {
+      masterOutGain.gain.value = gain;
+    };
+
+    inGain.connect(masterOutGain);
     delay.connect(feedbackGain);
     feedbackGain.connect(delay);
     delay.connect(outGain);
-    outGain.connect(r._ctx.destination);
+    outGain.connect(masterOutGain);
+    masterOutGain.connect(r._ctx.destination);
 
     graph.mainout = inGain;
     r._graph = graph;
@@ -293,6 +302,11 @@
     r.insertNote = function(note) {
       song.notesMap[note.id] = note;
       song.notes.push(note);
+    };
+
+    r.getSongLengthSeconds = function() {
+      var lastNote = song.notes[r.getNoteCount() - 1];
+      return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
     };
 
     r.importSong = function(json) {

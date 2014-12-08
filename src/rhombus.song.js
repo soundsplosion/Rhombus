@@ -68,6 +68,11 @@
       song.notes.push(note);
     };
 
+    r.getSongLengthSeconds = function() {
+      var lastNote = song.notes[r.getNoteCount() - 1];
+      return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
+    };
+
     r.importSong = function(json) {
       newSong();
       var notes = JSON.parse(json).notes;
