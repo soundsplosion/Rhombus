@@ -288,6 +288,11 @@
       return song.notes.length;
     };
 
+    r.getSongLengthSeconds = function() {
+      var lastNote = song.notes[r.getNoteCount() - 1];
+      return parseInt(r.ticks2Seconds(lastNote.getStart() + lastNote.getLength()), 10);
+    }
+
     r.getNote = function(index) {
       return song.notes[index];
     };
