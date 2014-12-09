@@ -22,13 +22,22 @@ var theRealRhombus = new Rhombus();
 <input type="radio" name="timeType" checked="checked" id="timeSeconds" />Seconds<br />
 <input type="radio" name="timeType" />Ticks<br />
 <button onclick="setNewTime()">Set new time</button>
+<br><br>
+<input style="width: 150px" type="range" min="0" max="100" value="50" id="wetLevel"/> Wet Level <br>
+<input style="width: 150px" type="range" min="0" max="100" value="50" id="feedbackLevel"/> Feedback
+<br><br>
+<button onclick="toggleEffect()">Toggle Effect</button>
 
 <script>
 var timeDisplay = document.getElementById("timeDisplay");
 var loopEnabled = document.getElementById("loopEnabled");
+var wetLevel = document.getElementById("wetLevel");
+var feedbackLevel = document.getElementById("feedbackLevel");
 function updateTime() {
   var seconds = theRealRhombus.getPosition();
   var ticks = theRealRhombus.seconds2Ticks(seconds);
+  theRealRhombus.setWetLevel(wetLevel.value/100);
+  theRealRhombus.setFeedbackLevel(feedbackLevel.value/100);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
   loopEnabled.innerHTML = "Loop Enabled: " + theRealRhombus.getLoopEnabled();
   requestAnimationFrame(updateTime);
@@ -36,6 +45,10 @@ function updateTime() {
 
 function toggleLoop() {
   theRealRhombus.setLoopEnabled(!theRealRhombus.getLoopEnabled());
+}
+
+function toggleEffect() {
+  theRealRhombus.setEffectOn(!theRealRhombus.getEffectEnabled());
 }
 
 updateTime();
