@@ -166,8 +166,9 @@
   Rhombus._instrumentSetup = function(r) {
     // A simple instrument to test basic note playback
     // Voice Structure: osc. --> gain --> filter --> gain --> output
-    function Trigger(pitch) {
+    function Trigger(id, pitch) {
       this._pitch = pitch;
+      this._id = id;
 
       // Instantiate the modules for this note trigger
       this._osc = r._ctx.createOscillator();
@@ -212,16 +213,14 @@
         this._filter.frequency.exponentialRampToValueAtTime(200, start + 0.250);
       },
 
-      noteOff: function(delay, pitch) {
-        // just a hack for now
-        if (!pitch || pitch === this._pitch) {
-          var stop = r._ctx.currentTime + 0.125 + delay;
-          this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
-          this._osc.stop(stop);
-          return true;
-        } else {
+      noteOff: function(delay, id) {
+        if (id && id !== this._id)
           return false;
-        }
+
+        var stop = r._ctx.currentTime + 0.125 + delay;
+        this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
+        this._osc.stop(stop);
+        return true;
       }
     };
 
@@ -231,22 +230,22 @@
 
     Instrument.prototype = {
       // Play back a simple synth voice at the pitch specified by the input note
-      noteOn: function(pitch, delay) {
+      noteOn: function(id, pitch, delay) {
 
         // Don't play out-of-range notes
         if (pitch < 0 || pitch > 127)
           return;
 
-        var trigger = new Trigger(pitch);
+        var trigger = new Trigger(id, pitch);
         trigger.noteOn(delay);
         this._triggers.push(trigger);
       },
 
       // Stop the playback of the currently-sounding note
-      noteOff: function(pitch, delay) {
+      noteOff: function(id, pitch, delay) {
         var newTriggers = [];
         for (var i = 0; i < this._triggers.length; i++) {
-          if (!this._triggers[i].noteOff(delay, pitch)) {
+          if (!this._triggers[i].noteOff(delay, id)) {
             newTriggers.push(this._triggers[i]);
           }
         }
@@ -441,13 +440,13 @@
 
         if (start > scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();
-          r.Instrument.noteOn(note.getPitch(), delay);
+          r.Instrument.noteOn(note.id, note.getPitch(), delay);
           count += 1;
         }
 
         if (end > scheduleStart) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note.getPitch(), delay);
+          r.Instrument.noteOff(note.id, note.getPitch(), delay);
           count += 1;
         }
       }
