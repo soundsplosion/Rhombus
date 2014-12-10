@@ -32,7 +32,6 @@
 
     this._newId = function(t) {
       this._setId(t, curId);
-      curId++;
     };
 
     root.Rhombus._graphSetup(this);
@@ -619,28 +618,6 @@
         }
       }
     };
-
-    var interval = 240;
-    var last = 960 - interval;
-
-    function appendArp(p1, p2, p3) {
-      var startTime = last + interval;
-      last += interval*4;
-
-      r.Edit.insertNote(new r.Note(p1, startTime, interval*2));
-      r.Edit.insertNote(new r.Note(p2, startTime + interval, interval*2));
-      r.Edit.insertNote(new r.Note(p3, startTime + interval*2, interval*2));
-      r.Edit.insertNote(new r.Note(p2, startTime + interval*3, interval*2));
-    }
-
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 68);
-    appendArp(60, 63, 68);
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 67);
-    appendArp(59, 62, 67);
-    appendArp(59, 62, 67);
 
   };
 })(this.Rhombus);
