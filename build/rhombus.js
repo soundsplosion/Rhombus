@@ -388,7 +388,7 @@
     // Number of ms to schedule ahead
     var scheduleAhead = 50;
 
-    var lastScheduled = 0;
+    var lastScheduled = -1;
     function scheduleNotes() {
       var notes = r._song.notes;
 
@@ -398,36 +398,31 @@
       var doWrap = r.getLoopEnabled && (r.getLoopEnd() - nowTicks < scheduleAhead);
 
       // need to do this more cleanly -- maybe a single branch
-      var scheduleStart = (doWrap) ? r.getLoopEnd() : lastScheduled;
-      var scheduleEnd   = (doWrap) ? r.getLoopEnd() : nowTicks + scheduleAhead;
-      var scheduleTo    = (doWrap) ? r.getLoopEnd() : nowTicks + scheduleAhead;
+      var scheduleStart = lastScheduled;
+      if (scheduleStart < 0)
+        scheduleStart = nowTicks;
 
-      var count = 0;
+      var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + scheduleAhead;
+
       // May want to avoid iterating over all the notes every time
       for (var i = 0; i < notes.length; i++) {
         var note = notes[i];
         var start = note.getStart();
         var end = note.getEnd();
 
-        if (start > scheduleStart && start < scheduleEnd) {
+        if (start >= scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();
           r.Instrument.noteOn(note.id, note.getPitch(), delay);
-          count += 1;
         }
 
-        if (end > scheduleStart) {
+        if (end >= scheduleStart && end < scheduleEnd) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
           r.Instrument.noteOff(note.id, delay);
-          count += 1;
         }
       }
 
-      lastScheduled = scheduleTo;
+      lastScheduled = scheduleEnd;
 
-      //if (count > 0) {
-      //  console.log("scheduled (" + scheduleStart + ", " + scheduleEnd + "): " + count + " events");
-      //}
-      
       // TODO: adjust scheduleStart/End/To to handle wraparound correctly
       if (doWrap)
         r.loopPlayback(nowTicks);
@@ -464,12 +459,14 @@
     var time = 0;
 
     // loop start and end position in ticks
-    var loopStart   = 960;
-    var loopEnd     = 4800 - 1;
+    // -20 a hack to make sure we hit the first note
+    // we really need to get that working for the demo
+    var loopStart   = 960 - 20;
+    var loopEnd     = 4800 - 20;
     var loopEnabled = false;
 
     function resetPlayback() {
-      lastScheduled = 0;
+      lastScheduled = -1;
       r.Instrument.killAllNotes();
     }
 
@@ -619,7 +616,7 @@
       }
     };
 
-    /*var interval = 240;
+    var interval = 240;
     var last = 960 - interval;
 
     function appendArp(p1, p2, p3) {
@@ -639,9 +636,7 @@
     appendArp(60, 63, 67);
     appendArp(60, 63, 67);
     appendArp(59, 62, 67);
-    appendArp(59, 62, 67);*/
-
-    r.Edit.insertNote(new r.Note(60, 480, 4800));
+    appendArp(59, 62, 67);
 
   };
 })(this.Rhombus);

@@ -59,7 +59,7 @@
       }
     };
 
-    /*var interval = 240;
+    var interval = 240;
     var last = 960 - interval;
 
     function appendArp(p1, p2, p3) {
@@ -79,9 +79,7 @@
     appendArp(60, 63, 67);
     appendArp(60, 63, 67);
     appendArp(59, 62, 67);
-    appendArp(59, 62, 67);*/
-
-    r.Edit.insertNote(new r.Note(60, 480, 4800));
+    appendArp(59, 62, 67);
 
   };
 })(this.Rhombus);
