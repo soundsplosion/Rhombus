@@ -49,7 +49,7 @@
       for (var i = 0; i < notes.length; i++) {
         var note = notes[i];
         var start = note.getStart();
-        var end = start + note.getLength();
+        var end = note.getEnd();
 
         if (start > scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();

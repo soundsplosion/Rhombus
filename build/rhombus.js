@@ -206,10 +206,12 @@
         this._filter.Q.value = 3 + (1 - this._pitch / 127) * 9;
 
         // Produce a smoothly-decaying volume envelope
+        this._oscGain.gain.setValueAtTime(0.0, start);
         this._oscGain.gain.linearRampToValueAtTime(0.6, start + 0.005);
         this._oscGain.gain.linearRampToValueAtTime(0.4, start + 0.010);
 
         // Sweep the cutoff frequency for spaced-out envelope effects!
+        this._filter.frequency.setValueAtTime(0.0, start);
         this._filter.frequency.linearRampToValueAtTime(4000, start + 0.005);
         this._filter.frequency.exponentialRampToValueAtTime(200, start + 0.250);
       },
@@ -219,10 +221,12 @@
           return false;
         }
 
-        console.log("off");
-        var stop = r._ctx.currentTime + 0.125 + delay;
-        this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
-        this._osc.stop(stop);
+        var stop = r._ctx.currentTime + delay;
+
+        this._oscGain.gain.cancelScheduledValues(stop);
+        this._oscGain.gain.setValueAtTime(0.4, stop);
+        this._oscGain.gain.linearRampToValueAtTime(0.0, stop + 0.125);
+        this._osc.stop(stop + 0.125);
         return true;
       }
     };
@@ -403,7 +407,7 @@
       for (var i = 0; i < notes.length; i++) {
         var note = notes[i];
         var start = note.getStart();
-        var end = start + note.getLength();
+        var end = note.getEnd();
 
         if (start > scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();
