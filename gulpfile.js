@@ -17,7 +17,10 @@ gulp.task("make", function() {
     .pipe(concat("rhombus.js"))
     .pipe(gulp.dest("build"))
     .pipe(rename("rhombus.min.js"))
-    .pipe(uglify())
+    .pipe(uglify().on('error', function() {
+      console.log("error uglifying Rhombus");
+      this.emit('end');
+    }))
     .pipe(gulp.dest("build"));
 });
 
