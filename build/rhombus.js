@@ -39,6 +39,7 @@
     root.Rhombus._instrumentSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._timeSetup(this);
+    root.Rhombus._editSetup(this);
   };
 
 })(this);
@@ -214,9 +215,11 @@
       },
 
       noteOff: function(delay, id) {
-        if (id && id !== this._id)
+        if (id && id !== this._id) {
           return false;
+        }
 
+        console.log("off");
         var stop = r._ctx.currentTime + 0.125 + delay;
         this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
         this._osc.stop(stop);
@@ -233,8 +236,9 @@
       noteOn: function(id, pitch, delay) {
 
         // Don't play out-of-range notes
-        if (pitch < 0 || pitch > 127)
+        if (pitch < 0 || pitch > 127) {
           return;
+        }
 
         var trigger = new Trigger(id, pitch);
         trigger.noteOn(delay);
@@ -296,29 +300,18 @@
         return this._pitch;
       },
 
-      setPitch: function(pitch) {
-        // TODO: impl
-      },
-
       getStart: function() {
         return this._start;
-      },
-
-      setStart: function (start) {
-        // TODO: impl
       },
 
       getLength: function() {
         return this._length;
       },
 
-      setLength: function(length) {
-        // TODO: impl
-      },
-
-      delete: function(length) {
-        // TODO: impl
+      getEnd: function() {
+        return this._start + this._length;
       }
+
     };
 
     var song;
@@ -339,11 +332,6 @@
       return song.notes[index];
     };
 
-    r.insertNote = function(note) {
-      song.notesMap[note.id] = note;
-      song.notes.push(note);
-    };
-
     r.getSongLengthSeconds = function() {
       var lastNote = song.notes[r.getNoteCount() - 1];
       return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
@@ -353,7 +341,7 @@
       newSong();
       var notes = JSON.parse(json).notes;
       for (var i = 0; i < notes.length; i++) {
-        r.insertNote(new r.Note(notes[i]._pitch, notes[i]._start, notes[i]._length, notes[i].id));
+        r.Edit.insertNote(new r.Note(notes[i]._pitch, notes[i]._start, notes[i]._length, notes[i].id));
       }
     }
 
@@ -361,27 +349,6 @@
       return JSON.stringify(song);
     };
 
-    var interval = 240;
-    var last = 960 - interval;
-
-    function appendArp(p1, p2, p3) {
-      var startTime = last + interval;
-      last += interval*4;
-
-      r.insertNote(new r.Note(p1, startTime, interval*2));
-      r.insertNote(new r.Note(p2, startTime + interval, interval*2));
-      r.insertNote(new r.Note(p3, startTime + interval*2, interval*2));
-      r.insertNote(new r.Note(p2, startTime + interval*3, interval*2));
-    }
-
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 68);
-    appendArp(60, 63, 68);
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 67);
-    appendArp(59, 62, 67);
-    appendArp(59, 62, 67);
   };
 })(this.Rhombus);
 
@@ -584,5 +551,93 @@
     r.setLoopEnd = function(ticks) {
       loopEnd = ticks;
     };
+  };
+})(this.Rhombus);
+
+//! rhombus.edit.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+
+(function(Rhombus) {
+  Rhombus._editSetup = function(r) {
+    r.Edit = {};
+
+    function stopIfPlaying(note) {
+      var curTicks = r.seconds2Ticks(r.getPosition());
+      var playing = note.getStart() <= curTicks && curTicks <= note.getEnd();
+      if (playing) {
+        r.Instrument.noteOff(note.id, 0);
+      }
+    }
+
+    r.Edit.insertNote = function(note) {
+      r._song.notesMap[note.id] = note;
+      r._song.notes.push(note);
+    };
+
+
+    r.Edit.changeNoteTime = function(noteid, start, length) {
+      var note = r._song.notesMap[noteid];
+
+      var shouldBePlaying = start <= curTicks && curTicks <= (start + length);
+
+      if (!shouldBePlaying) {
+        stopIfPlaying(note);
+      }
+
+      note._start = start;
+      note._length = length;
+    };
+
+    r.Edit.changeNotePitch = function(noteid, pitch) {
+      var note = r._song.notesMap[noteid];
+
+      if (pitch === note.getPitch()) {
+        return;
+      }
+
+      r.Instrument.noteOff(note.id, 0);
+      note._pitch = pitch;
+    };
+
+    r.Edit.deleteNote = function(noteid) {
+      var note = r._song.notesMap[noteid];
+
+      delete r._song.notesMap[note.id];
+
+      var notes = r._song.notes;
+      for (var i = 0; i < notes.length; i++) {
+        if (notes[i].id === note.id) {
+          notes.splice(i, 1);
+          stopIfPlaying(note);
+          return;
+        }
+      }
+    };
+
+    /*var interval = 240;
+    var last = 960 - interval;
+
+    function appendArp(p1, p2, p3) {
+      var startTime = last + interval;
+      last += interval*4;
+
+      r.Edit.insertNote(new r.Note(p1, startTime, interval*2));
+      r.Edit.insertNote(new r.Note(p2, startTime + interval, interval*2));
+      r.Edit.insertNote(new r.Note(p3, startTime + interval*2, interval*2));
+      r.Edit.insertNote(new r.Note(p2, startTime + interval*3, interval*2));
+    }
+
+    appendArp(60, 63, 67);
+    appendArp(60, 63, 67);
+    appendArp(60, 63, 68);
+    appendArp(60, 63, 68);
+    appendArp(60, 63, 67);
+    appendArp(60, 63, 67);
+    appendArp(59, 62, 67);
+    appendArp(59, 62, 67);*/
+
+    r.Edit.insertNote(new r.Note(60, 480, 4800));
+
   };
 })(this.Rhombus);

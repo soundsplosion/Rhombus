@@ -54,9 +54,11 @@
       },
 
       noteOff: function(delay, id) {
-        if (id && id !== this._id)
+        if (id && id !== this._id) {
           return false;
+        }
 
+        console.log("off");
         var stop = r._ctx.currentTime + 0.125 + delay;
         this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
         this._osc.stop(stop);
@@ -73,8 +75,9 @@
       noteOn: function(id, pitch, delay) {
 
         // Don't play out-of-range notes
-        if (pitch < 0 || pitch > 127)
+        if (pitch < 0 || pitch > 127) {
           return;
+        }
 
         var trigger = new Trigger(id, pitch);
         trigger.noteOn(delay);
