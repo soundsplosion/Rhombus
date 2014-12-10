@@ -32,7 +32,6 @@
 
     this._newId = function(t) {
       this._setId(t, curId);
-      curId++;
     };
 
     root.Rhombus._graphSetup(this);
