@@ -82,7 +82,7 @@
       },
 
       // Stop the playback of the currently-sounding note
-      noteOff: function(id, pitch, delay) {
+      noteOff: function(id, delay) {
         var newTriggers = [];
         for (var i = 0; i < this._triggers.length; i++) {
           if (!this._triggers[i].noteOff(delay, id)) {

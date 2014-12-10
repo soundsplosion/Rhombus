@@ -59,7 +59,7 @@
 
         if (end > scheduleStart) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note.id, note.getPitch(), delay);
+          r.Instrument.noteOff(note.id, delay);
           count += 1;
         }
       }
