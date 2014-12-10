@@ -242,7 +242,7 @@
       },
 
       // Stop the playback of the currently-sounding note
-      noteOff: function(id, pitch, delay) {
+      noteOff: function(id, delay) {
         var newTriggers = [];
         for (var i = 0; i < this._triggers.length; i++) {
           if (!this._triggers[i].noteOff(delay, id)) {
@@ -446,7 +446,7 @@
 
         if (end > scheduleStart) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note.id, note.getPitch(), delay);
+          r.Instrument.noteOff(note.id, delay);
           count += 1;
         }
       }
