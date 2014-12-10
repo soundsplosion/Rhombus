@@ -53,13 +53,13 @@
 
         if (start > scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();
-          r.Instrument.noteOn(note.getPitch(), delay);
+          r.Instrument.noteOn(note.id, note.getPitch(), delay);
           count += 1;
         }
 
         if (end > scheduleStart) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note.getPitch(), delay);
+          r.Instrument.noteOff(note.id, note.getPitch(), delay);
           count += 1;
         }
       }
