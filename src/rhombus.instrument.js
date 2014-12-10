@@ -45,21 +45,27 @@
         this._filter.Q.value = 3 + (1 - this._pitch / 127) * 9;
 
         // Produce a smoothly-decaying volume envelope
+        this._oscGain.gain.setValueAtTime(0.0, start);
         this._oscGain.gain.linearRampToValueAtTime(0.6, start + 0.005);
         this._oscGain.gain.linearRampToValueAtTime(0.4, start + 0.010);
 
         // Sweep the cutoff frequency for spaced-out envelope effects!
+        this._filter.frequency.setValueAtTime(0.0, start);
         this._filter.frequency.linearRampToValueAtTime(4000, start + 0.005);
         this._filter.frequency.exponentialRampToValueAtTime(200, start + 0.250);
       },
 
       noteOff: function(delay, id) {
-        if (id && id !== this._id)
+        if (id && id !== this._id) {
           return false;
+        }
 
-        var stop = r._ctx.currentTime + 0.125 + delay;
-        this._oscGain.gain.linearRampToValueAtTime(0.0, stop);
-        this._osc.stop(stop);
+        var stop = r._ctx.currentTime + delay;
+
+        this._oscGain.gain.cancelScheduledValues(stop);
+        this._oscGain.gain.setValueAtTime(0.4, stop);
+        this._oscGain.gain.linearRampToValueAtTime(0.0, stop + 0.125);
+        this._osc.stop(stop + 0.125);
         return true;
       }
     };
@@ -73,8 +79,9 @@
       noteOn: function(id, pitch, delay) {
 
         // Don't play out-of-range notes
-        if (pitch < 0 || pitch > 127)
+        if (pitch < 0 || pitch > 127) {
           return;
+        }
 
         var trigger = new Trigger(id, pitch);
         trigger.noteOn(delay);

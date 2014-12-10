@@ -20,29 +20,18 @@
         return this._pitch;
       },
 
-      setPitch: function(pitch) {
-        // TODO: impl
-      },
-
       getStart: function() {
         return this._start;
-      },
-
-      setStart: function (start) {
-        // TODO: impl
       },
 
       getLength: function() {
         return this._length;
       },
 
-      setLength: function(length) {
-        // TODO: impl
-      },
-
-      delete: function(length) {
-        // TODO: impl
+      getEnd: function() {
+        return this._start + this._length;
       }
+
     };
 
     var song;
@@ -63,11 +52,6 @@
       return song.notes[index];
     };
 
-    r.insertNote = function(note) {
-      song.notesMap[note.id] = note;
-      song.notes.push(note);
-    };
-
     r.getSongLengthSeconds = function() {
       var lastNote = song.notes[r.getNoteCount() - 1];
       return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
@@ -77,7 +61,7 @@
       newSong();
       var notes = JSON.parse(json).notes;
       for (var i = 0; i < notes.length; i++) {
-        r.insertNote(new r.Note(notes[i]._pitch, notes[i]._start, notes[i]._length, notes[i].id));
+        r.Edit.insertNote(new r.Note(notes[i]._pitch, notes[i]._start, notes[i]._length, notes[i].id));
       }
     }
 
@@ -85,26 +69,5 @@
       return JSON.stringify(song);
     };
 
-    var interval = 240;
-    var last = 960 - interval;
-
-    function appendArp(p1, p2, p3) {
-      var startTime = last + interval;
-      last += interval*4;
-
-      r.insertNote(new r.Note(p1, startTime, interval*2));
-      r.insertNote(new r.Note(p2, startTime + interval, interval*2));
-      r.insertNote(new r.Note(p3, startTime + interval*2, interval*2));
-      r.insertNote(new r.Note(p2, startTime + interval*3, interval*2));
-    }
-
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 68);
-    appendArp(60, 63, 68);
-    appendArp(60, 63, 67);
-    appendArp(60, 63, 67);
-    appendArp(59, 62, 67);
-    appendArp(59, 62, 67);
   };
 })(this.Rhombus);
