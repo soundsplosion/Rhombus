@@ -5,15 +5,35 @@
 <meta charset="UTF-8" />
 <script src="../build/rhombus.js"></script>
 <script>
-var theRealRhombus = new Rhombus();
+var rhomb = new Rhombus();
+var interval = 240;
+var last = 960 - interval;
+
+function appendArp(p1, p2, p3) {
+  var startTime = last + interval;
+  last += interval*4;
+
+  rhomb.Edit.insertNote(new rhomb.Note(p1, startTime, interval*2));
+  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval, interval*2));
+  rhomb.Edit.insertNote(new rhomb.Note(p3, startTime + interval*2, interval*2));
+  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval*3, interval*2));
+}
+appendArp(60, 63, 67);
+appendArp(60, 63, 67);
+appendArp(60, 63, 68);
+appendArp(60, 63, 68);
+appendArp(60, 63, 67);
+appendArp(60, 63, 67);
+appendArp(59, 62, 67);
+appendArp(59, 62, 67);
 </script>
 </head>
 <body>
 
 <p id="timeDisplay"></p>
 <p id="loopEnabled"></p>
-<button onclick="theRealRhombus.startPlayback()">Start</button>
-<button onclick="theRealRhombus.stopPlayback()">Stop</button>
+<button onclick="rhomb.startPlayback()">Start</button>
+<button onclick="rhomb.stopPlayback()">Stop</button>
 <button onclick="toggleLoop()">Toggle Loop</button>
 
 <br />
@@ -34,21 +54,21 @@ var loopEnabled = document.getElementById("loopEnabled");
 var wetGain = document.getElementById("wetGain");
 var feedbackGain = document.getElementById("feedbackGain");
 function updateTime() {
-  var seconds = theRealRhombus.getPosition();
-  var ticks = theRealRhombus.seconds2Ticks(seconds);
-  theRealRhombus.setWetGain(wetGain.value/100);
-  theRealRhombus.setFeedbackGain(feedbackGain.value/100);
+  var seconds = rhomb.getPosition();
+  var ticks = rhomb.seconds2Ticks(seconds);
+  rhomb.setWetGain(wetGain.value/100);
+  rhomb.setFeedbackGain(feedbackGain.value/100);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
-  loopEnabled.innerHTML = "Loop Enabled: " + theRealRhombus.getLoopEnabled();
+  loopEnabled.innerHTML = "Loop Enabled: " + rhomb.getLoopEnabled();
   requestAnimationFrame(updateTime);
 }
 
 function toggleLoop() {
-  theRealRhombus.setLoopEnabled(!theRealRhombus.getLoopEnabled());
+  rhomb.setLoopEnabled(!rhomb.getLoopEnabled());
 }
 
 function toggleEffect() {
-  theRealRhombus.setEffectOn(!theRealRhombus.getEffectEnabled());
+  rhomb.setEffectOn(!rhomb.getEffectEnabled());
 }
 
 updateTime();
@@ -58,9 +78,9 @@ var timeSeconds = document.getElementById("timeSeconds");
 function setNewTime() {
   var newTime = +(timeInput.value);
   if (timeSeconds.checked) {
-    theRealRhombus.moveToPositionSeconds(newTime);
+    rhomb.moveToPositionSeconds(newTime);
   } else {
-    theRealRhombus.moveToPositionTicks(newTime);
+    rhomb.moveToPositionTicks(newTime);
   }
 
   updateTime();
