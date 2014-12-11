@@ -64,7 +64,6 @@
 
       // TODO: adjust scheduleStart/End/To to handle wraparound correctly
       if (doWrap) {
-        console.log("looping");
         r.loopPlayback(nowTicks);
       }
     }
@@ -137,8 +136,6 @@
       // do loop stuff
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
-        //console.log("Overshot loopEnd by " + tickDiff.toFixed(3) + " ticks @ " + 
-        //            r._ctx.currentTime.toFixed(3));
         r.moveToPositionTicks(loopStart + tickDiff);
         lastScheduled = loopStart - tickDiff;
         scheduleNotes(tickDiff);
