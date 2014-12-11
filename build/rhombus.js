@@ -267,16 +267,24 @@
       }
     };
 
-    // I'm not quite sure how to "install" the default instrument...
     var inst1 = new Instrument();
     r.Instrument = inst1;
 
+    // only one preview note is allowed at a time
+    var previewNote = undefined;
+    
     r.startPreviewNote = function(pitch) {
-      r.Instrument.noteOn(pitch, 0);
+      if (previewNote === undefined) {
+        previewNote = new Note(pitch, 0);
+        r.Instrument.noteOn(previewNote.id, pitch, 0);
+      }
     };
 
-    r.stopPreviewNote = function(pitch) {
-      r.Instrument.noteOff(pitch, 0);
+    r.stopPreviewNote = function() {
+      if (previewNote !== undefined) {
+        r.Instrument.noteOff(previewNote.id, 0);
+        previewNote = undefined;
+      }
     };
   };
 })(this.Rhombus);
