@@ -32,27 +32,62 @@
       this._filterGain.gain.value = 0.5;
     }
 
+    // default envelope parameters for synth voice
+    var peakLevel    = 0.4;
+    var sustainLevel = 0.200;
+    var releaseTime  = 0.250;
+    var filterCutoff = 24.0;
+    var envDepth     = 4.0;
+
+    r.setReleaseTime = function(time) {
+      if (time >= 0.0)
+        releaseTime = time;
+    };
+
+    r.getReleaseTime = function() {
+      return releaseTime;
+    };
+
+    r.setFilterCutoff = function(cutoff) {
+      if (cutoff >= -36 && cutoff <= 36)
+        filterCutoff = cutoff;
+    };
+
+    r.getFilterCutoff = function() {
+      return filterCutoff;
+    };
+
+    r.setEnvDepth = function(depth) {
+      if (depth >= 1.0 && depth <= 10)
+        envDepth = depth;
+    };
+
+    r.getEnvDepth = function() {
+      return envDepth;
+    };
+
     Trigger.prototype = {
       noteOn: function(delay) {
         var start = r._ctx.currentTime + delay;
-        var noteFreq = Rhombus.Util.noteNum2Freq(this._pitch);
+        var noteFreq = Rhombus.Util.noteNum2Freq(parseFloat(this._pitch));
+        var filterFreq = Rhombus.Util.noteNum2Freq(parseFloat(this._pitch) + filterCutoff);
 
         // Immediately set the frequency of the oscillator based on the note
         this._osc.frequency.setValueAtTime(noteFreq, r._ctx.currentTime);
         this._osc.start(start);
 
         // Reduce resonance for higher notes to reduce clipping
-        this._filter.Q.value = 3 + (1 - this._pitch / 127) * 9;
+        this._filter.Q.value = 3 + (1 - this._pitch / 127) * 6;
 
         // Produce a smoothly-decaying volume envelope
         this._oscGain.gain.setValueAtTime(0.0, start);
-        this._oscGain.gain.linearRampToValueAtTime(0.6, start + 0.005);
-        this._oscGain.gain.linearRampToValueAtTime(0.4, start + 0.010);
+        this._oscGain.gain.linearRampToValueAtTime(peakLevel, start + 0.005);
+        this._oscGain.gain.linearRampToValueAtTime(sustainLevel, start + 0.050);
 
         // Sweep the cutoff frequency for spaced-out envelope effects!
         this._filter.frequency.setValueAtTime(0.0, start);
-        this._filter.frequency.linearRampToValueAtTime(4000, start + 0.005);
-        this._filter.frequency.exponentialRampToValueAtTime(200, start + 0.250);
+        this._filter.frequency.linearRampToValueAtTime(filterFreq * envDepth, start + 0.005);
+        this._filter.frequency.exponentialRampToValueAtTime(filterFreq, start + 0.250);
       },
 
       noteOff: function(delay, id) {
@@ -63,9 +98,9 @@
         var stop = r._ctx.currentTime + delay;
 
         this._oscGain.gain.cancelScheduledValues(stop);
-        this._oscGain.gain.setValueAtTime(0.4, stop);
-        this._oscGain.gain.linearRampToValueAtTime(0.0, stop + 0.125);
-        this._osc.stop(stop + 0.125);
+        this._oscGain.gain.setValueAtTime(sustainLevel, stop);
+        this._oscGain.gain.linearRampToValueAtTime(0.0, stop + releaseTime);
+        this._osc.stop(stop + releaseTime + 0.125);
         return true;
       }
     };
@@ -112,7 +147,7 @@
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
-    
+
     r.startPreviewNote = function(pitch) {
       if (previewNote === undefined) {
         previewNote = new Note(pitch, 0);
