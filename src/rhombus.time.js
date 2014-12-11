@@ -27,24 +27,21 @@
     var scheduleWorker = createScheduleWorker();
     scheduleWorker.onmessage = scheduleNotes;
 
-    // Number of ms to schedule ahead
-    var scheduleAhead = 50;
+    // Number of seconds to schedule ahead
+    var scheduleAhead = 0.050;
 
     var lastScheduled = -1;
     function scheduleNotes() {
       var notes = r._song.notes;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
+      var aheadTicks = r.seconds2Ticks(scheduleAhead);
 
       // determine if playback needs to loop around in this time window
-      var doWrap = r.getLoopEnabled && (r.getLoopEnd() - nowTicks < scheduleAhead);
+      var doWrap = r.getLoopEnabled() && (r.getLoopEnd() - nowTicks < aheadTicks);
 
-      // need to do this more cleanly -- maybe a single branch
       var scheduleStart = lastScheduled;
-      if (scheduleStart < 0)
-        scheduleStart = nowTicks;
-
-      var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + scheduleAhead;
+      var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
       // May want to avoid iterating over all the notes every time
       for (var i = 0; i < notes.length; i++) {
@@ -66,8 +63,10 @@
       lastScheduled = scheduleEnd;
 
       // TODO: adjust scheduleStart/End/To to handle wraparound correctly
-      if (doWrap)
+      if (doWrap) {
+        console.log("looping");
         r.loopPlayback(nowTicks);
+      }
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -103,8 +102,8 @@
     // loop start and end position in ticks
     // -20 a hack to make sure we hit the first note
     // we really need to get that working for the demo
-    var loopStart   = 960 - 20;
-    var loopEnd     = 4800 - 20;
+    var loopStart   = 0;
+    var loopEnd     = 1920;
     var loopEnabled = false;
 
     function resetPlayback() {
@@ -138,10 +137,11 @@
       // do loop stuff
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
-        console.log("Overshot loopEnd by " + tickDiff.toFixed(3) + " ticks @ " + 
-                    r._ctx.currentTime.toFixed(3));
+        //console.log("Overshot loopEnd by " + tickDiff.toFixed(3) + " ticks @ " + 
+        //            r._ctx.currentTime.toFixed(3));
         r.moveToPositionTicks(loopStart + tickDiff);
-        scheduleNotes();
+        lastScheduled = loopStart - tickDiff;
+        scheduleNotes(tickDiff);
       }
     };
 
