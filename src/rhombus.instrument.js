@@ -37,7 +37,10 @@
     var sustainLevel = 0.200;
     var releaseTime  = 0.250;
     var filterCutoff = 24.0;
-    var envDepth     = 4.0;
+    var filterRes    = 6;
+    var envDepth     = 3.0;
+    var attackTime   = 0.025;
+    var decayTime    = 0.250;
 
     r.setReleaseTime = function(time) {
       if (time >= 0.0)
@@ -57,27 +60,54 @@
       return filterCutoff;
     };
 
+    r.setFilterRes = function(resonance) {
+      if (resonance >= 0 && resonance <= 24)
+        filterRes = resonance;
+    };
+
+    r.getFilterRes = function() {
+      return filterRes;
+    };
+
     r.setEnvDepth = function(depth) {
-      if (depth >= 1.0 && depth <= 10)
-        envDepth = depth;
+      if (depth >= 0.0 && depth <= 19)
+        envDepth = depth + 1;
     };
 
     r.getEnvDepth = function() {
       return envDepth;
     };
 
+    r.setAttackTime = function(attack) {
+      if (attack >= 0.0)
+        attackTime = attack;
+    };
+
+    r.getAttackTime = function() {
+      return attackTime;
+    };
+
+    r.setDecayTime = function(decay) {
+      if (decay >= 0.0)
+        decayTime = decay;
+    };
+
+    r.getDecayTime = function() {
+      return decayTime;
+    };
+
     Trigger.prototype = {
       noteOn: function(delay) {
         var start = r._ctx.currentTime + delay;
-        var noteFreq = Rhombus.Util.noteNum2Freq(parseFloat(this._pitch));
-        var filterFreq = Rhombus.Util.noteNum2Freq(parseFloat(this._pitch) + filterCutoff);
+        var noteFreq = Rhombus.Util.noteNum2Freq(+this._pitch);
+        var filterFreq = Rhombus.Util.noteNum2Freq(+this._pitch + filterCutoff);
 
         // Immediately set the frequency of the oscillator based on the note
         this._osc.frequency.setValueAtTime(noteFreq, r._ctx.currentTime);
         this._osc.start(start);
 
         // Reduce resonance for higher notes to reduce clipping
-        this._filter.Q.value = 3 + (1 - this._pitch / 127) * 6;
+        this._filter.Q.value = (1 - this._pitch / 127) * filterRes;
 
         // Produce a smoothly-decaying volume envelope
         this._oscGain.gain.setValueAtTime(0.0, start);
@@ -85,9 +115,9 @@
         this._oscGain.gain.linearRampToValueAtTime(sustainLevel, start + 0.050);
 
         // Sweep the cutoff frequency for spaced-out envelope effects!
-        this._filter.frequency.setValueAtTime(0.0, start);
-        this._filter.frequency.linearRampToValueAtTime(filterFreq * envDepth, start + 0.005);
-        this._filter.frequency.exponentialRampToValueAtTime(filterFreq, start + 0.250);
+        this._filter.frequency.setValueAtTime(filterFreq, start);
+        this._filter.frequency.exponentialRampToValueAtTime(filterFreq * envDepth, start + attackTime + 0.005);
+        this._filter.frequency.exponentialRampToValueAtTime(filterFreq, start + decayTime + attackTime);
       },
 
       noteOff: function(delay, id) {
@@ -101,6 +131,7 @@
         this._oscGain.gain.setValueAtTime(sustainLevel, stop);
         this._oscGain.gain.linearRampToValueAtTime(0.0, stop + releaseTime);
         this._osc.stop(stop + releaseTime + 0.125);
+
         return true;
       }
     };

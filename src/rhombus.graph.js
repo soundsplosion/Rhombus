@@ -38,7 +38,7 @@
 
     // controls the amount of wet signal going to the output
     var wetGain = r._ctx.createGain();
-    wetGain.gain.value = 0.0;
+    wetGain.gain.value = 0.4;
 
     r.getWetGain = function () {
       return wetGain.gain.value;;
