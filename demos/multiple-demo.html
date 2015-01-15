@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8" />
+<script src="../build/rhombus.js"></script>
+<script>
+var rhomb1 = new Rhombus();
+var rhomb2 = new Rhombus();
+rhomb2.importSong(JSON.stringify(
+{ "notes" : [ { "id" : 0, "_pitch":69, "_start":600, "_length":48000}]}
+))
+</script>
+</head>
+<body>
+
+<p id="timeDisplay1"></p>
+<p id="timeDisplay2"></p>
+<button onclick="rhomb1.startPlayback()">Start 1</button>
+<button onclick="rhomb1.stopPlayback()">Stop 1</button>
+<button onclick="rhomb2.startPlayback()">Start 2</button>
+<button onclick="rhomb2.stopPlayback()">Stop 2</button>
+
+<script>
+var timeDisplay1 = document.getElementById("timeDisplay1");
+var timeDisplay2 = document.getElementById("timeDisplay2");
+function updateTime() {
+  function one(r, t, n) {
+    var seconds = r.getPosition();
+    var ticks = r.seconds2Ticks(seconds);
+    t.innerHTML = "Current time (" + n + "): (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
+  }
+
+  one(rhomb1, timeDisplay1, "1");
+  one(rhomb2, timeDisplay2, "2");
+
+  requestAnimationFrame(updateTime);
+}
+
+updateTime();
+</script>
+
+</body>
+</html>

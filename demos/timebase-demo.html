@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8" />
+<script src="../build/rhombus.js"></script>
+<script>
+var rhomb = new Rhombus();
+var interval = 240;
+var last = 960 - interval;
+
+function appendArp(p1, p2, p3) {
+  var startTime = last + interval;
+  last += interval*4;
+
+  rhomb.Edit.insertNote(new rhomb.Note(p1, startTime, interval*2));
+  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval, interval*2));
+  rhomb.Edit.insertNote(new rhomb.Note(p3, startTime + interval*2, interval*2));
+  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval*3, interval*2));
+}
+
+rhomb.Edit.insertNote(new rhomb.Note(60, 0, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 240, 240));
+rhomb.Edit.insertNote(new rhomb.Note(67, 480, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 720, 240));
+
+rhomb.Edit.insertNote(new rhomb.Note(60, 960, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 1200, 240));
+rhomb.Edit.insertNote(new rhomb.Note(67, 1440, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 1680, 240));
+
+rhomb.Edit.insertNote(new rhomb.Note(60, 1920, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 2160, 240));
+rhomb.Edit.insertNote(new rhomb.Note(68, 2400, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 2640, 240));
+
+rhomb.Edit.insertNote(new rhomb.Note(60, 2880, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 3120, 240));
+rhomb.Edit.insertNote(new rhomb.Note(68, 3360, 240));
+rhomb.Edit.insertNote(new rhomb.Note(63, 3600, 240));
+
+//appendArp(60, 63, 67);
+//appendArp(60, 63, 67);
+//appendArp(60, 63, 68);
+//appendArp(60, 63, 68);
+//appendArp(60, 63, 67);
+//appendArp(60, 63, 67);
+//appendArp(59, 62, 67);
+//appendArp(59, 62, 67);
+</script>
+</head>
+<body>
+
+<p id="timeDisplay"></p>
+<p id="loopEnabled"></p>
+<button onclick="rhomb.startPlayback()">Start</button>
+<button onclick="rhomb.stopPlayback()">Stop</button>
+<button onclick="toggleLoop()">Toggle Loop</button>
+
+<br />
+<p>Enter new time here:</p>
+<input type="text" id="timeInput" /><br />
+<input type="radio" name="timeType" checked="checked" id="timeSeconds" />Seconds<br />
+<input type="radio" name="timeType" />Ticks<br />
+<button onclick="setNewTime()">Set new time</button>
+<br><br>
+<input style="width: 150px" type="range" min="0" max="100" value="50" id="wetGain"/> Wet Gain <br>
+<input style="width: 150px" type="range" min="0" max="100" value="50" id="feedbackGain"/> Feedback
+<br><br>
+<button onclick="toggleEffect()">Toggle Effect</button>
+
+<script>
+var timeDisplay = document.getElementById("timeDisplay");
+var loopEnabled = document.getElementById("loopEnabled");
+var wetGain = document.getElementById("wetGain");
+var feedbackGain = document.getElementById("feedbackGain");
+function updateTime() {
+  var seconds = rhomb.getPosition();
+  var ticks = rhomb.seconds2Ticks(seconds);
+  rhomb.setWetGain(wetGain.value/100);
+  rhomb.setFeedbackGain(feedbackGain.value/100);
+  timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
+  loopEnabled.innerHTML = "Loop Enabled: " + rhomb.getLoopEnabled();
+  requestAnimationFrame(updateTime);
+}
+
+function toggleLoop() {
+  rhomb.setLoopEnabled(!rhomb.getLoopEnabled());
+}
+
+function toggleEffect() {
+  rhomb.setEffectOn(!rhomb.getEffectEnabled());
+}
+
+updateTime();
+
+var timeInput = document.getElementById("timeInput");
+var timeSeconds = document.getElementById("timeSeconds");
+function setNewTime() {
+  var newTime = +(timeInput.value);
+  if (timeSeconds.checked) {
+    rhomb.moveToPositionSeconds(newTime);
+  } else {
+    rhomb.moveToPositionTicks(newTime);
+  }
+
+  updateTime();
+}
+</script>
+
+</body>
+</html>
