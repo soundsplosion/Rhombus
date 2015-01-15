@@ -52,7 +52,7 @@
     };
 
     r.setFilterCutoff = function(cutoff) {
-      if (cutoff >= -36 && cutoff <= 36)
+      if (cutoff >= 0 && cutoff <= 127)
         filterCutoff = cutoff;
     };
 
