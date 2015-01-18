@@ -36,6 +36,7 @@
 
     root.Rhombus._graphSetup(this);
     root.Rhombus._instrumentSetup(this);
+    root.Rhombus._patternSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
@@ -355,12 +356,35 @@
   };
 })(this.Rhombus);
 
+//! rhombus.pattern.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+
+(function(Rhombus) {
+  Rhombus._patternSetup = function(r) {
+    
+    var patternId = 0;
+
+    r.Pattern = function() {
+      this.notes = new Array();
+      this.notesMap = {};
+      this._id = patternId;
+      patternId = patternId + 1;
+      console.log("creating new pattern with ID " + this._id);
+    };
+
+  };
+
+})(this.Rhombus);
+
 //! rhombus.song.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
 (function(Rhombus) {
   Rhombus._songSetup = function(r) {
+    r.Song = {};
+
     r.Note = function(pitch, start, length, id) {
       if (id) {
         r._setId(this, id);
@@ -391,26 +415,24 @@
 
     };
 
-    var song;
     function newSong() {
-      r._song = {};
-      song = r._song;
-      song.notes = new Array();
-      song.notesMap = {};
+      //r.Song.notes = new Array();
+      //r.Song.notesMap = {};
+      r.Song.pattern = new r.Pattern();
     }
 
     newSong();
 
     r.getNoteCount = function() {
-      return song.notes.length;
+      return r.Song.pattern.notes.length;
     };
 
     r.getNote = function(index) {
-      return song.notes[index];
+      return r.Song.pattern.notes[index];
     };
 
     r.getSongLengthSeconds = function() {
-      var lastNote = song.notes[r.getNoteCount() - 1];
+      var lastNote = r.Song.pattern.notes[r.getNoteCount() - 1];
       return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
     };
 
@@ -418,12 +440,15 @@
       newSong();
       var notes = JSON.parse(json).notes;
       for (var i = 0; i < notes.length; i++) {
-        r.Edit.insertNote(new r.Note(notes[i]._pitch, notes[i]._start, notes[i]._length, notes[i].id));
+        r.Edit.insertNote(new r.Note(notes[i]._pitch, 
+                                     notes[i]._start, 
+                                     notes[i]._length, 
+                                     notes[i].id));
       }
     }
 
     r.exportSong = function() {
-      return JSON.stringify(song);
+      return JSON.stringify(r.Song);
     };
 
   };
@@ -463,7 +488,7 @@
 
     var lastScheduled = -1;
     function scheduleNotes() {
-      var notes = r._song.notes;
+      var notes = r.Song.pattern.notes;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
@@ -642,13 +667,13 @@
     }
 
     r.Edit.insertNote = function(note) {
-      r._song.notesMap[note.id] = note;
-      r._song.notes.push(note);
+      r.Song.pattern.notesMap[note.id] = note;
+      r.Song.pattern.notes.push(note);
     };
 
 
     r.Edit.changeNoteTime = function(noteid, start, length) {
-      var note = r._song.notesMap[noteid];
+      var note = r.Song.pattern.notesMap[noteid];
 
       var shouldBePlaying = start <= curTicks && curTicks <= (start + length);
 
@@ -661,7 +686,7 @@
     };
 
     r.Edit.changeNotePitch = function(noteid, pitch) {
-      var note = r._song.notesMap[noteid];
+      var note = r.Song.pattern.notesMap[noteid];
 
       if (pitch === note.getPitch()) {
         return;
@@ -672,11 +697,11 @@
     };
 
     r.Edit.deleteNote = function(noteid) {
-      var note = r._song.notesMap[noteid];
+      var note = r.Song.pattern.notesMap[noteid];
 
-      delete r._song.notesMap[note.id];
+      delete r.Song.pattern.notesMap[note.id];
 
-      var notes = r._song.notes;
+      var notes = r.Song.pattern.notes;
       for (var i = 0; i < notes.length; i++) {
         if (notes[i].id === note.id) {
           notes.splice(i, 1);

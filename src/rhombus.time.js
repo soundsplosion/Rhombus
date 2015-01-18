@@ -32,7 +32,7 @@
 
     var lastScheduled = -1;
     function scheduleNotes() {
-      var notes = r._song.notes;
+      var notes = r.Song.pattern.notes;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);

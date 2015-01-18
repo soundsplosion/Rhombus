@@ -10,6 +10,7 @@ gulp.task("make", function() {
     "src/rhombus.util.js",
     "src/rhombus.graph.js",
     "src/rhombus.instrument.js",
+    "src/rhombus.pattern.js",
     "src/rhombus.song.js",
     "src/rhombus.time.js",
     "src/rhombus.edit.js"

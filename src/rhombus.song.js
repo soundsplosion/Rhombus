@@ -4,6 +4,8 @@
 
 (function(Rhombus) {
   Rhombus._songSetup = function(r) {
+    r.Song = {};
+
     r.Note = function(pitch, start, length, id) {
       if (id) {
         r._setId(this, id);
@@ -34,26 +36,24 @@
 
     };
 
-    var song;
     function newSong() {
-      r._song = {};
-      song = r._song;
-      song.notes = new Array();
-      song.notesMap = {};
+      //r.Song.notes = new Array();
+      //r.Song.notesMap = {};
+      r.Song.pattern = new r.Pattern();
     }
 
     newSong();
 
     r.getNoteCount = function() {
-      return song.notes.length;
+      return r.Song.pattern.notes.length;
     };
 
     r.getNote = function(index) {
-      return song.notes[index];
+      return r.Song.pattern.notes[index];
     };
 
     r.getSongLengthSeconds = function() {
-      var lastNote = song.notes[r.getNoteCount() - 1];
+      var lastNote = r.Song.pattern.notes[r.getNoteCount() - 1];
       return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
     };
 
@@ -61,12 +61,15 @@
       newSong();
       var notes = JSON.parse(json).notes;
       for (var i = 0; i < notes.length; i++) {
-        r.Edit.insertNote(new r.Note(notes[i]._pitch, notes[i]._start, notes[i]._length, notes[i].id));
+        r.Edit.insertNote(new r.Note(notes[i]._pitch, 
+                                     notes[i]._start, 
+                                     notes[i]._length, 
+                                     notes[i].id));
       }
     }
 
     r.exportSong = function() {
-      return JSON.stringify(song);
+      return JSON.stringify(r.Song);
     };
 
   };

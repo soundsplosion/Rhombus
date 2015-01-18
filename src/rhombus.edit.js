@@ -15,13 +15,13 @@
     }
 
     r.Edit.insertNote = function(note) {
-      r._song.notesMap[note.id] = note;
-      r._song.notes.push(note);
+      r.Song.pattern.notesMap[note.id] = note;
+      r.Song.pattern.notes.push(note);
     };
 
 
     r.Edit.changeNoteTime = function(noteid, start, length) {
-      var note = r._song.notesMap[noteid];
+      var note = r.Song.pattern.notesMap[noteid];
 
       var shouldBePlaying = start <= curTicks && curTicks <= (start + length);
 
@@ -34,7 +34,7 @@
     };
 
     r.Edit.changeNotePitch = function(noteid, pitch) {
-      var note = r._song.notesMap[noteid];
+      var note = r.Song.pattern.notesMap[noteid];
 
       if (pitch === note.getPitch()) {
         return;
@@ -45,11 +45,11 @@
     };
 
     r.Edit.deleteNote = function(noteid) {
-      var note = r._song.notesMap[noteid];
+      var note = r.Song.pattern.notesMap[noteid];
 
-      delete r._song.notesMap[note.id];
+      delete r.Song.pattern.notesMap[note.id];
 
-      var notes = r._song.notes;
+      var notes = r.Song.pattern.notes;
       for (var i = 0; i < notes.length; i++) {
         if (notes[i].id === note.id) {
           notes.splice(i, 1);
