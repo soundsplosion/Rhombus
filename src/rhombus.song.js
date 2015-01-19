@@ -5,66 +5,50 @@
 (function(Rhombus) {
   Rhombus._songSetup = function(r) {
     r.Song = {};
+    r.Song.patterns = {};
 
-    r.Note = function(pitch, start, length, id) {
-      if (id) {
-        r._setId(this, id);
-      } else {
-        r._newId(this);
-      }
-      this._pitch = pitch || 60;
-      this._start = start || 0;
-      this._length = length || 0;
+    r.Song.addPattern = function() {
+      r.Song.patterns[r.Song.patterns.length] = new r.Pattern();
     };
 
-    r.Note.prototype = {
-      getPitch: function() {
-        return this._pitch;
-      },
-
-      getStart: function() {
-        return this._start;
-      },
-
-      getLength: function() {
-        return this._length;
-      },
-
-      getEnd: function() {
-        return this._start + this._length;
-      }
-
-    };
-
+    // TODO: this still reflects the single, hard-coded pattern paradigm
+    //       of yesteryear.
     function newSong() {
-      //r.Song.notes = new Array();
-      //r.Song.notesMap = {};
-      r.Song.pattern = new r.Pattern();
+      r.Song.patterns = new Array();
+      r.Song.addPattern();
     }
 
     newSong();
 
     r.getNoteCount = function() {
-      return r.Song.pattern.notes.length;
+      return r.Song.patterns[0].notes.length;
     };
 
-    r.getNote = function(index) {
-      return r.Song.pattern.notes[index];
-    };
+    /*
+      r.getNote = function(index) {
+      return r.Song.patterns[0].notes[index];
+      };
+    */
 
+    // TODO: this probably has no real utility in the context of
+    //       multiple tracks/patterns, and should probably be removed
+    //       or refactored.
     r.getSongLengthSeconds = function() {
-      var lastNote = r.Song.pattern.notes[r.getNoteCount() - 1];
+      var lastNote = r.Song.patterns[0].notes[r.getNoteCount() - 1];
       return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
     };
 
+    // TODO: refactor to handle multiple tracks, patterns, etc.
+    //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       newSong();
       var notes = JSON.parse(json).notes;
       for (var i = 0; i < notes.length; i++) {
-        r.Edit.insertNote(new r.Note(notes[i]._pitch, 
-                                     notes[i]._start, 
-                                     notes[i]._length, 
-                                     notes[i].id));
+        r.Edit.insertNote(new r.Note(notes[i]._pitch,
+                                     notes[i]._start,
+                                     notes[i]._length,
+                                     notes[i].id),
+                          0); // this is the pattern ID, oughtn't be hard-coded
       }
     }
 
