@@ -365,10 +365,8 @@
 
     var patternId = 0;
 
-    // TODO: this needs a lot of work...
     r.Pattern = function() {
-      //this.notes = new Array();
-      this.noteMap = {};
+      this._noteMap = {};
       this._id = patternId;
       patternId = patternId + 1;
     };
@@ -400,9 +398,7 @@
       getEnd: function() {
         return this._start + this._length;
       }
-
     };
-
   };
 })(this.Rhombus);
 
@@ -412,26 +408,27 @@
 
 (function(Rhombus) {
   Rhombus._songSetup = function(r) {
-    r.Song = {};
-    r.Song.patterns = {};
 
-    r.Song.addPattern = function() {
-      r.Song.patterns[r.Song.patterns.length] = new r.Pattern();
+    function Song() {
+      this._length = 3840;
+      this._patterns = {};
     };
 
-    // TODO: this still reflects the single, hard-coded pattern paradigm
-    //       of yesteryear.
-    function newSong() {
-      r.Song.patterns = new Array();
-      r.Song.addPattern();
-    }
+    Song.prototype = {
+      addPattern: function() {
+        var pattern = new r.Pattern();
+        this._patterns[pattern._id] = pattern;
+      }
+    };
 
-    newSong();
+    var song = new Song();
+    r.Song = song;
+
+    // TODO: adding patterns should be handled by the audio app
+    r.Song.addPattern();
 
     r.getSongLengthSeconds = function() {
-      // var lastNote = r.Song.patterns[0].notes[r.getNoteCount() - 1];
-      //return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
-      return 4.0;
+      return r.ticks2Seconds(r.Song._length);
     };
 
     // TODO: refactor to handle multiple tracks, patterns, etc.
@@ -489,7 +486,7 @@
 
     var lastScheduled = -1;
     function scheduleNotes() {
-      var noteMap = r.Song.patterns[0].noteMap;
+      var noteMap = r.Song._patterns[0]._noteMap;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
@@ -514,8 +511,7 @@
         if (end >= scheduleStart && end < scheduleEnd) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
           r.Instrument.noteOff(note.id, delay);
-        }
-        
+        }        
       }
 
       lastScheduled = scheduleEnd;
@@ -669,12 +665,12 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r.Song.patterns[ptnId].noteMap[note.id] = note;
-      //r.Song.patterns[ptnId].notes.push(note);
+      r.Song._patterns[ptnId]._noteMap[note.id] = note;
+      //r.Song._patterns[ptnId].notes.push(note);
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
-      var note = r.Song.patterns[ptnId].noteMap[noteId];
+      var note = r.Song._patterns[ptnId]._noteMap[noteId];
 
       var shouldBePlaying = start <= curTicks && curTicks <= (start + length);
 
@@ -687,7 +683,7 @@
     };
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
-      var note = r.Song.patterns[ptnId].noteMap[noteId];
+      var note = r.Song._patterns[ptnId]._noteMap[noteId];
 
       if (pitch === note.getPitch()) {
         return;
@@ -698,12 +694,12 @@
     };
 
     r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r.Song.patterns[ptnId].noteMap[noteId];
+      var note = r.Song._patterns[ptnId]._noteMap[noteId];
 
       if (note === undefined)
         return;
 
-      delete r.Song.patterns[ptnId].noteMap[note.id];
+      delete r.Song._patterns[ptnId]._noteMap[note.id];
       stopIfPlaying(note);
     };
 

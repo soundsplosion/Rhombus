@@ -7,10 +7,8 @@
 
     var patternId = 0;
 
-    // TODO: this needs a lot of work...
     r.Pattern = function() {
-      //this.notes = new Array();
-      this.noteMap = {};
+      this._noteMap = {};
       this._id = patternId;
       patternId = patternId + 1;
     };
@@ -42,8 +40,6 @@
       getEnd: function() {
         return this._start + this._length;
       }
-
     };
-
   };
 })(this.Rhombus);

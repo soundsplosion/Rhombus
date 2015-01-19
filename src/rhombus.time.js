@@ -32,7 +32,7 @@
 
     var lastScheduled = -1;
     function scheduleNotes() {
-      var noteMap = r.Song.patterns[0].noteMap;
+      var noteMap = r.Song._patterns[0]._noteMap;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
@@ -57,8 +57,7 @@
         if (end >= scheduleStart && end < scheduleEnd) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
           r.Instrument.noteOff(note.id, delay);
-        }
-        
+        }        
       }
 
       lastScheduled = scheduleEnd;

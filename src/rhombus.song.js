@@ -4,26 +4,27 @@
 
 (function(Rhombus) {
   Rhombus._songSetup = function(r) {
-    r.Song = {};
-    r.Song.patterns = {};
 
-    r.Song.addPattern = function() {
-      r.Song.patterns[r.Song.patterns.length] = new r.Pattern();
+    function Song() {
+      this._length = 3840;
+      this._patterns = {};
     };
 
-    // TODO: this still reflects the single, hard-coded pattern paradigm
-    //       of yesteryear.
-    function newSong() {
-      r.Song.patterns = new Array();
-      r.Song.addPattern();
-    }
+    Song.prototype = {
+      addPattern: function() {
+        var pattern = new r.Pattern();
+        this._patterns[pattern._id] = pattern;
+      }
+    };
 
-    newSong();
+    var song = new Song();
+    r.Song = song;
+
+    // TODO: adding patterns should be handled by the audio app
+    r.Song.addPattern();
 
     r.getSongLengthSeconds = function() {
-      // var lastNote = r.Song.patterns[0].notes[r.getNoteCount() - 1];
-      //return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
-      return 4.0;
+      return r.ticks2Seconds(r.Song._length);
     };
 
     // TODO: refactor to handle multiple tracks, patterns, etc.
