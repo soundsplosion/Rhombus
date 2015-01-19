@@ -15,12 +15,12 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r.Song.patterns[ptnId].notesMap[note.id] = note;
-      r.Song.patterns[ptnId].notes.push(note);
+      r.Song.patterns[ptnId].noteMap[note.id] = note;
+      //r.Song.patterns[ptnId].notes.push(note);
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
-      var note = r.Song.patterns[ptnId].notesMap[noteId];
+      var note = r.Song.patterns[ptnId].noteMap[noteId];
 
       var shouldBePlaying = start <= curTicks && curTicks <= (start + length);
 
@@ -33,7 +33,7 @@
     };
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
-      var note = r.Song.patterns[ptnId].notesMap[noteId];
+      var note = r.Song.patterns[ptnId].noteMap[noteId];
 
       if (pitch === note.getPitch()) {
         return;
@@ -44,18 +44,13 @@
     };
 
     r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r.Song.patterns[ptnId].notesMap[noteId];
+      var note = r.Song.patterns[ptnId].noteMap[noteId];
 
-      delete r.Song.patterns[ptnId].notesMap[note.id];
+      if (note === undefined)
+        return;
 
-      var notes = r.Song.patterns[ptnId].notes;
-      for (var i = 0; i < notes.length; i++) {
-        if (notes[i].id === note.id) {
-          notes.splice(i, 1);
-          stopIfPlaying(note);
-          return;
-        }
-      }
+      delete r.Song.patterns[ptnId].noteMap[note.id];
+      stopIfPlaying(note);
     };
 
   };

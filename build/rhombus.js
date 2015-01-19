@@ -367,8 +367,8 @@
 
     // TODO: this needs a lot of work...
     r.Pattern = function() {
-      this.notes = new Array();
-      this.notesMap = {};
+      //this.notes = new Array();
+      this.noteMap = {};
       this._id = patternId;
       patternId = patternId + 1;
     };
@@ -501,7 +501,7 @@
 
     var lastScheduled = -1;
     function scheduleNotes() {
-      var notes = r.Song.patterns[0].notes;
+      var noteMap = r.Song.patterns[0].noteMap;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
@@ -513,8 +513,8 @@
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
       // May want to avoid iterating over all the notes every time
-      for (var i = 0; i < notes.length; i++) {
-        var note = notes[i];
+      for (var noteId in noteMap) {
+        var note = noteMap[noteId];
         var start = note.getStart();
         var end = note.getEnd();
 
@@ -527,6 +527,7 @@
           var delay = r.ticks2Seconds(end) - r.getPosition();
           r.Instrument.noteOff(note.id, delay);
         }
+        
       }
 
       lastScheduled = scheduleEnd;
@@ -680,12 +681,12 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r.Song.patterns[ptnId].notesMap[note.id] = note;
-      r.Song.patterns[ptnId].notes.push(note);
+      r.Song.patterns[ptnId].noteMap[note.id] = note;
+      //r.Song.patterns[ptnId].notes.push(note);
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
-      var note = r.Song.patterns[ptnId].notesMap[noteId];
+      var note = r.Song.patterns[ptnId].noteMap[noteId];
 
       var shouldBePlaying = start <= curTicks && curTicks <= (start + length);
 
@@ -698,7 +699,7 @@
     };
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
-      var note = r.Song.patterns[ptnId].notesMap[noteId];
+      var note = r.Song.patterns[ptnId].noteMap[noteId];
 
       if (pitch === note.getPitch()) {
         return;
@@ -709,18 +710,13 @@
     };
 
     r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r.Song.patterns[ptnId].notesMap[noteId];
+      var note = r.Song.patterns[ptnId].noteMap[noteId];
 
-      delete r.Song.patterns[ptnId].notesMap[note.id];
+      if (note === undefined)
+        return;
 
-      var notes = r.Song.patterns[ptnId].notes;
-      for (var i = 0; i < notes.length; i++) {
-        if (notes[i].id === note.id) {
-          notes.splice(i, 1);
-          stopIfPlaying(note);
-          return;
-        }
-      }
+      delete r.Song.patterns[ptnId].noteMap[note.id];
+      stopIfPlaying(note);
     };
 
   };

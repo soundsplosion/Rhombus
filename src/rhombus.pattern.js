@@ -9,8 +9,8 @@
 
     // TODO: this needs a lot of work...
     r.Pattern = function() {
-      this.notes = new Array();
-      this.notesMap = {};
+      //this.notes = new Array();
+      this.noteMap = {};
       this._id = patternId;
       patternId = patternId + 1;
     };
