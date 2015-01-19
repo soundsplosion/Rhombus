@@ -20,22 +20,10 @@
 
     newSong();
 
-    r.getNoteCount = function() {
-      return r.Song.patterns[0].notes.length;
-    };
-
-    /*
-      r.getNote = function(index) {
-      return r.Song.patterns[0].notes[index];
-      };
-    */
-
-    // TODO: this probably has no real utility in the context of
-    //       multiple tracks/patterns, and should probably be removed
-    //       or refactored.
     r.getSongLengthSeconds = function() {
-      var lastNote = r.Song.patterns[0].notes[r.getNoteCount() - 1];
-      return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
+      // var lastNote = r.Song.patterns[0].notes[r.getNoteCount() - 1];
+      //return r.ticks2Seconds(lastNote.getStart() + lastNote.getLength());
+      return 4.0;
     };
 
     // TODO: refactor to handle multiple tracks, patterns, etc.
