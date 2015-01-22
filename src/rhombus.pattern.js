@@ -8,11 +8,24 @@
     var patternId = 0;
 
     r.Pattern = function() {
-      this._noteMap = {};
-      this._id = patternId;
+      // pattern metadata
+      this._name = "Default Pattern Name";
+
+      // this ID handling is clumsy and stupid
+      this._id  = patternId;
       patternId = patternId + 1;
+
+      // pattern structure data
+      this._noteMap = {};
     };
 
+    r.Pattern.prototype = {
+      addNote: function(note) {
+        this._noteMap[note.id] = note;
+      }
+    };
+
+    // TODO: Note should probaly have its own source file
     r.Note = function(pitch, start, length, id) {
       if (id) {
         r._setId(this, id);

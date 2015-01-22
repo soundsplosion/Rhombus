@@ -17,12 +17,17 @@ gulp.task("make", function() {
     ])
     .pipe(concat("rhombus.js"))
     .pipe(gulp.dest("build"))
+
+// we can uncomment these lines in the future to restore
+// the minified version.  
+/*
     .pipe(rename("rhombus.min.js"))
     .pipe(uglify().on('error', function() {
       console.log("error uglifying Rhombus");
       this.emit('end');
     }))
     .pipe(gulp.dest("build"));
+*/
 });
 
 gulp.task("watch", function() {
