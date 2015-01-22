@@ -32,7 +32,7 @@
 
     var lastScheduled = -1;
     function scheduleNotes() {
-      var notes = r._song.notes;
+      var noteMap = r._song._patterns[0]._noteMap;
 
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
@@ -44,8 +44,8 @@
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
       // May want to avoid iterating over all the notes every time
-      for (var i = 0; i < notes.length; i++) {
-        var note = notes[i];
+      for (var noteId in noteMap) {
+        var note = noteMap[noteId];
         var start = note.getStart();
         var end = note.getEnd();
 
@@ -57,7 +57,7 @@
         if (end >= scheduleStart && end < scheduleEnd) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
           r.Instrument.noteOff(note.id, delay);
-        }
+        }        
       }
 
       lastScheduled = scheduleEnd;
@@ -97,9 +97,9 @@
     var playing = false;
     var time = 0;
 
-    // Loop start and end position in ticks, default is two measures
+    // Loop start and end position in ticks, default is one measure
     var loopStart   = 0;
-    var loopEnd     = 3840;
+    var loopEnd     = 1920;
     var loopEnabled = false;
 
     function resetPlayback() {
