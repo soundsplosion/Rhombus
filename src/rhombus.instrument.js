@@ -5,8 +5,9 @@
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
     function Instrument() {
-      this._toneSynth = new Tone.MonoSynth();
-      this._toneSynth.toMaster();
+      this._synth = new Tone.PolySynth(6, Tone.MonoSynth);
+      this._synth.toMaster();
+      this._triggered = [];
     }
 
     Instrument.prototype = {
@@ -18,24 +19,27 @@
         }
 
         var freq = Rhombus.Util.noteNum2Freq(pitch);
+        this._triggered.push(freq);
+
         if (delay > 0) {
-          this._toneSynth.triggerAttack(freq, "+" + delay);
+          this._synth.triggerAttack(freq, "+" + delay);
         } else {
-          this._toneSynth.triggerAttack(freq);
+          this._synth.triggerAttack(freq);
         }
       },
 
       // Stop the playback of the currently-sounding note
       noteOff: function(id, delay) {
         if (delay > 0) {
-          this._toneSynth.triggerRelease("+" + delay);
+          this._synth.triggerRelease("+" + delay);
         } else {
-          this._toneSynth.triggerRelease();
+          this._synth.triggerRelease();
         }
       },
 
       killAllNotes: function() {
-        this._toneSynth.triggerRelease();
+        this._synth.triggerRelease(this._triggered);
+        this._triggered = [];
       }
     };
 
