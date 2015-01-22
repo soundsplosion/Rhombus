@@ -10,7 +10,7 @@
       var curTicks = r.seconds2Ticks(r.getPosition());
       var playing = note.getStart() <= curTicks && curTicks <= note.getEnd();
       if (playing) {
-        r.Instrument.noteOff(note.id, 0);
+        r.Instrument.triggerRelease(note.id, 0);
       }
     }
 
@@ -40,7 +40,7 @@
         return;
       }
 
-      r.Instrument.noteOff(note.id, 0);
+      r.Instrument.triggerRelease(note.id, 0);
       note._pitch = pitch;
     };
 

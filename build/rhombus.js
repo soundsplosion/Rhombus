@@ -179,7 +179,7 @@
 
     Instrument.prototype = {
       // Play back a simple synth voice at the pitch specified by the input note
-      noteOn: function(id, pitch, delay) {
+      triggerAttack: function(id, pitch, delay) {
         // Don't play out-of-range notes
         if (pitch < 0 || pitch > 127) {
           return;
@@ -196,7 +196,7 @@
       },
 
       // Stop the playback of the currently-sounding note
-      noteOff: function(id, delay) {
+      triggerRelease: function(id, delay) {
         if (delay > 0) {
           this._synth.triggerRelease("+" + delay);
         } else {
@@ -219,13 +219,13 @@
     r.startPreviewNote = function(pitch) {
       if (previewNote === undefined) {
         previewNote = new r.Note(pitch, 0);
-        r.Instrument.noteOn(previewNote.id, pitch, 0);
+        r.Instrument.triggerAttack(previewNote.id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
       if (previewNote !== undefined) {
-        r.Instrument.noteOff(previewNote.id, 0);
+        r.Instrument.triggerRelease(previewNote.id, 0);
         previewNote = undefined;
       }
     };
@@ -359,12 +359,12 @@
 
         if (start >= scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();
-          r.Instrument.noteOn(note.id, note.getPitch(), delay);
+          r.Instrument.triggerAttack(note.id, note.getPitch(), delay);
         }
 
         if (end >= scheduleStart && end < scheduleEnd) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note.id, delay);
+          r.Instrument.triggerRelease(note.id, delay);
         }
       }
 
@@ -514,7 +514,7 @@
       var curTicks = r.seconds2Ticks(r.getPosition());
       var playing = note.getStart() <= curTicks && curTicks <= note.getEnd();
       if (playing) {
-        r.Instrument.noteOff(note.id, 0);
+        r.Instrument.triggerRelease(note.id, 0);
       }
     }
 
@@ -544,7 +544,7 @@
         return;
       }
 
-      r.Instrument.noteOff(note.id, 0);
+      r.Instrument.triggerRelease(note.id, 0);
       note._pitch = pitch;
     };
 
