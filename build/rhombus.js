@@ -313,6 +313,8 @@
         var trigger = new Trigger(id, pitch);
         trigger.noteOn(delay);
         this._triggers.push(trigger);
+
+        console.log(" - triggers.length = " + this._triggers.length);
       },
 
       // Stop the playback of the currently-sounding note
@@ -327,9 +329,9 @@
       },
 
       killAllNotes: function() {
-        for (var i = 0; i < this._triggers.length; i++) {
-          this._triggers[i].noteOff(0);
-        }
+        //for (var i = 0; i < this._triggers.length; i++) {
+        //  this._triggers[i].noteOff(0);
+        //}
         this._triggers = [];
       }
     };
@@ -605,7 +607,8 @@
     // Playback/timebase stuff
     /////////////////////////////////////////////////////////////////////////////
 
-    // The smallest unit of time in Rhombus is one tick
+    // The smallest unit of time in Rhombus is one tick, and there are 480 ticks
+    // per quarter note
     var TICKS_PER_SECOND = 480;
 
     function ticks2Beats(ticks) {
@@ -616,7 +619,7 @@
       return beats * TICKS_PER_SECOND;
     }
 
-    // TODO: enable variable BPM
+    // TODO: implement variable BPM
     var BPM = 120;
 
     r.ticks2Seconds = function(ticks) {
@@ -649,6 +652,8 @@
           delete playingNotes[noteId];
         }
       }
+
+      r.Instrument.killAllNotes();
     }
 
     r.startPlayback = function() {
@@ -658,9 +663,15 @@
 
       playing = true;
 
+      // TODO: song start position needs to be defined somewhere
+
+      // Begin slightly before the start position to prevent
+      // missing notes at the beginning
       r.moveToPositionSeconds(-0.010);
 
+      // Force the first round of scheduling
       scheduleNotes();
+
       scheduleWorker.postMessage({ playing: true });
     };
 
@@ -672,7 +683,7 @@
       playing = false;
 
       resetPlayback();
-      
+
       time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
     };
@@ -680,8 +691,13 @@
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
+        // make sure the notes near the start of the loop aren't missed
+        r.moveToPositionTicks(loopStart - 0.001);
+        scheduleNotes();
+
+        // adjust the playback position to help mitigate timing drift
         r.moveToPositionTicks(loopStart + tickDiff);
-        lastScheduled = loopStart - tickDiff;
+        //lastScheduled = loopStart - tickDiff;
         scheduleNotes();
       }
     };

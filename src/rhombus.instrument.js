@@ -152,6 +152,8 @@
         var trigger = new Trigger(id, pitch);
         trigger.noteOn(delay);
         this._triggers.push(trigger);
+
+        console.log(" - triggers.length = " + this._triggers.length);
       },
 
       // Stop the playback of the currently-sounding note
@@ -166,9 +168,9 @@
       },
 
       killAllNotes: function() {
-        for (var i = 0; i < this._triggers.length; i++) {
-          this._triggers[i].noteOff(0);
-        }
+        //for (var i = 0; i < this._triggers.length; i++) {
+        //  this._triggers[i].noteOff(0);
+        //}
         this._triggers = [];
       }
     };

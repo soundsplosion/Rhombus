@@ -133,6 +133,8 @@
           delete playingNotes[noteId];
         }
       }
+
+      r.Instrument.killAllNotes();
     }
 
     r.startPlayback = function() {
@@ -170,8 +172,13 @@
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
+        // make sure the notes near the start of the loop aren't missed
+        r.moveToPositionTicks(loopStart - 0.001);
+        scheduleNotes();
+
+        // adjust the playback position to help mitigate timing drift
         r.moveToPositionTicks(loopStart + tickDiff);
-        lastScheduled = loopStart - tickDiff;
+        //lastScheduled = loopStart - tickDiff;
         scheduleNotes();
       }
     };
