@@ -51,12 +51,12 @@
 
         if (start >= scheduleStart && start < scheduleEnd) {
           var delay = r.ticks2Seconds(start) - r.getPosition();
-          r.Instrument.noteOn(note.id, note.getPitch(), delay);
+          r.Instrument.noteOn(note._id, note.getPitch(), delay);
         }
 
         if (end >= scheduleStart && end < scheduleEnd) {
           var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note.id, delay);
+          r.Instrument.noteOff(note._id, delay);
         }        
       }
 

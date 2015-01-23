@@ -182,13 +182,13 @@
     r.startPreviewNote = function(pitch) {
       if (previewNote === undefined) {
         previewNote = new Note(pitch, 0);
-        r.Instrument.noteOn(previewNote.id, pitch, 0);
+        r.Instrument.noteOn(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
       if (previewNote !== undefined) {
-        r.Instrument.noteOff(previewNote.id, 0);
+        r.Instrument.noteOff(previewNote._id, 0);
         previewNote = undefined;
       }
     };

@@ -7,13 +7,15 @@
 
     var patternId = 0;
 
-    r.Pattern = function() {
+    r.Pattern = function(id) {
+      if (id) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
       // pattern metadata
       this._name = "Default Pattern Name";
-
-      // this ID handling is clumsy and stupid
-      this._id  = patternId;
-      patternId = patternId + 1;
 
       // pattern structure data
       this._noteMap = {};
@@ -21,7 +23,7 @@
 
     r.Pattern.prototype = {
       addNote: function(note) {
-        this._noteMap[note.id] = note;
+        this._noteMap[note._id] = note;
       }
     };
 
