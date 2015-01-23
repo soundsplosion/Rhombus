@@ -4,19 +4,35 @@
 
 (function(root) {
 
-  // Audio Context shim stuff
-  var AudioContext = root.webkitAudioContext || root.AudioContext;
-  if (!AudioContext) {
-    throw new Error("No Web Audio API support - cannot initialize Rhombus.");
-  }
+  var rhombs = [];
 
   // Add Rhombus constructor
   root.Rhombus = function() {
 
-    var ctx = new AudioContext();
-    Object.defineProperty(this, '_ctx', {
-      value: ctx
-    });
+    rhombs.push(this);
+
+    this._active = true;
+    this._disposed = false;
+    this._ctx = Tone.context;
+
+    this.setActive = function(active) {
+      if (this._disposed) {
+        return;
+      }
+      this._active = active;
+    };
+
+    this.dispose = function() {
+      this.setActive(false);
+      this._disposed = true;
+      delete this._ctx;
+      for (var i = 0; i < rhombs.length; i++) {
+        if (rhombs[i] === this) {
+          rhombs.splice(i, 1);
+          return;
+        }
+      }
+    };
 
     var curId = 0;
     this._setId = function(t, id) {

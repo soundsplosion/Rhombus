@@ -108,7 +108,7 @@
     }
 
     r.startPlayback = function() {
-      if (playing) {
+      if (!r._active || playing) {
         return;
       }
 
@@ -118,7 +118,7 @@
     };
 
     r.stopPlayback = function() {
-      if (!playing) {
+      if (!r._active || !playing) {
         return;
       }
 
