@@ -377,6 +377,7 @@
 
       // pattern structure data
       this._noteMap = {};
+      this._playingNotes = {};
     };
 
     r.Pattern.prototype = {
@@ -544,12 +545,13 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of seconds to schedule ahead
-    var scheduleAhead = 0.030;
+    var scheduleAhead = 0.050;
 
     var lastScheduled = -1;
-    function scheduleNotes() {
-      var noteMap = r._song._patterns[0]._noteMap;
 
+    // TODO: scheduling needs to happen relative to that start time of the
+    //       pattern
+    function scheduleNotes() {
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
 
@@ -559,21 +561,37 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
-      // May want to avoid iterating over all the notes every time
-      for (var noteId in noteMap) {
-        var note = noteMap[noteId];
-        var start = note.getStart();
-        var end = note.getEnd();
+      for (var ptnId in r._song._patterns) {
+        // Grab the notes for the current pattern
+        var noteMap = r._song._patterns[ptnId]._noteMap;
+        var playingNotes = r._song._patterns[ptnId]._playingNotes;
 
-        if (start >= scheduleStart && start < scheduleEnd) {
-          var delay = r.ticks2Seconds(start) - r.getPosition();
-          r.Instrument.noteOn(note._id, note.getPitch(), delay);
+        // TODO: find a more efficient way to determine which notes to play
+        if (r.isPlaying()) {
+          for (var noteId in noteMap) {
+            var note = noteMap[noteId];
+            var start = note.getStart();
+            var end = note.getEnd();
+
+            if (start >= scheduleStart && start < scheduleEnd) {
+              var delay = r.ticks2Seconds(start) - r.getPosition();
+              r.Instrument.noteOn(note._id, note.getPitch(), delay);
+              playingNotes[note._id] = note;
+            }
+          }
         }
 
-        if (end >= scheduleStart && end < scheduleEnd) {
-          var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.noteOff(note._id, delay);
-        }        
+        for (var noteId in playingNotes) {
+          var note = playingNotes[noteId];
+          var start = note.getStart();
+          var end = note.getEnd();
+
+          if (end >= scheduleStart && end < scheduleEnd) {
+            var delay = r.ticks2Seconds(end) - r.getPosition();
+            r.Instrument.noteOff(note._id, delay);
+            delete playingNotes[noteId];
+          }
+        }
       }
 
       lastScheduled = scheduleEnd;
@@ -598,7 +616,7 @@
       return beats * TICKS_PER_SECOND;
     }
 
-    // This is fixed for now...
+    // TODO: enable variable BPM
     var BPM = 120;
 
     r.ticks2Seconds = function(ticks) {
@@ -620,7 +638,17 @@
 
     function resetPlayback() {
       lastScheduled = -1;
-      r.Instrument.killAllNotes();
+
+      for (var ptnId in r._song._patterns) {
+        var noteMap = r._song._patterns[ptnId]._noteMap;
+        var playingNotes = r._song._patterns[ptnId]._playingNotes;
+
+        for (var noteId in playingNotes) {
+          var note = playingNotes[noteId];
+          r.Instrument.noteOff(note._id, 0);
+          delete playingNotes[noteId];
+        }
+      }
     }
 
     r.startPlayback = function() {
@@ -629,7 +657,10 @@
       }
 
       playing = true;
-      time = time - r._ctx.currentTime;
+
+      r.moveToPositionSeconds(-0.010);
+
+      scheduleNotes();
       scheduleWorker.postMessage({ playing: true });
     };
 
@@ -638,9 +669,10 @@
         return;
       }
 
-      resetPlayback();
-
       playing = false;
+
+      resetPlayback();
+      
       time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
     };
@@ -650,7 +682,7 @@
       if (tickDiff >= 0 && loopEnabled === true) {
         r.moveToPositionTicks(loopStart + tickDiff);
         lastScheduled = loopStart - tickDiff;
-        scheduleNotes(tickDiff);
+        scheduleNotes();
       }
     };
 
@@ -732,13 +764,18 @@
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
+
+      if (note === undefined)
+        return;
+
       var curTicks = r.seconds2Ticks(r.getPosition());
 
-      var shouldBePlaying = 
-        (start <= curTicks) && (curTicks <= (start + length));
+      //var shouldBePlaying =
+      //  (start <= curTicks) && (curTicks <= (start + length));
 
-      if (!shouldBePlaying) {
-        stopIfPlaying(note);
+      if (noteId in r._song._patterns[ptnId]._playingNotes) {
+        r.Instrument.noteOff(noteId, 0);
+        delete r._song._patterns[ptnId]._playingNotes[noteId];
       }
 
       note._start = start;
@@ -747,6 +784,9 @@
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
+
+      if (note === undefined)
+        return;
 
       if (pitch === note.getPitch()) {
         return;
@@ -763,7 +803,11 @@
         return;
 
       delete r._song._patterns[ptnId]._noteMap[note._id];
-      stopIfPlaying(note);
+
+      if (noteId in r._song._patterns[ptnId]._playingNotes) {
+        r.Instrument.noteOff(noteId, 0);
+        delete r._song._patterns[ptnId]._playingNotes[noteId];
+      }
     };
 
   };

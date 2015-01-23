@@ -19,6 +19,7 @@
 
       // pattern structure data
       this._noteMap = {};
+      this._playingNotes = {};
     };
 
     r.Pattern.prototype = {
