@@ -171,43 +171,49 @@
 
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
+
     function Instrument() {
-      this._synth = new Tone.PolySynth(6, Tone.MonoSynth);
-      this._synth.toMaster();
-      this._triggered = [];
+      Tone.PolySynth.call(this, 6, Tone.MonoSynth);
+      this.toMaster();
+      this._triggered = {};
     }
 
-    Instrument.prototype = {
-      // Play back a simple synth voice at the pitch specified by the input note
-      triggerAttack: function(id, pitch, delay) {
-        // Don't play out-of-range notes
-        if (pitch < 0 || pitch > 127) {
-          return;
-        }
+    Tone.extend(Instrument, Tone.PolySynth);
 
-        var freq = Rhombus.Util.noteNum2Freq(pitch);
-        this._triggered.push(freq);
-
-        if (delay > 0) {
-          this._synth.triggerAttack(freq, "+" + delay);
-        } else {
-          this._synth.triggerAttack(freq);
-        }
-      },
-
-      // Stop the playback of the currently-sounding note
-      triggerRelease: function(id, delay) {
-        if (delay > 0) {
-          this._synth.triggerRelease("+" + delay);
-        } else {
-          this._synth.triggerRelease();
-        }
-      },
-
-      killAllNotes: function() {
-        this._synth.triggerRelease(this._triggered);
-        this._triggered = [];
+    Instrument.prototype.triggerAttack = function(id, pitch, delay) {
+      // Don't play out-of-range notes
+      if (pitch < 0 || pitch > 127) {
+        return;
       }
+      var tA = Tone.PolySynth.prototype.triggerAttack;
+
+      var freq = Rhombus.Util.noteNum2Freq(pitch);
+      this._triggered[id] = freq;
+
+      if (delay > 0) {
+        tA.call(this, freq, "+" + delay);
+      } else {
+        tA.call(this, freq);
+      }
+    };
+
+    Instrument.prototype.triggerRelease = function(id, delay) {
+      var tR = Tone.PolySynth.prototype.triggerRelease;
+      var freq = this._triggered[id];
+      if (delay > 0) {
+        tR.call(this, freq, "+" + delay);
+      } else {
+        tR.call(this, freq);
+      }
+    };
+
+    Instrument.prototype.killAllNotes = function() {
+      var freqs = [];
+      for (var id in this._triggered) {
+        freqs.push(this._triggered[id]);
+      }
+      Tone.PolySynth.prototype.triggerRelease.call(this, freqs);
+      this._triggered = {};
     };
 
     var inst1 = new Instrument();
