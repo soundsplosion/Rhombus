@@ -24,7 +24,7 @@
         curId = id + 1;
       }
 
-      Object.defineProperty(t, 'id', {
+      Object.defineProperty(t, '_id', {
         value: id,
         enumerable: true
       });
