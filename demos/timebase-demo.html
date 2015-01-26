@@ -10,44 +10,30 @@ var rhomb = new Rhombus();
 var interval = 240;
 var last = 960 - interval;
 
-function appendArp(p1, p2, p3) {
-  var startTime = last + interval;
-  last += interval*4;
-
-  rhomb.Edit.insertNote(new rhomb.Note(p1, startTime, interval*2));
-  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval, interval*2));
-  rhomb.Edit.insertNote(new rhomb.Note(p3, startTime + interval*2, interval*2));
-  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval*3, interval*2));
+var patId = rhomb._song.addPattern();
+function ins(a, b, c) {
+  rhomb.Edit.insertNote(new rhomb.Note(a, b, c), patId);
 }
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 0, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 240, 240));
-rhomb.Edit.insertNote(new rhomb.Note(67, 480, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 720, 240));
+ins(60, 0, 240);
+ins(63, 240, 240);
+ins(67, 480, 240);
+ins(63, 720, 240);
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 960, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 1200, 240));
-rhomb.Edit.insertNote(new rhomb.Note(67, 1440, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 1680, 240));
+ins(60, 960, 240);
+ins(63, 1200, 240);
+ins(67, 1440, 240);
+ins(63, 1680, 240);
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 1920, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 2160, 240));
-rhomb.Edit.insertNote(new rhomb.Note(68, 2400, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 2640, 240));
+ins(60, 1920, 240);
+ins(63, 2160, 240);
+ins(68, 2400, 240);
+ins(63, 2640, 240);
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 2880, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 3120, 240));
-rhomb.Edit.insertNote(new rhomb.Note(68, 3360, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 3600, 240));
-
-//appendArp(60, 63, 67);
-//appendArp(60, 63, 67);
-//appendArp(60, 63, 68);
-//appendArp(60, 63, 68);
-//appendArp(60, 63, 67);
-//appendArp(60, 63, 67);
-//appendArp(59, 62, 67);
-//appendArp(59, 62, 67);
+ins(60, 2880, 240);
+ins(63, 3120, 240);
+ins(68, 3360, 240);
+ins(63, 3600, 240);
 </script>
 </head>
 <body>

@@ -129,7 +129,7 @@
 
         for (var noteId in playingNotes) {
           var note = playingNotes[noteId];
-          r.Instrument.noteOff(note._id, 0);
+          r.Instrument.triggerRelease(note._id, 0);
           delete playingNotes[noteId];
         }
       }
