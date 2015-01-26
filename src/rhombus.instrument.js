@@ -57,14 +57,14 @@
 
     r.startPreviewNote = function(pitch) {
       if (previewNote === undefined) {
-        previewNote = new r.Note(pitch, 0);
-        r.Instrument.triggerAttack(previewNote.id, pitch, 0);
+        previewNote = new Note(pitch, 0);
+        r.Instrument.triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
       if (previewNote !== undefined) {
-        r.Instrument.triggerRelease(previewNote.id, 0);
+        r.Instrument.triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };

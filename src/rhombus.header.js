@@ -40,7 +40,7 @@
         curId = id + 1;
       }
 
-      Object.defineProperty(t, 'id', {
+      Object.defineProperty(t, '_id', {
         value: id,
         enumerable: true
       });
@@ -52,6 +52,7 @@
 
     root.Rhombus._graphSetup(this);
     root.Rhombus._instrumentSetup(this);
+    root.Rhombus._patternSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);

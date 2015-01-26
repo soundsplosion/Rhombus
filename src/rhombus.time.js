@@ -28,12 +28,13 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of seconds to schedule ahead
-    var scheduleAhead = 0.030;
+    var scheduleAhead = 0.050;
 
     var lastScheduled = -1;
-    function scheduleNotes() {
-      var notes = r._song.notes;
 
+    // TODO: scheduling needs to happen relative to that start time of the
+    //       pattern
+    function scheduleNotes() {
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
 
@@ -43,20 +44,36 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
-      // May want to avoid iterating over all the notes every time
-      for (var i = 0; i < notes.length; i++) {
-        var note = notes[i];
-        var start = note.getStart();
-        var end = note.getEnd();
+      for (var ptnId in r._song._patterns) {
+        // Grab the notes for the current pattern
+        var noteMap = r._song._patterns[ptnId]._noteMap;
+        var playingNotes = r._song._patterns[ptnId]._playingNotes;
 
-        if (start >= scheduleStart && start < scheduleEnd) {
-          var delay = r.ticks2Seconds(start) - r.getPosition();
-          r.Instrument.triggerAttack(note.id, note.getPitch(), delay);
+        // TODO: find a more efficient way to determine which notes to play
+        if (r.isPlaying()) {
+          for (var noteId in noteMap) {
+            var note = noteMap[noteId];
+            var start = note.getStart();
+            var end = note.getEnd();
+
+            if (start >= scheduleStart && start < scheduleEnd) {
+              var delay = r.ticks2Seconds(start) - r.getPosition();
+              r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
+              playingNotes[note._id] = note;
+            }
+          }
         }
 
-        if (end >= scheduleStart && end < scheduleEnd) {
-          var delay = r.ticks2Seconds(end) - r.getPosition();
-          r.Instrument.triggerRelease(note.id, delay);
+        for (var noteId in playingNotes) {
+          var note = playingNotes[noteId];
+          var start = note.getStart();
+          var end = note.getEnd();
+
+          if (end >= scheduleStart && end < scheduleEnd) {
+            var delay = r.ticks2Seconds(end) - r.getPosition();
+            r.Instrument.triggerRelease(note._id, delay);
+            delete playingNotes[noteId];
+          }
         }
       }
 
@@ -71,7 +88,8 @@
     // Playback/timebase stuff
     /////////////////////////////////////////////////////////////////////////////
 
-    // The smallest unit of time in Rhombus is one tick
+    // The smallest unit of time in Rhombus is one tick, and there are 480 ticks
+    // per quarter note
     var TICKS_PER_SECOND = 480;
 
     function ticks2Beats(ticks) {
@@ -82,7 +100,7 @@
       return beats * TICKS_PER_SECOND;
     }
 
-    // This is fixed for now...
+    // TODO: implement variable BPM
     var BPM = 120;
 
     r.ticks2Seconds = function(ticks) {
@@ -97,13 +115,25 @@
     var playing = false;
     var time = 0;
 
-    // Loop start and end position in ticks, default is two measures
+    // Loop start and end position in ticks, default is one measure
     var loopStart   = 0;
-    var loopEnd     = 3840;
+    var loopEnd     = 1920;
     var loopEnabled = false;
 
     function resetPlayback() {
       lastScheduled = -1;
+
+      for (var ptnId in r._song._patterns) {
+        var noteMap = r._song._patterns[ptnId]._noteMap;
+        var playingNotes = r._song._patterns[ptnId]._playingNotes;
+
+        for (var noteId in playingNotes) {
+          var note = playingNotes[noteId];
+          r.Instrument.noteOff(note._id, 0);
+          delete playingNotes[noteId];
+        }
+      }
+
       r.Instrument.killAllNotes();
     }
 
@@ -113,7 +143,16 @@
       }
 
       playing = true;
-      time = time - r._ctx.currentTime;
+
+      // TODO: song start position needs to be defined somewhere
+
+      // Begin slightly before the start position to prevent
+      // missing notes at the beginning
+      r.moveToPositionSeconds(-0.010);
+
+      // Force the first round of scheduling
+      scheduleNotes();
+
       scheduleWorker.postMessage({ playing: true });
     };
 
@@ -122,9 +161,10 @@
         return;
       }
 
+      playing = false;
+
       resetPlayback();
 
-      playing = false;
       time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
     };
@@ -132,9 +172,14 @@
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
+        // make sure the notes near the start of the loop aren't missed
+        r.moveToPositionTicks(loopStart - 0.001);
+        scheduleNotes();
+
+        // adjust the playback position to help mitigate timing drift
         r.moveToPositionTicks(loopStart + tickDiff);
-        lastScheduled = loopStart - tickDiff;
-        scheduleNotes(tickDiff);
+        //lastScheduled = loopStart - tickDiff;
+        scheduleNotes();
       }
     };
 
