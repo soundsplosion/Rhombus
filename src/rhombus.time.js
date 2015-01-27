@@ -33,7 +33,7 @@
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
-    //       pattern
+    // pattern
     function scheduleNotes() {
       var nowTicks = r.seconds2Ticks(r.getPosition());
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
@@ -44,17 +44,17 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
+      var playingNotes = r._song._playingNotes;
+
       for (var ptnId in r._song._patterns) {
         // Grab the notes for the current pattern
         var noteMap = r._song._patterns[ptnId]._noteMap;
-        var playingNotes = r._song._patterns[ptnId]._playingNotes;
 
         // TODO: find a more efficient way to determine which notes to play
         if (r.isPlaying()) {
           for (var noteId in noteMap) {
             var note = noteMap[noteId];
             var start = note.getStart();
-            var end = note.getEnd();
 
             if (start >= scheduleStart && start < scheduleEnd) {
               var delay = r.ticks2Seconds(start) - r.getPosition();
@@ -66,7 +66,6 @@
 
         for (var noteId in playingNotes) {
           var note = playingNotes[noteId];
-          var start = note.getStart();
           var end = note.getEnd();
 
           if (end >= scheduleStart && end < scheduleEnd) {
@@ -123,15 +122,12 @@
     function resetPlayback() {
       lastScheduled = -1;
 
-      for (var ptnId in r._song._patterns) {
-        var noteMap = r._song._patterns[ptnId]._noteMap;
-        var playingNotes = r._song._patterns[ptnId]._playingNotes;
+      var playingNotes = r._song._playingNotes;
 
-        for (var noteId in playingNotes) {
-          var note = playingNotes[noteId];
-          r.Instrument.noteOff(note._id, 0);
-          delete playingNotes[noteId];
-        }
+      for (var noteId in playingNotes) {
+        var note = playingNotes[noteId];
+        r.Instrument.noteOff(note._id, 0);
+        delete playingNotes[noteId];
       }
 
       r.Instrument.killAllNotes();
@@ -178,7 +174,7 @@
 
         // adjust the playback position to help mitigate timing drift
         r.moveToPositionTicks(loopStart + tickDiff);
-        //lastScheduled = loopStart - tickDiff;
+
         scheduleNotes();
       }
     };

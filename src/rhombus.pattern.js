@@ -4,9 +4,7 @@
 
 (function(Rhombus) {
   Rhombus._patternSetup = function(r) {
-
-    var patternId = 0;
-
+    
     r.Pattern = function(id) {
       if (id) {
         r._setId(this, id);
@@ -19,7 +17,9 @@
 
       // pattern structure data
       this._noteMap = {};
-      this._playingNotes = {};
+
+      // TODO: determine if length should be defined here,
+      // or in Track....
     };
 
     r.Pattern.prototype = {
