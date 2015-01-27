@@ -9,11 +9,15 @@
       // song metadata
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
+      this._length = 1920; // not really metadata, but it's fixed for now..
       
       // song structure data
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
+
+      // song runtime data
+      this._playingNotes = {};
     };
 
     Song.prototype = {
@@ -67,12 +71,11 @@
         var newPattern = new r.Pattern();
 
         newPattern._name = pattern._name;
-        newPattern._id = pattern._id;
+        newPattern._id   = pattern._id;
 
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
-          console.log(" - Adding note, ID = " + noteId);
           var note = new r.Note(noteMap[noteId]._pitch,
                                 noteMap[noteId]._start,
                                 noteMap[noteId]._length,
