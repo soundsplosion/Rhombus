@@ -6,11 +6,18 @@
 
   Rhombus.Util = {};
 
+  function calculator(noteNum) {
+    return Math.pow(2, (noteNum-69)/12) * 440;
+  }
+
+  var table = [];
+  for (var i = 0; i < 127; i++) {
+    table[i] = calculator(i);
+  }
+
   // Converts a note-number (typical range 0-127) into a frequency value
-  // We'll probably just want to pre-compute a table...
-  Rhombus.Util.noteNum2Freq = function (noteNum) {
-    var freq =  Math.pow(2, (noteNum-69)/12) * 440;
-    return freq;
+  Rhombus.Util.noteNum2Freq = function(noteNum) {
+    return table[noteNum];
   }
 
 })(this.Rhombus);

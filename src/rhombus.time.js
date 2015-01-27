@@ -58,7 +58,7 @@
 
             if (start >= scheduleStart && start < scheduleEnd) {
               var delay = r.ticks2Seconds(start) - r.getPosition();
-              r.Instrument.noteOn(note._id, note.getPitch(), delay);
+              r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
               playingNotes[note._id] = note;
             }
           }
@@ -70,7 +70,7 @@
 
           if (end >= scheduleStart && end < scheduleEnd) {
             var delay = r.ticks2Seconds(end) - r.getPosition();
-            r.Instrument.noteOff(note._id, delay);
+            r.Instrument.triggerRelease(note._id, delay);
             delete playingNotes[noteId];
           }
         }
@@ -126,7 +126,7 @@
 
       for (var noteId in playingNotes) {
         var note = playingNotes[noteId];
-        r.Instrument.noteOff(note._id, 0);
+        r.Instrument.triggerRelease(note._id, 0);
         delete playingNotes[noteId];
       }
 
@@ -134,7 +134,7 @@
     }
 
     r.startPlayback = function() {
-      if (playing) {
+      if (!r._active || playing) {
         return;
       }
 
@@ -153,7 +153,7 @@
     };
 
     r.stopPlayback = function() {
-      if (!playing) {
+      if (!r._active || !playing) {
         return;
       }
 
