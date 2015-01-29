@@ -21,6 +21,8 @@
         ctr = Tone.MonoSynth;
       }
 
+      r._newId(this);
+
       this._ctr = ctr;
       Tone.PolySynth.call(this, null, ctr);
 
@@ -29,7 +31,7 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    var instruments = [];
+    var instruments = {};
 
     r.getInstruments = function() {
       return instruments;
@@ -42,51 +44,26 @@
         return;
       }
 
-      instruments.push(instr);
+      instruments[instr._id] = instr;
     };
 
-    function inToIndex(instrOrIndex) {
-      var index;
-      if (typeof instrOrIndex === "object") {
-        index = instruments.indexOf(instrOrIndex);
+    function inToId(instrOrId) {
+      var id;
+      if (typeof instrOrId === "object") {
+        id = instrOrId._id;
       } else {
-        index = +index;
-      }
-      if (index >= instruments.length) {
-        index = -1;
+        id = +id;
       }
       return index;
     }
 
-    r.removeInstrument = function(instrOrIndex) {
-      var index = inToIndex(instrOrIndex);
-      if (index < 0) {
+    r.removeInstrument = function(instrOrId) {
+      var id = inToId(instrOrId);
+      if (id < 0) {
         return;
       }
 
-      instruments.splice(index, 1);
-    };
-
-    r.moveInstrument = function(instrOrIndex, newIndex) {
-      var index = inToIndex(instrOrIndex);
-      if (index < 0) {
-        return;
-      }
-
-      var ins = instruments.splice(index, 1);
-      instruments.splice(newIndex, 0, ins);
-    };
-
-    r.swapInstruments = function(instrOrIndex1, instrOrIndex2) {
-      var i1 = inToIndex(instrToIndex1);
-      var i2 = inToIndex(instrToIndex2);
-      if (i1 < 0 || i2 < 0) {
-        return;
-      }
-
-      var tmp = instruments[i1];
-      instruments[i1] = instruments[i2];
-      instruments[i2] = tmp;
+      delete instruments[id];
     };
 
     Tone.extend(Instrument, Tone.PolySynth);
@@ -131,23 +108,25 @@
     var previewNote = undefined;
 
     r.startPreviewNote = function(pitch) {
-      if (instruments.length === 0) {
+      var keys = Object.keys(instruments);
+      if (keys.length === 0) {
         return;
       }
 
       if (previewNote === undefined) {
         previewNote = new Note(pitch, 0);
-        instruments[0].triggerAttack(previewNote._id, pitch, 0);
+        instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
-      if (instruments.length === 0) {
+      var keys = Object.keys(instruments);
+      if (keys.length === 0) {
         return;
       }
 
       if (previewNote !== undefined) {
-        instruments[0].triggerRelease(previewNote._id, 0);
+        instruments[keys[0]].triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };
