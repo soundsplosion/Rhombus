@@ -52,8 +52,17 @@
     var inst1 = new Instrument();
     r.Instrument = inst1;
 
+    // tame the beast
+    r.Instrument.setVolume(-24);
+
     // only one preview note is allowed at a time
     var previewNote = undefined;
+
+    r.setFilterCutoff = function(cutoff) {
+      //if (cutoff >= 0 && cutoff <= 127)
+      //  filterCutoff = cutoff;
+      console.log(" - trying to set filter cutoff to " + cutoff);
+    };
 
     r.startPreviewNote = function(pitch) {
       if (previewNote === undefined) {

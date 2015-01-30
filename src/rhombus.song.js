@@ -10,14 +10,11 @@
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
       this._length = 1920; // not really metadata, but it's fixed for now..
-      
+
       // song structure data
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
-
-      // song runtime data
-      this._playingNotes = {};
     };
 
     Song.prototype = {
@@ -37,12 +34,18 @@
         return this._artist;
       },
 
-      addPattern: function(pattern) {        
+      addPattern: function(pattern) {
         if (pattern === undefined) {
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
         return pattern._id;
+      },
+
+      addTrack: function() {
+        var track = new r.Track();
+        this._tracks[track._id] = track;
+        return track._id;
       }
     };
 
