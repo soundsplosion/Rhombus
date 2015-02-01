@@ -6,8 +6,13 @@
 
   Rhombus._trackSetup = function(r) {
 
-    r.PlaylistItem = function(ptnId, start, end) {
-      r._newId(this);
+    r.PlaylistItem = function(ptnId, start, end, id) {
+      if (id) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
       this._ptnId = ptnId;
       this._start = start;
       this._end = end;
