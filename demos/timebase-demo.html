@@ -14,6 +14,8 @@ var patId = rhomb._song.addPattern();
 function ins(a, b, c) {
   rhomb.Edit.insertNote(new rhomb.Note(a, b, c), patId);
 }
+var trackId = rhomb._song.addTrack();
+rhomb._song._tracks[trackId].addToPlaylist(patId, 0, 3840);
 
 ins(60, 0, 240);
 ins(63, 240, 240);
