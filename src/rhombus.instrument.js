@@ -20,13 +20,18 @@
       "duo"  : duo
     };
 
-    function Instrument(type, options) {
+    // TODO: put this on the Rhombus object
+    function Instrument(type, options, id) {
       var ctr = typeMap[type];
       if (ctr === null || ctr === undefined) {
         ctr = mono;
       }
 
-      r._newId(this);
+      if (id === undefined || id === null) {
+        r._newId(this);
+      } else {
+        r._setId(this, id);
+      }
 
       this._type = type;
       var unnormalized = unnormalizedParams(options, this._type);
@@ -39,8 +44,8 @@
     Tone.extend(Instrument, Tone.PolySynth);
 
     r._song.instruments = {};
-    r.addInstrument = function(type, options) {
-      instr = new Instrument(type, options);
+    r.addInstrument = function(type, options, id) {
+      instr = new Instrument(type, options, id);
 
       if (instr === null || instr === undefined) {
         return;
@@ -103,6 +108,14 @@
       }
       Tone.PolySynth.prototype.triggerRelease.call(this, freqs);
       this._triggered = {};
+    };
+
+    Instrument.prototype.toJSON = function() {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type
+      };
+      return JSON.stringify(jsonVersion);
     };
 
     // Common mapping styles.

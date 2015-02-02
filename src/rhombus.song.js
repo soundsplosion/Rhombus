@@ -59,12 +59,13 @@
     //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       r._song = new Song();
-      r._song.setTitle(JSON.parse(json)._title);
-      r._song.setArtist(JSON.parse(json)._artist);
+      var parsed = JSON.parse(json);
+      r._song.setTitle(parsed._title);
+      r._song.setArtist(parsed._artist);
 
-      var tracks      = JSON.parse(json)._tracks;
-      var patterns    = JSON.parse(json)._patterns;
-      var instruments = JSON.parse(json)._instruments;
+      var tracks      = parsed._tracks;
+      var patterns    = parsed._patterns;
+      var instruments = parsed._instruments;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -110,6 +111,11 @@
         }
 
         r._song._tracks[trkId] = newTrack;
+      }
+
+      for (var instId in instruments) {
+        var inst = instruments[instId];
+        r.addInstrument(inst._type, undefined, instId);
       }
     }
 
