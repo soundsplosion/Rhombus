@@ -167,6 +167,7 @@
     }
 
     // Frequently used mappings.
+    // TODO: fix envelope function mappings
     var timeMapFn = mapExp(0.0001, 60);
     var freqMapFn = mapExp(1, 22100);
     var lowFreqMapFn = mapExp(1, 100);
@@ -195,6 +196,7 @@
     var filterEnvelopeMap = {
       "attack" : timeMapFn,
       "decay" : timeMapFn,
+      // TODO: fix this
       "sustain" : timeMapFn,
       "release" : timeMapFn,
       "min" : freqMapFn,
