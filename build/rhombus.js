@@ -193,7 +193,6 @@
     var mono = Tone.MonoSynth;
     var am = Tone.AMSynth;
     var fm = Tone.FMSynth;
-    var pluck = Tone.PluckSynth;
     var noise = Tone.NoiseSynth;
     var samp = Tone.MultiSampler;
     var duo = Tone.DuoSynth;
@@ -201,7 +200,6 @@
       "mono" : mono,
       "am"   : am,
       "fm"   : fm,
-      "pluck": pluck,
       "noise": noise,
       "samp" : samp,
       "duo"  : duo
@@ -455,13 +453,6 @@
         "modulator" : monoSynthMap
       },
 
-      "pluck" : {
-        "attackNoise" : mapExp(0.1, 20),
-        "dampening" : freqMapFn,
-        // TODO: verify this is good (that is, verify 0,1 should be excluded)
-        "resonance" : mapLinear(0.001, 0.999)
-      },
-
       "noise" : {
         "noise" : {
           "type" : mapDiscrete("white", "pink", "brown")
@@ -476,8 +467,7 @@
       },
 
       "duo" : {
-        // TODO: verify this is good
-        "vibratoAmount" : mapIdentity,
+        "vibratoAmount" : mapLinear(0, 20),
         "vibratoRate" : freqMapFn,
         "vibratoDelay" : timeMapFn,
         "harmonicity" : harmMapFn,
