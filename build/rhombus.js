@@ -51,10 +51,10 @@
     };
 
     root.Rhombus._graphSetup(this);
-    root.Rhombus._instrumentSetup(this);
     root.Rhombus._patternSetup(this);
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
+    root.Rhombus._instrumentSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
   };
@@ -215,14 +215,17 @@
 
       r._newId(this);
 
-      this._ctr = ctr;
-      Tone.PolySynth.call(this, null, ctr);
+      this._type = type;
+      var unnormalized = unnormalizedParams(options, this._type);
+      Tone.PolySynth.call(this, undefined, ctr, unnormalized);
 
+      // TODO: don't route everything to master
       this.toMaster();
       this._triggered = {};
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
+    r._song.instruments = {};
     r.addInstrument = function(type, options) {
       instr = new Instrument(type, options);
 
@@ -251,6 +254,43 @@
 
       delete r._song.instruments[id];
     };
+
+    // HACK: these are here until note routing is implemented
+    var getDefaultInstr = function() {
+      var instrs = r._song.instruments;
+      var keys = Object.keys(instrs);
+      if (keys.length === 0) {
+        return null;
+      } else {
+        return instrs[keys[0]];
+      }
+    }
+    r.Instrument = {};
+    r.Instrument.triggerAttack = function() {
+      var instr = getDefaultInstr();
+      if (instr === null) {
+        return;
+      }
+      var tA = instr.triggerAttack;
+      tA.apply(instr, Array.prototype.slice.call(arguments));
+    }
+    r.Instrument.triggerRelease = function() {
+      var instr = getDefaultInstr();
+      if (instr === null) {
+        return;
+      }
+      var tR = instr.triggerRelease;
+      tR.apply(instr, Array.prototype.slice.call(arguments));
+    }
+    r.Instrument.killAllNotes = function() {
+      var instr = getDefaultInstr();
+      if (instr === null) {
+        return;
+      }
+      var kAN = instr.killAllNotes;
+      kAN.apply(instr, Array.prototype.slice.call(arguments));
+    }
+    // HACK: end
 
     Instrument.prototype.triggerAttack = function(id, pitch, delay) {
       // Don't play out-of-range notes
@@ -347,7 +387,7 @@
     var freqMapFn = mapExp(1, 22100);
     var lowFreqMapFn = mapExp(1, 100);
     var exponentMapFn = mapExp(0.01, 10);
-    var harmMapFn = mapLinear(-5, 5);
+    var harmMapFn = mapLinear(-1000, 1000);
 
     var envelopeMap = {
       "attack" : timeMapFn,
@@ -383,7 +423,7 @@
     var globalMaps = {
       "portamento" : mapLinear(0, 10),
       // TODO: verify this is good
-      "volume" : mapLog(-10000, 12.04)
+      "volume" : mapLog(-96.32, 12.04)
     };
 
     var monoSynthMap = {
@@ -393,21 +433,20 @@
       "envelope" : envelopeMap,
       "filter" : filterMap,
       "filterEnvelope" : filterEnvelopeMap,
-      // TODO: verify this is good
       "detune" : harmMapFn
     };
 
-    var normalizeMaps = {
-      mono : monoSynthMap,
+    var unnormalizeMaps = {
+      "mono" : monoSynthMap,
 
-      am : {
+      "am" : {
         // TODO: verify this is good
         "harmonicity" : harmMapFn,
         "carrier" : monoSynthMap,
         "modulator" : monoSynthMap
       },
 
-      fm : {
+      "fm" : {
         // TODO: verify this is good
         "harmonicity" : harmMapFn,
         // TODO: verify this is good
@@ -416,14 +455,14 @@
         "modulator" : monoSynthMap
       },
 
-      pluck : {
+      "pluck" : {
         "attackNoise" : mapExp(0.1, 20),
         "dampening" : freqMapFn,
         // TODO: verify this is good (that is, verify 0,1 should be excluded)
         "resonance" : mapLinear(0.001, 0.999)
       },
 
-      noise : {
+      "noise" : {
         "noise" : {
           "type" : mapDiscrete("white", "pink", "brown")
         },
@@ -432,11 +471,11 @@
         "filterEnvelope" : filterEnvelopeMap,
       },
 
-      samp : {
+      "samp" : {
         // TODO: anything here?
       },
 
-      duo : {
+      "duo" : {
         // TODO: verify this is good
         "vibratoAmount" : mapIdentity,
         "vibratoRate" : freqMapFn,
@@ -447,29 +486,42 @@
       }
     };
 
-    Instrument.prototype.normalizedSet = function(params) {
-      var ctrMaps = normalizeMaps[this._ctr];
+    function unnormalizedParams(params, type) {
+      if (params === undefined || params === null ||
+          typeof(params) !== "object") {
+        return params;
+      }
 
-      function transform(params) {
-        var keys = Object.keys(params);
-        for (var key in keys) {
-          var value = params[key];
+      function unnormalized(obj, thisLevelMap) {
+        var returnObj = {};
+        var keys = Object.keys(obj);
+        for (var idx in keys) {
+          var key = keys[idx];
+          var value = obj[key];
           if (typeof(value) === "object") {
-            transform(value);
+            var nextLevelMap = thisLevelMap[key];
+            returnObj[key] = unnormalized(value, nextLevelMap);
           } else {
             var globalXformer = globalMaps[key];
-            var ctrXformer = ctrMaps[key];
+            var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key] : undefined;
             if (globalXformer !== undefined) {
-              params[key] = globalXformer(value);
+              returnObj[key] = globalXformer(value);
             } else if (ctrXformer !== undefined) {
-              params[key] = ctrXformer(value);
+              returnObj[key] = ctrXformer(value);
+            } else {
+              returnObj[key] = value;
             }
           }
         }
+        return returnObj;
       }
 
-      transform(params);
-      this.set(params);
+      return unnormalized(params, unnormalizeMaps[type]);
+    }
+
+    Instrument.prototype.normalizedSet = function(params) {
+      var unnormalized = unnormalizedParams(params, this._type);
+      this.set(unnormalized);
     };
 
     // only one preview note is allowed at a time
