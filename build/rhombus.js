@@ -232,6 +232,7 @@
       }
 
       r._song.instruments[instr._id] = instr;
+      return instr._id;
     };
 
     function inToId(instrOrId) {
@@ -252,43 +253,6 @@
 
       delete r._song.instruments[id];
     };
-
-    // HACK: these are here until note routing is implemented
-    var getDefaultInstr = function() {
-      var instrs = r._song.instruments;
-      var keys = Object.keys(instrs);
-      if (keys.length === 0) {
-        return null;
-      } else {
-        return instrs[keys[0]];
-      }
-    }
-    r.Instrument = {};
-    r.Instrument.triggerAttack = function() {
-      var instr = getDefaultInstr();
-      if (instr === null) {
-        return;
-      }
-      var tA = instr.triggerAttack;
-      tA.apply(instr, Array.prototype.slice.call(arguments));
-    }
-    r.Instrument.triggerRelease = function() {
-      var instr = getDefaultInstr();
-      if (instr === null) {
-        return;
-      }
-      var tR = instr.triggerRelease;
-      tR.apply(instr, Array.prototype.slice.call(arguments));
-    }
-    r.Instrument.killAllNotes = function() {
-      var instr = getDefaultInstr();
-      if (instr === null) {
-        return;
-      }
-      var kAN = instr.killAllNotes;
-      kAN.apply(instr, Array.prototype.slice.call(arguments));
-    }
-    // HACK: end
 
     Instrument.prototype.triggerAttack = function(id, pitch, delay) {
       // Don't play out-of-range notes
@@ -353,9 +317,16 @@
     // because log functions aren't defined at 0.
     function mapLog(x, y) {
       var threshold = 0.0001;
-      var logc1 = Math.log(threshold) / ((x/y) - 1);
-      var c1 = Math.exp(logc1);
-      var c0 = y / logc1;
+      var logc1, c1, c0;
+      if (y === 0) {
+        c1 = 1;
+        c0 = x / Math.log(threshold);
+      } else {
+        logc1 = Math.log(threshold) / ((x/y) - 1);
+        c1 = Math.exp(logc1);
+        c0 = y / logc1;
+      }
+
       function mapper(t) {
         if (t < threshold) {
           t = threshold;
@@ -421,7 +392,7 @@
     var globalMaps = {
       "portamento" : mapLinear(0, 10),
       // TODO: verify this is good
-      "volume" : mapLog(-96.32, 12.04)
+      "volume" : mapLog(-96.32, 0)
     };
 
     var monoSynthMap = {
@@ -511,8 +482,15 @@
 
     Instrument.prototype.normalizedSet = function(params) {
       var unnormalized = unnormalizedParams(params, this._type);
+      console.log(unnormalized.volume);
       this.set(unnormalized);
     };
+
+    // HACK: these are here until proper note routing is implemented
+    var instrId = r.addInstrument("mono");
+    r.Instrument = r._song.instruments[instrId];
+    r.Instrument.normalizedSet({ volume: 0.1 });
+    // HACK: end
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
