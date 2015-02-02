@@ -6,20 +6,20 @@
   Rhombus._timeSetup = function(r) {
     function createScheduleWorker() {
       var code =
-      "var scheduleId = false;\n" +
-      "self.onmessage = function(oEvent) {\n" +
-      "  if (oEvent.data.playing === false) {\n" +
-      "    if (scheduleId) {\n" +
-      "      clearTimeout(scheduleId);\n" +
-      "    }\n" +
-      "  } else {\n" +
-      "    triggerSchedule();\n" +
-      "  }\n" +
-      "}\n" +
-      "function triggerSchedule() {\n" +
-      "  postMessage(0);\n" +
-      "  scheduleId = setTimeout(triggerSchedule, 10);\n" +
-      "}\n";
+        "var scheduleId = false;\n" +
+        "self.onmessage = function(oEvent) {\n" +
+        "  if (oEvent.data.playing === false) {\n" +
+        "    if (scheduleId) {\n" +
+        "      clearTimeout(scheduleId);\n" +
+        "    }\n" +
+        "  } else {\n" +
+        "    triggerSchedule();\n" +
+        "  }\n" +
+        "}\n" +
+        "function triggerSchedule() {\n" +
+        "  postMessage(0);\n" +
+        "  scheduleId = setTimeout(triggerSchedule, 10);\n" +
+        "}\n";
       var blob = new Blob([code], {type: "application/javascript"});
       return new Worker(URL.createObjectURL(blob));
     }
@@ -29,7 +29,6 @@
 
     // Number of seconds to schedule ahead
     var scheduleAhead = 0.050;
-
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
@@ -44,26 +43,36 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
-      var playingNotes = r._song._playingNotes;
+      // Iterate over every track to find notes that can be scheduled
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
 
-      for (var ptnId in r._song._patterns) {
-        // Grab the notes for the current pattern
-        var noteMap = r._song._patterns[ptnId]._noteMap;
+        // TODO: Find a way to determine which patterns are really schedulable,
+        //       based on the current playback position
+        for (var playlistId in track._playlist) {
+          var ptnId   = track._playlist[playlistId]._ptnId;
+          var noteMap = r._song._patterns[ptnId]._noteMap;
 
-        // TODO: find a more efficient way to determine which notes to play
-        if (r.isPlaying()) {
-          for (var noteId in noteMap) {
-            var note = noteMap[noteId];
-            var start = note.getStart();
+          // TODO: Handle note start and end times relative to the start of
+          //       the originating pattern
 
-            if (start >= scheduleStart && start < scheduleEnd) {
-              var delay = r.ticks2Seconds(start) - r.getPosition();
-              r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
-              playingNotes[note._id] = note;
+          // TODO: find a more efficient way to determine which notes to play
+          if (r.isPlaying()) {
+            for (var noteId in noteMap) {
+              var note = noteMap[noteId];
+              var start = note.getStart();
+
+              if (start >= scheduleStart && start < scheduleEnd) {
+                var delay = r.ticks2Seconds(start) - r.getPosition();
+                r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
+                playingNotes[note._id] = note;
+              }
             }
           }
         }
 
+        // Schedule note-offs for notes playing on the current track
         for (var noteId in playingNotes) {
           var note = playingNotes[noteId];
           var end = note.getEnd();
@@ -87,8 +96,8 @@
     // Playback/timebase stuff
     /////////////////////////////////////////////////////////////////////////////
 
-    // The smallest unit of time in Rhombus is one tick, and there are 480 ticks
-    // per quarter note
+    // The smallest unit of musical time in Rhombus is one tick, and there are
+    // 480 ticks per quarter note
     var TICKS_PER_SECOND = 480;
 
     function ticks2Beats(ticks) {
@@ -122,12 +131,15 @@
     function resetPlayback() {
       lastScheduled = -1;
 
-      var playingNotes = r._song._playingNotes;
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
 
-      for (var noteId in playingNotes) {
-        var note = playingNotes[noteId];
-        r.Instrument.triggerRelease(note._id, 0);
-        delete playingNotes[noteId];
+        for (var noteId in playingNotes) {
+          var note = playingNotes[noteId];
+          r.Instrument.triggerRelease(note._id, 0);
+          delete playingNotes[noteId];
+        }
       }
 
       r.Instrument.killAllNotes();

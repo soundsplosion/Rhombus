@@ -4,7 +4,7 @@
 
 (function(Rhombus) {
   Rhombus._patternSetup = function(r) {
-    
+
     r.Pattern = function(id) {
       if (id) {
         r._setId(this, id);
