@@ -492,8 +492,17 @@
     r.Instrument.normalizedSet({ volume: 0.1 });
     // HACK: end
 
+    // tame the beast
+    r.Instrument.setVolume(-24);
+
     // only one preview note is allowed at a time
     var previewNote = undefined;
+
+    r.setFilterCutoff = function(cutoff) {
+      //if (cutoff >= 0 && cutoff <= 127)
+      //  filterCutoff = cutoff;
+      console.log(" - trying to set filter cutoff to " + cutoff);
+    };
 
     r.startPreviewNote = function(pitch) {
       var keys = Object.keys(r._song.instruments);
@@ -527,7 +536,7 @@
 
 (function(Rhombus) {
   Rhombus._patternSetup = function(r) {
-    
+
     r.Pattern = function(id) {
       if (id) {
         r._setId(this, id);
@@ -588,7 +597,20 @@
 //! license: MIT
 
 (function(Rhombus) {
+
   Rhombus._trackSetup = function(r) {
+
+    r.PlaylistItem = function(ptnId, start, end, id) {
+      if (id) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
+      this._ptnId = ptnId;
+      this._start = start;
+      this._end = end;
+    };
 
     r.Track = function(id) {
       if (id) {
@@ -605,9 +627,63 @@
       this._playingNotes = {};
 
       // TODO: define some kind of pattern playlist
+      this._playlist = {};
     };
 
     r.Track.prototype = {
+
+      // Determine if a playlist item exists that overlaps with the given range
+      checkOverlap: function(start, end) {
+        for (var id in this._playlist) {
+          var item = this._playlist[id];
+
+          if (item._start <= start && item._end > start)
+            return true;
+
+          if (item._end > start && item._end < end)
+            return true;
+
+          if (item._start <= start && item._end >= end)
+            return true;
+
+          if (start <= item._start && end >= item._end)
+            return true;
+        }
+
+        // No overlapping items found
+        return false;
+      },
+
+      addToPlaylist: function(ptnId, start, end) {
+        // ptnId myst belong to an existing pattern
+        if (r._song._patterns[ptnId] === undefined)
+          return undefined;
+
+        // All arguments must be defined
+        if (ptnId === undefined || start === undefined || end === undefined)
+          return undefined;
+
+        // Minimum item length is 480 ticks (1 beat)
+        if ((end - start) < 480)
+          return undefined;
+
+        // Don't allow overlapping patterns
+        if (this.checkOverlap(start, end))
+          return undefined;
+
+        var newItem = new r.PlaylistItem(ptnId, start, end);
+        this._playlist[newItem._id] = newItem;
+        return newItem._id;
+      },
+
+      removeFromPlaylist: function(itemId) {
+        if (!this._playlist.hasOwnProperty(itemId.toString()))
+          return undefined;
+        else
+          delete this._playlist[itemId.toString()];
+
+        return itemId;
+      }
     };
   };
 })(this.Rhombus);
@@ -624,14 +700,11 @@
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
       this._length = 1920; // not really metadata, but it's fixed for now..
-      
+
       // song structure data
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
-
-      // song runtime data
-      this._playingNotes = {};
     };
 
     Song.prototype = {
@@ -651,12 +724,18 @@
         return this._artist;
       },
 
-      addPattern: function(pattern) {        
+      addPattern: function(pattern) {
         if (pattern === undefined) {
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
         return pattern._id;
+      },
+
+      addTrack: function() {
+        var track = new r.Track();
+        this._tracks[track._id] = track;
+        return track._id;
       }
     };
 
@@ -677,15 +756,13 @@
       var patterns    = JSON.parse(json)._patterns;
       var instruments = JSON.parse(json)._instruments;
 
-      // there has got to be a better way to deserialize things...
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
         var noteMap = pattern._noteMap;
 
-        var newPattern = new r.Pattern();
+        var newPattern = new r.Pattern(pattern._id);
 
         newPattern._name = pattern._name;
-        newPattern._id   = pattern._id;
 
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
@@ -703,6 +780,27 @@
 
       // TODO: tracks and instruments will need to be imported
       //       in a similar manner
+
+      for (var trkId in tracks) {
+        var track = tracks[trkId];
+        var playlist = track._playlist;
+
+        var newTrack = new r.Track(track._id);
+
+        newTrack._name = track._name;
+
+        for (var itemId in playlist) {
+          var item = playlist[itemId];
+          var newItem = new r.PlaylistItem(item._ptnId,
+                                           item._start,
+                                           item._end,
+                                           item._id)
+
+          newTrack._playlist[itemId] = newItem;
+        }
+
+        r._song._tracks[trkId] = newTrack;
+      }
     }
 
     r.exportSong = function() {
@@ -720,20 +818,20 @@
   Rhombus._timeSetup = function(r) {
     function createScheduleWorker() {
       var code =
-      "var scheduleId = false;\n" +
-      "self.onmessage = function(oEvent) {\n" +
-      "  if (oEvent.data.playing === false) {\n" +
-      "    if (scheduleId) {\n" +
-      "      clearTimeout(scheduleId);\n" +
-      "    }\n" +
-      "  } else {\n" +
-      "    triggerSchedule();\n" +
-      "  }\n" +
-      "}\n" +
-      "function triggerSchedule() {\n" +
-      "  postMessage(0);\n" +
-      "  scheduleId = setTimeout(triggerSchedule, 10);\n" +
-      "}\n";
+        "var scheduleId = false;\n" +
+        "self.onmessage = function(oEvent) {\n" +
+        "  if (oEvent.data.playing === false) {\n" +
+        "    if (scheduleId) {\n" +
+        "      clearTimeout(scheduleId);\n" +
+        "    }\n" +
+        "  } else {\n" +
+        "    triggerSchedule();\n" +
+        "  }\n" +
+        "}\n" +
+        "function triggerSchedule() {\n" +
+        "  postMessage(0);\n" +
+        "  scheduleId = setTimeout(triggerSchedule, 10);\n" +
+        "}\n";
       var blob = new Blob([code], {type: "application/javascript"});
       return new Worker(URL.createObjectURL(blob));
     }
@@ -743,7 +841,6 @@
 
     // Number of seconds to schedule ahead
     var scheduleAhead = 0.050;
-
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
@@ -758,26 +855,36 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
-      var playingNotes = r._song._playingNotes;
+      // Iterate over every track to find notes that can be scheduled
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
 
-      for (var ptnId in r._song._patterns) {
-        // Grab the notes for the current pattern
-        var noteMap = r._song._patterns[ptnId]._noteMap;
+        // TODO: Find a way to determine which patterns are really schedulable,
+        //       based on the current playback position
+        for (var playlistId in track._playlist) {
+          var ptnId   = track._playlist[playlistId]._ptnId;
+          var noteMap = r._song._patterns[ptnId]._noteMap;
 
-        // TODO: find a more efficient way to determine which notes to play
-        if (r.isPlaying()) {
-          for (var noteId in noteMap) {
-            var note = noteMap[noteId];
-            var start = note.getStart();
+          // TODO: Handle note start and end times relative to the start of
+          //       the originating pattern
 
-            if (start >= scheduleStart && start < scheduleEnd) {
-              var delay = r.ticks2Seconds(start) - r.getPosition();
-              r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
-              playingNotes[note._id] = note;
+          // TODO: find a more efficient way to determine which notes to play
+          if (r.isPlaying()) {
+            for (var noteId in noteMap) {
+              var note = noteMap[noteId];
+              var start = note.getStart();
+
+              if (start >= scheduleStart && start < scheduleEnd) {
+                var delay = r.ticks2Seconds(start) - r.getPosition();
+                r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
+                playingNotes[note._id] = note;
+              }
             }
           }
         }
 
+        // Schedule note-offs for notes playing on the current track
         for (var noteId in playingNotes) {
           var note = playingNotes[noteId];
           var end = note.getEnd();
@@ -801,8 +908,8 @@
     // Playback/timebase stuff
     /////////////////////////////////////////////////////////////////////////////
 
-    // The smallest unit of time in Rhombus is one tick, and there are 480 ticks
-    // per quarter note
+    // The smallest unit of musical time in Rhombus is one tick, and there are
+    // 480 ticks per quarter note
     var TICKS_PER_SECOND = 480;
 
     function ticks2Beats(ticks) {
@@ -836,12 +943,15 @@
     function resetPlayback() {
       lastScheduled = -1;
 
-      var playingNotes = r._song._playingNotes;
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
 
-      for (var noteId in playingNotes) {
-        var note = playingNotes[noteId];
-        r.Instrument.triggerRelease(note._id, 0);
-        delete playingNotes[noteId];
+        for (var noteId in playingNotes) {
+          var note = playingNotes[noteId];
+          r.Instrument.triggerRelease(note._id, 0);
+          delete playingNotes[noteId];
+        }
       }
 
       r.Instrument.killAllNotes();
@@ -977,12 +1087,14 @@
 
       var curTicks = r.seconds2Ticks(r.getPosition());
 
-      //var shouldBePlaying =
-      //  (start <= curTicks) && (curTicks <= (start + length));
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
 
-      if (noteId in r._song._playingNotes) {
-        r.Instrument.triggerRelease(noteId, 0);
-        delete r._song._playingNotes[noteId];
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(noteId, 0);
+          delete playingNotes[noteId];
+        }
       }
 
       note._start = start;
@@ -1011,9 +1123,14 @@
 
       delete r._song._patterns[ptnId]._noteMap[note._id];
 
-      if (noteId in r._song._playingNotes) {
-        r.Instrument.triggerRelease(noteId, 0);
-        delete r._song._playingNotes[noteId];
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(noteId, 0);
+          delete playingNotes[noteId];
+        }
       }
     };
 

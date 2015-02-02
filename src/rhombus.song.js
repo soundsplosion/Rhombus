@@ -10,14 +10,11 @@
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
       this._length = 1920; // not really metadata, but it's fixed for now..
-      
+
       // song structure data
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
-
-      // song runtime data
-      this._playingNotes = {};
     };
 
     Song.prototype = {
@@ -37,12 +34,18 @@
         return this._artist;
       },
 
-      addPattern: function(pattern) {        
+      addPattern: function(pattern) {
         if (pattern === undefined) {
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
         return pattern._id;
+      },
+
+      addTrack: function() {
+        var track = new r.Track();
+        this._tracks[track._id] = track;
+        return track._id;
       }
     };
 
@@ -63,15 +66,13 @@
       var patterns    = JSON.parse(json)._patterns;
       var instruments = JSON.parse(json)._instruments;
 
-      // there has got to be a better way to deserialize things...
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
         var noteMap = pattern._noteMap;
 
-        var newPattern = new r.Pattern();
+        var newPattern = new r.Pattern(pattern._id);
 
         newPattern._name = pattern._name;
-        newPattern._id   = pattern._id;
 
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
@@ -89,6 +90,27 @@
 
       // TODO: tracks and instruments will need to be imported
       //       in a similar manner
+
+      for (var trkId in tracks) {
+        var track = tracks[trkId];
+        var playlist = track._playlist;
+
+        var newTrack = new r.Track(track._id);
+
+        newTrack._name = track._name;
+
+        for (var itemId in playlist) {
+          var item = playlist[itemId];
+          var newItem = new r.PlaylistItem(item._ptnId,
+                                           item._start,
+                                           item._end,
+                                           item._id)
+
+          newTrack._playlist[itemId] = newItem;
+        }
+
+        r._song._tracks[trkId] = newTrack;
+      }
     }
 
     r.exportSong = function() {

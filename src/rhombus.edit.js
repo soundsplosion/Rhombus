@@ -26,12 +26,14 @@
 
       var curTicks = r.seconds2Ticks(r.getPosition());
 
-      //var shouldBePlaying =
-      //  (start <= curTicks) && (curTicks <= (start + length));
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
 
-      if (noteId in r._song._playingNotes) {
-        r.Instrument.triggerRelease(noteId, 0);
-        delete r._song._playingNotes[noteId];
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(noteId, 0);
+          delete playingNotes[noteId];
+        }
       }
 
       note._start = start;
@@ -60,9 +62,14 @@
 
       delete r._song._patterns[ptnId]._noteMap[note._id];
 
-      if (noteId in r._song._playingNotes) {
-        r.Instrument.triggerRelease(noteId, 0);
-        delete r._song._playingNotes[noteId];
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(noteId, 0);
+          delete playingNotes[noteId];
+        }
       }
     };
 
