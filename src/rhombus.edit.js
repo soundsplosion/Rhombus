@@ -15,7 +15,21 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r._song._patterns[ptnId]._noteMap[note._id] = note;
+      r._song._patterns[ptnId].addNote(note);
+    };
+
+    r.Edit.deleteNote = function(noteId, ptnId) {
+      r._song._patterns[ptnId].deleteNote(noteId);
+
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(noteId, 0);
+          delete playingNotes[noteId];
+        }
+      }
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
@@ -53,25 +67,5 @@
       r.Instrument.triggerRelease(note._id, 0);
       note._pitch = pitch;
     };
-
-    r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
-
-      if (note === undefined)
-        return;
-
-      delete r._song._patterns[ptnId]._noteMap[note._id];
-
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
-        var playingNotes = track._playingNotes;
-
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
-        }
-      }
-    };
-
   };
 })(this.Rhombus);

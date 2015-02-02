@@ -25,6 +25,17 @@
     r.Pattern.prototype = {
       addNote: function(note) {
         this._noteMap[note._id] = note;
+      },
+
+      deleteNote: function(noteId) {
+        var note = this._noteMap[noteId];
+
+        if (note === undefined)
+          return undefined;
+
+        delete this._noteMap[note._id];
+        
+        return noteId;
       }
     };
 

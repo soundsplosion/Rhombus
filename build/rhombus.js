@@ -292,6 +292,17 @@
     r.Pattern.prototype = {
       addNote: function(note) {
         this._noteMap[note._id] = note;
+      },
+
+      deleteNote: function(noteId) {
+        var note = this._noteMap[noteId];
+
+        if (note === undefined)
+          return undefined;
+
+        delete this._noteMap[note._id];
+        
+        return noteId;
       }
     };
 
@@ -459,6 +470,20 @@
         return this._artist;
       },
 
+      setLength: function(length) {
+        if (length !== undefined && length >= 480) {
+          this._length = length;
+          return length;
+        }
+        else {
+          return undefined;
+        }
+      },
+
+      getLength: function() {
+        return this._length;
+      },
+
       addPattern: function(pattern) {
         if (pattern === undefined) {
           var pattern = new r.Pattern();
@@ -471,6 +496,25 @@
         var track = new r.Track();
         this._tracks[track._id] = track;
         return track._id;
+      },
+
+      deleteTrack: function(trkId) {
+        var track = this._tracks[trkId];
+        
+        if (track === undefined) {
+          return undefined;
+        }
+        else {
+          // TODO: find a more robust way to terminate playing notes
+          for (var noteId in this._playingNotes) {
+            var note = this._playingNotes[noteId];
+            r.Instrument.triggerRelease(note._id, delay);
+            delete this._playingNotes[noteId]
+          }
+
+          delete this._tracks[trkId];
+          return trkId;
+        }
       }
     };
 
@@ -480,8 +524,6 @@
       return r.ticks2Seconds(r._song._length);
     };
 
-    // TODO: refactor to handle multiple tracks, patterns, etc.
-    //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       r._song = new Song();
       r._song.setTitle(JSON.parse(json)._title);
@@ -811,7 +853,21 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r._song._patterns[ptnId]._noteMap[note._id] = note;
+      r._song._patterns[ptnId].addNote(note);
+    };
+
+    r.Edit.deleteNote = function(noteId, ptnId) {
+      r._song._patterns[ptnId].deleteNote(noteId);
+
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(noteId, 0);
+          delete playingNotes[noteId];
+        }
+      }
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
@@ -849,25 +905,5 @@
       r.Instrument.triggerRelease(note._id, 0);
       note._pitch = pitch;
     };
-
-    r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
-
-      if (note === undefined)
-        return;
-
-      delete r._song._patterns[ptnId]._noteMap[note._id];
-
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
-        var playingNotes = track._playingNotes;
-
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
-        }
-      }
-    };
-
   };
 })(this.Rhombus);
