@@ -149,7 +149,7 @@
         "_type": this._type,
         "_params": this._currentParams
       };
-      return JSON.stringify(jsonVersion);
+      return jsonVersion;
     };
 
     // Common mapping styles.
