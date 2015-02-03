@@ -28,7 +28,7 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of seconds to schedule ahead
-    var scheduleAhead = 0.050;
+    var scheduleAhead = 0.030;
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
@@ -56,6 +56,21 @@
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
+        // Schedule note-offs for notes playing on the current track.
+        // Do this before schedyling note-ons to prevent back-to-back notes from
+        // interfering with each other.
+        for (var rtNoteId in playingNotes) {
+          var rtNote = playingNotes[rtNoteId];
+          var end = rtNote._end;
+
+          if (end <= scheduleEndTime) {
+            var delay = end - curTime;
+
+            r.Instrument.triggerRelease(rtNote._id, delay);
+            delete playingNotes[rtNoteId];
+          }
+        }
+
         // TODO: Find a way to determine which patterns are really schedulable,
         //       based on the current playback position
         for (var playlistId in track._playlist) {
@@ -71,7 +86,7 @@
               var note = noteMap[noteId];
               var start = note.getStart();
 
-              if (start >= scheduleStart && start < scheduleEnd) {
+              if (start >= scheduleStart && start <= scheduleEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
 
                 var startTime = curTime + delay;
@@ -83,19 +98,6 @@
                 r.Instrument.triggerAttack(rtNote._id, note.getPitch(), delay);
               }
             }
-          }
-        }
-
-        // Schedule note-offs for notes playing on the current track
-        for (var rtNoteId in playingNotes) {
-          var rtNote = playingNotes[rtNoteId];
-          var end = rtNote._end;
-
-          if (end < scheduleEndTime) {
-            var delay = end - curTime;
-
-            r.Instrument.triggerRelease(rtNote._id, delay);
-            delete playingNotes[rtNoteId];
           }
         }
       }
@@ -241,7 +243,7 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        //resetPlayback();
+        resetPlayback();
         time = seconds - r._ctx.currentTime;
       } else {
         time = seconds;
