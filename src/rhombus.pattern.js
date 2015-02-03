@@ -33,7 +33,7 @@
           return undefined;
 
         delete this._noteMap[note._id];
-        
+
         return noteId;
       }
     };

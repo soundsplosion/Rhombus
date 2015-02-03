@@ -21,15 +21,20 @@
     r.Edit.deleteNote = function(noteId, ptnId) {
       r._song._patterns[ptnId].deleteNote(noteId);
 
+      // TODO: find another way to terminate deleted notes
+      //       as things stand, deleted notes will stop playing
+      //       naturally, but not when the pattern note is deleted
+      /*
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
         if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
         }
       }
+      */
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
@@ -44,9 +49,9 @@
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
+        if (rtNoteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
         }
       }
 
@@ -74,7 +79,7 @@
     // without adding it to the song -- I dunno.
     r.Edit.copyPattern = function(ptnId) {
       var src = r._song._patterns[ptnId];
-      
+
       if (src === undefined) {
         return undefined;
       }
@@ -89,7 +94,7 @@
 
         dst._noteMap[dstNote._id] = dstNote;
       }
-      
+
       r._song._patterns[dst._id] = dst;
 
       return dst._id;

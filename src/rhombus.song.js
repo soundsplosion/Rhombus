@@ -64,16 +64,16 @@
 
       deleteTrack: function(trkId) {
         var track = this._tracks[trkId];
-        
+
         if (track === undefined) {
           return undefined;
         }
         else {
           // TODO: find a more robust way to terminate playing notes
-          for (var noteId in this._playingNotes) {
-            var note = this._playingNotes[noteId];
-            r.Instrument.triggerRelease(note._id, delay);
-            delete this._playingNotes[noteId]
+          for (var rtNoteId in this._playingNotes) {
+            var note = this._playingNotes[rtNoteId];
+            r.Instrument.triggerRelease(note._id, 0);
+            delete this._playingNotes[rtNoteId];
           }
 
           delete this._tracks[trkId];
