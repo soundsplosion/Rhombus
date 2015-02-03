@@ -973,7 +973,9 @@
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
-        // Schedule note-offs for notes playing on the current track
+        // Schedule note-offs for notes playing on the current track.
+        // Do this before schedyling note-ons to prevent back-to-back notes from
+        // interfering with each other.
         for (var rtNoteId in playingNotes) {
           var rtNote = playingNotes[rtNoteId];
           var end = rtNote._end;
@@ -1015,8 +1017,6 @@
             }
           }
         }
-
-        
       }
 
       lastScheduled = scheduleEnd;
@@ -1071,8 +1071,7 @@
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
-          var rtNote = playingNotes[rtNoteId];
-          r.Instrument.triggerRelease(rtNoteid, 0);
+          r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
       }

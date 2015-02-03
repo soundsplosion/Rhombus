@@ -154,8 +154,7 @@
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
-          var rtNote = playingNotes[rtNoteId];
-          r.Instrument.triggerRelease(rtNoteid, 0);
+          r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
       }
