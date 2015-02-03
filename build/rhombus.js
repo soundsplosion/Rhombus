@@ -232,7 +232,7 @@
     Tone.extend(Instrument, Tone.PolySynth);
 
     r.addInstrument = function(type, options, id) {
-      instr = new Instrument(type, options, id);
+      var instr = new Instrument(type, options, id);
 
       if (instr === null || instr === undefined) {
         return;
@@ -249,7 +249,7 @@
       } else {
         id = +id;
       }
-      return index;
+      return id;
     }
 
     r.removeInstrument = function(instrOrId) {
