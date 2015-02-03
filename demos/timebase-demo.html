@@ -44,8 +44,8 @@ ins(63, 3600, 240);
 <p id="elapsedDisplay"></p>
 <p id="driftDisplay"></p>
 <p id="loopEnabled"></p>
-<button onclick="rhomb.startPlayback()">Start</button>
-<button onclick="rhomb.stopPlayback()">Stop</button>
+<button onclick="if (rhomb.isPlaying()) rhomb.stopPlayback(); else rhomb.startPlayback();">Start</button>
+<button onclick="rhomb.stopPlayback(); rhomb.moveToPositionTicks(rhomb.getLoopStart());">Stop</button>
 <button onclick="toggleLoop()">Toggle Loop</button>
 
 <br />
