@@ -115,7 +115,7 @@
 
       for (var instId in instruments) {
         var inst = instruments[instId];
-        r.addInstrument(inst._type, undefined, instId);
+        r.addInstrument(inst._type, inst._params, instId);
       }
     }
 

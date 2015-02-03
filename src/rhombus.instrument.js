@@ -34,6 +34,9 @@
       }
 
       this._type = type;
+      this._currentParams = {};
+      this._trackParameters(options);
+
       var unnormalized = unnormalizedParams(options, this._type);
       Tone.PolySynth.call(this, undefined, ctr, unnormalized);
 
@@ -110,10 +113,42 @@
       this._triggered = {};
     };
 
+    function mergeInObject(base, toAdd) {
+      if (typeof toAdd !== "object") {
+        return;
+      }
+
+      var addKeys = Object.keys(toAdd);
+      for (var idx in addKeys) {
+        var key = addKeys[idx];
+        var value = toAdd[key];
+
+        if (value === undefined || value === null) {
+          continue;
+        }
+
+        if (key in base) {
+          var oldValue = base[key];
+          if (typeof oldValue === "object" && typeof value === "object") {
+            mergeInObject(base[key], value);
+          } else {
+            base[key] = value;
+          }
+        } else {
+          base[key] = value;
+        }
+      }
+    }
+
+    Instrument.prototype._trackParameters = function(params) {
+      mergeInObject(this._currentParams, params);
+    };
+
     Instrument.prototype.toJSON = function() {
       var jsonVersion = {
         "_id": this._id,
-        "_type": this._type
+        "_type": this._type,
+        "_params": this._currentParams
       };
       return JSON.stringify(jsonVersion);
     };
