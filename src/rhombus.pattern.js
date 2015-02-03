@@ -17,14 +17,24 @@
 
       // pattern structure data
       this._noteMap = {};
-
-      // TODO: determine if length should be defined here,
-      // or in Track....
     };
 
+    // TODO: make this interface a little more sanitary...
+    //       It's a rather direct as-is
     r.Pattern.prototype = {
       addNote: function(note) {
         this._noteMap[note._id] = note;
+      },
+
+      deleteNote: function(noteId) {
+        var note = this._noteMap[noteId];
+
+        if (note === undefined)
+          return undefined;
+
+        delete this._noteMap[note._id];
+
+        return noteId;
       }
     };
 

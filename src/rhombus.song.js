@@ -34,6 +34,20 @@
         return this._artist;
       },
 
+      setLength: function(length) {
+        if (length !== undefined && length >= 480) {
+          this._length = length;
+          return length;
+        }
+        else {
+          return undefined;
+        }
+      },
+
+      getLength: function() {
+        return this._length;
+      },
+
       addPattern: function(pattern) {
         if (pattern === undefined) {
           var pattern = new r.Pattern();
@@ -46,6 +60,25 @@
         var track = new r.Track();
         this._tracks[track._id] = track;
         return track._id;
+      },
+
+      deleteTrack: function(trkId) {
+        var track = this._tracks[trkId];
+
+        if (track === undefined) {
+          return undefined;
+        }
+        else {
+          // TODO: find a more robust way to terminate playing notes
+          for (var rtNoteId in this._playingNotes) {
+            var note = this._playingNotes[rtNoteId];
+            r.Instrument.triggerRelease(note._id, 0);
+            delete this._playingNotes[rtNoteId];
+          }
+
+          delete this._tracks[trkId];
+          return trkId;
+        }
       }
     };
 
@@ -55,8 +88,6 @@
       return r.ticks2Seconds(r._song._length);
     };
 
-    // TODO: refactor to handle multiple tracks, patterns, etc.
-    //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       r._song = new Song();
       var parsed = JSON.parse(json);

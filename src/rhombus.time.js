@@ -28,13 +28,17 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of seconds to schedule ahead
-    var scheduleAhead = 0.050;
+    var scheduleAhead = 0.030;
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
     // pattern
     function scheduleNotes() {
-      var nowTicks = r.seconds2Ticks(r.getPosition());
+      // capturing the current time and position so that all scheduling actions
+      // in this time frame are on the same "page," so to speak
+      var curTime = r.getElapsedTime();
+      var curPos = r.getPosition();
+      var nowTicks = r.seconds2Ticks(curPos);
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
 
       // Determine if playback needs to loop around in this time window
@@ -43,10 +47,29 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
+      // TODO: decide to used the elapsed time since playback started,
+      //       or the context time
+      var scheduleEndTime = curTime + scheduleAhead;
+
       // Iterate over every track to find notes that can be scheduled
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
+
+        // Schedule note-offs for notes playing on the current track.
+        // Do this before schedyling note-ons to prevent back-to-back notes from
+        // interfering with each other.
+        for (var rtNoteId in playingNotes) {
+          var rtNote = playingNotes[rtNoteId];
+          var end = rtNote._end;
+
+          if (end <= scheduleEndTime) {
+            var delay = end - curTime;
+
+            r.Instrument.triggerRelease(rtNote._id, delay);
+            delete playingNotes[rtNoteId];
+          }
+        }
 
         // TODO: Find a way to determine which patterns are really schedulable,
         //       based on the current playback position
@@ -63,24 +86,18 @@
               var note = noteMap[noteId];
               var start = note.getStart();
 
-              if (start >= scheduleStart && start < scheduleEnd) {
-                var delay = r.ticks2Seconds(start) - r.getPosition();
-                r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
-                playingNotes[note._id] = note;
+              if (start >= scheduleStart && start <= scheduleEnd) {
+                var delay = r.ticks2Seconds(start) - curPos;
+
+                var startTime = curTime + delay;
+                var endTime = startTime + r.ticks2Seconds(note._length);
+
+                var rtNote = new r.RtNote(note._pitch, startTime, endTime);
+                playingNotes[rtNote._id] = rtNote;
+
+                r.Instrument.triggerAttack(rtNote._id, note.getPitch(), delay);
               }
             }
-          }
-        }
-
-        // Schedule note-offs for notes playing on the current track
-        for (var noteId in playingNotes) {
-          var note = playingNotes[noteId];
-          var end = note.getEnd();
-
-          if (end >= scheduleStart && end < scheduleEnd) {
-            var delay = r.ticks2Seconds(end) - r.getPosition();
-            r.Instrument.triggerRelease(note._id, delay);
-            delete playingNotes[noteId];
           }
         }
       }
@@ -122,23 +139,23 @@
 
     var playing = false;
     var time = 0;
+    var startTime = 0;
 
     // Loop start and end position in ticks, default is one measure
     var loopStart   = 0;
     var loopEnd     = 1920;
     var loopEnabled = false;
 
-    function resetPlayback() {
-      lastScheduled = -1;
+    function resetPlayback(resetPoint) {
+      lastScheduled = resetPoint;
 
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
-        for (var noteId in playingNotes) {
-          var note = playingNotes[noteId];
-          r.Instrument.triggerRelease(note._id, 0);
-          delete playingNotes[noteId];
+        for (var rtNoteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
         }
       }
 
@@ -156,7 +173,9 @@
 
       // Begin slightly before the start position to prevent
       // missing notes at the beginning
-      r.moveToPositionSeconds(-0.010);
+      r.moveToPositionSeconds(time);
+
+      startTime = r._ctx.currentTime;
 
       // Force the first round of scheduling
       scheduleNotes();
@@ -170,25 +189,23 @@
       }
 
       playing = false;
-
-      resetPlayback();
-
-      time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
+      resetPlayback(r.seconds2Ticks(time));
+      time = getPosition(true);
     };
 
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
-        // make sure the notes near the start of the loop aren't missed
-        r.moveToPositionTicks(loopStart - 0.001);
-        scheduleNotes();
-
-        // adjust the playback position to help mitigate timing drift
-        r.moveToPositionTicks(loopStart + tickDiff);
-
+        // Schedule notes at the beginning of the loop
+        lastScheduled = loopStart;
+        r.moveToPositionTicks(loopStart);
         scheduleNotes();
       }
+
+      // Adjust the playback position to help mitigate timing drift
+      r.moveToPositionTicks(loopStart + tickDiff);
+      scheduleNotes();
     };
 
     function getPosition(playing) {
@@ -203,6 +220,14 @@
       return getPosition(playing);
     };
 
+    r.getElapsedTime = function() {
+      return r._ctx.currentTime - startTime;
+    };
+
+    r.getElapsedTicks = function() {
+      return r.seconds2Ticks(r.getElapsedTime());
+    };
+
     r.moveToPositionTicks = function(ticks) {
       var seconds = r.ticks2Seconds(ticks);
       r.moveToPositionSeconds(seconds);
@@ -210,7 +235,7 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        resetPlayback();
+        resetPlayback(r.seconds2Ticks(seconds));
         time = seconds - r._ctx.currentTime;
       } else {
         time = seconds;
