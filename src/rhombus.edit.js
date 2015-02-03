@@ -15,7 +15,26 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r._song._patterns[ptnId]._noteMap[note._id] = note;
+      r._song._patterns[ptnId].addNote(note);
+    };
+
+    r.Edit.deleteNote = function(noteId, ptnId) {
+      r._song._patterns[ptnId].deleteNote(noteId);
+
+      // TODO: find another way to terminate deleted notes
+      //       as things stand, deleted notes will stop playing
+      //       naturally, but not when the pattern note is deleted
+      /*
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
+        }
+      }
+      */
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
@@ -30,9 +49,9 @@
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
+        if (rtNoteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
         }
       }
 
@@ -43,8 +62,9 @@
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (note === undefined)
+      if (note === undefined) {
         return;
+      }
 
       if (pitch === note.getPitch()) {
         return;
@@ -54,24 +74,30 @@
       note._pitch = pitch;
     };
 
-    r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+    // Makes a copy of the source pattern and adds it to the song's
+    // pattern set. It might be preferable to just return the copy
+    // without adding it to the song -- I dunno.
+    r.Edit.copyPattern = function(ptnId) {
+      var src = r._song._patterns[ptnId];
 
-      if (note === undefined)
-        return;
-
-      delete r._song._patterns[ptnId]._noteMap[note._id];
-
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
-        var playingNotes = track._playingNotes;
-
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
-        }
+      if (src === undefined) {
+        return undefined;
       }
-    };
 
+      var dst = new r.Pattern();
+
+      for (var noteId in src._noteMap) {
+        var srcNote = src._noteMap[noteId];
+        var dstNote = new r.Note(srcNote._pitch,
+                                 srcNote._start,
+                                 srcNote._length);
+
+        dst._noteMap[dstNote._id] = dstNote;
+      }
+
+      r._song._patterns[dst._id] = dst;
+
+      return dst._id;
+    };
   };
 })(this.Rhombus);

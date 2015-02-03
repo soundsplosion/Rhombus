@@ -18,6 +18,14 @@
       this._end = end;
     };
 
+    r.RtNote = function(pitch, start, end) {
+      r._newId(this);
+
+      this._pitch = pitch || 60;
+      this._start = start || 0;
+      this._end = end || 0;
+    };
+
     r.Track = function(id) {
       if (id) {
         r._setId(this, id);

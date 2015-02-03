@@ -599,14 +599,24 @@
 
       // pattern structure data
       this._noteMap = {};
-
-      // TODO: determine if length should be defined here,
-      // or in Track....
     };
 
+    // TODO: make this interface a little more sanitary...
+    //       It's a rather direct as-is
     r.Pattern.prototype = {
       addNote: function(note) {
         this._noteMap[note._id] = note;
+      },
+
+      deleteNote: function(noteId) {
+        var note = this._noteMap[noteId];
+
+        if (note === undefined)
+          return undefined;
+
+        delete this._noteMap[note._id];
+
+        return noteId;
       }
     };
 
@@ -660,6 +670,14 @@
       this._ptnId = ptnId;
       this._start = start;
       this._end = end;
+    };
+
+    r.RtNote = function(pitch, start, end) {
+      r._newId(this);
+
+      this._pitch = pitch || 60;
+      this._start = start || 0;
+      this._end = end || 0;
     };
 
     r.Track = function(id) {
@@ -774,6 +792,20 @@
         return this._artist;
       },
 
+      setLength: function(length) {
+        if (length !== undefined && length >= 480) {
+          this._length = length;
+          return length;
+        }
+        else {
+          return undefined;
+        }
+      },
+
+      getLength: function() {
+        return this._length;
+      },
+
       addPattern: function(pattern) {
         if (pattern === undefined) {
           var pattern = new r.Pattern();
@@ -786,6 +818,25 @@
         var track = new r.Track();
         this._tracks[track._id] = track;
         return track._id;
+      },
+
+      deleteTrack: function(trkId) {
+        var track = this._tracks[trkId];
+
+        if (track === undefined) {
+          return undefined;
+        }
+        else {
+          // TODO: find a more robust way to terminate playing notes
+          for (var rtNoteId in this._playingNotes) {
+            var note = this._playingNotes[rtNoteId];
+            r.Instrument.triggerRelease(note._id, 0);
+            delete this._playingNotes[rtNoteId];
+          }
+
+          delete this._tracks[trkId];
+          return trkId;
+        }
       }
     };
 
@@ -795,8 +846,6 @@
       return r.ticks2Seconds(r._song._length);
     };
 
-    // TODO: refactor to handle multiple tracks, patterns, etc.
-    //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       r._song = new Song();
       var parsed = JSON.parse(json);
@@ -896,13 +945,17 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of seconds to schedule ahead
-    var scheduleAhead = 0.050;
+    var scheduleAhead = 0.030;
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
     // pattern
     function scheduleNotes() {
-      var nowTicks = r.seconds2Ticks(r.getPosition());
+      // capturing the current time and position so that all scheduling actions
+      // in this time frame are on the same "page," so to speak
+      var curTime = r.getElapsedTime();
+      var curPos = r.getPosition();
+      var nowTicks = r.seconds2Ticks(curPos);
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
 
       // Determine if playback needs to loop around in this time window
@@ -911,10 +964,29 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
+      // TODO: decide to used the elapsed time since playback started,
+      //       or the context time
+      var scheduleEndTime = curTime + scheduleAhead;
+
       // Iterate over every track to find notes that can be scheduled
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
+
+        // Schedule note-offs for notes playing on the current track.
+        // Do this before schedyling note-ons to prevent back-to-back notes from
+        // interfering with each other.
+        for (var rtNoteId in playingNotes) {
+          var rtNote = playingNotes[rtNoteId];
+          var end = rtNote._end;
+
+          if (end <= scheduleEndTime) {
+            var delay = end - curTime;
+
+            r.Instrument.triggerRelease(rtNote._id, delay);
+            delete playingNotes[rtNoteId];
+          }
+        }
 
         // TODO: Find a way to determine which patterns are really schedulable,
         //       based on the current playback position
@@ -931,24 +1003,18 @@
               var note = noteMap[noteId];
               var start = note.getStart();
 
-              if (start >= scheduleStart && start < scheduleEnd) {
-                var delay = r.ticks2Seconds(start) - r.getPosition();
-                r.Instrument.triggerAttack(note._id, note.getPitch(), delay);
-                playingNotes[note._id] = note;
+              if (start >= scheduleStart && start <= scheduleEnd) {
+                var delay = r.ticks2Seconds(start) - curPos;
+
+                var startTime = curTime + delay;
+                var endTime = startTime + r.ticks2Seconds(note._length);
+
+                var rtNote = new r.RtNote(note._pitch, startTime, endTime);
+                playingNotes[rtNote._id] = rtNote;
+
+                r.Instrument.triggerAttack(rtNote._id, note.getPitch(), delay);
               }
             }
-          }
-        }
-
-        // Schedule note-offs for notes playing on the current track
-        for (var noteId in playingNotes) {
-          var note = playingNotes[noteId];
-          var end = note.getEnd();
-
-          if (end >= scheduleStart && end < scheduleEnd) {
-            var delay = r.ticks2Seconds(end) - r.getPosition();
-            r.Instrument.triggerRelease(note._id, delay);
-            delete playingNotes[noteId];
           }
         }
       }
@@ -990,23 +1056,23 @@
 
     var playing = false;
     var time = 0;
+    var startTime = 0;
 
     // Loop start and end position in ticks, default is one measure
     var loopStart   = 0;
     var loopEnd     = 1920;
     var loopEnabled = false;
 
-    function resetPlayback() {
-      lastScheduled = -1;
+    function resetPlayback(resetPoint) {
+      lastScheduled = resetPoint;
 
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
-        for (var noteId in playingNotes) {
-          var note = playingNotes[noteId];
-          r.Instrument.triggerRelease(note._id, 0);
-          delete playingNotes[noteId];
+        for (var rtNoteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
         }
       }
 
@@ -1024,7 +1090,9 @@
 
       // Begin slightly before the start position to prevent
       // missing notes at the beginning
-      r.moveToPositionSeconds(-0.010);
+      r.moveToPositionSeconds(time);
+
+      startTime = r._ctx.currentTime;
 
       // Force the first round of scheduling
       scheduleNotes();
@@ -1038,25 +1106,23 @@
       }
 
       playing = false;
-
-      resetPlayback();
-
-      time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
+      resetPlayback(r.seconds2Ticks(time));
+      time = getPosition(true);
     };
 
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
-        // make sure the notes near the start of the loop aren't missed
-        r.moveToPositionTicks(loopStart - 0.001);
-        scheduleNotes();
-
-        // adjust the playback position to help mitigate timing drift
-        r.moveToPositionTicks(loopStart + tickDiff);
-
+        // Schedule notes at the beginning of the loop
+        lastScheduled = loopStart;
+        r.moveToPositionTicks(loopStart);
         scheduleNotes();
       }
+
+      // Adjust the playback position to help mitigate timing drift
+      r.moveToPositionTicks(loopStart + tickDiff);
+      scheduleNotes();
     };
 
     function getPosition(playing) {
@@ -1071,6 +1137,14 @@
       return getPosition(playing);
     };
 
+    r.getElapsedTime = function() {
+      return r._ctx.currentTime - startTime;
+    };
+
+    r.getElapsedTicks = function() {
+      return r.seconds2Ticks(r.getElapsedTime());
+    };
+
     r.moveToPositionTicks = function(ticks) {
       var seconds = r.ticks2Seconds(ticks);
       r.moveToPositionSeconds(seconds);
@@ -1078,7 +1152,7 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        resetPlayback();
+        resetPlayback(r.seconds2Ticks(seconds));
         time = seconds - r._ctx.currentTime;
       } else {
         time = seconds;
@@ -1132,7 +1206,26 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r._song._patterns[ptnId]._noteMap[note._id] = note;
+      r._song._patterns[ptnId].addNote(note);
+    };
+
+    r.Edit.deleteNote = function(noteId, ptnId) {
+      r._song._patterns[ptnId].deleteNote(noteId);
+
+      // TODO: find another way to terminate deleted notes
+      //       as things stand, deleted notes will stop playing
+      //       naturally, but not when the pattern note is deleted
+      /*
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        if (noteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
+        }
+      }
+      */
     };
 
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
@@ -1147,9 +1240,9 @@
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
 
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
+        if (rtNoteId in playingNotes) {
+          r.Instrument.triggerRelease(rtNoteId, 0);
+          delete playingNotes[rtNoteId];
         }
       }
 
@@ -1160,8 +1253,9 @@
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (note === undefined)
+      if (note === undefined) {
         return;
+      }
 
       if (pitch === note.getPitch()) {
         return;
@@ -1171,24 +1265,30 @@
       note._pitch = pitch;
     };
 
-    r.Edit.deleteNote = function(noteId, ptnId) {
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+    // Makes a copy of the source pattern and adds it to the song's
+    // pattern set. It might be preferable to just return the copy
+    // without adding it to the song -- I dunno.
+    r.Edit.copyPattern = function(ptnId) {
+      var src = r._song._patterns[ptnId];
 
-      if (note === undefined)
-        return;
-
-      delete r._song._patterns[ptnId]._noteMap[note._id];
-
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
-        var playingNotes = track._playingNotes;
-
-        if (noteId in playingNotes) {
-          r.Instrument.triggerRelease(noteId, 0);
-          delete playingNotes[noteId];
-        }
+      if (src === undefined) {
+        return undefined;
       }
-    };
 
+      var dst = new r.Pattern();
+
+      for (var noteId in src._noteMap) {
+        var srcNote = src._noteMap[noteId];
+        var dstNote = new r.Note(srcNote._pitch,
+                                 srcNote._start,
+                                 srcNote._length);
+
+        dst._noteMap[dstNote._id] = dstNote;
+      }
+
+      r._song._patterns[dst._id] = dst;
+
+      return dst._id;
+    };
   };
 })(this.Rhombus);
