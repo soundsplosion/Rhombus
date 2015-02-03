@@ -112,12 +112,12 @@
           var note = new r.Note(noteMap[noteId]._pitch,
                                 noteMap[noteId]._start,
                                 noteMap[noteId]._length,
-                                noteId);
+                                +noteId);
 
-          newPattern._noteMap[noteId] = note;
+          newPattern._noteMap[+noteId] = note;
         }
 
-        r._song._patterns[ptnId] = newPattern;
+        r._song._patterns[+ptnId] = newPattern;
       }
 
       // TODO: tracks and instruments will need to be imported
@@ -138,15 +138,15 @@
                                            item._end,
                                            item._id)
 
-          newTrack._playlist[itemId] = newItem;
+          newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks[trkId] = newTrack;
+        r._song._tracks[+trkId] = newTrack;
       }
 
       for (var instId in instruments) {
         var inst = instruments[instId];
-        r.addInstrument(inst._type, undefined, instId);
+        r.addInstrument(inst._type, inst._params, +instId);
       }
     }
 

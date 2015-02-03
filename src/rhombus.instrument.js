@@ -34,6 +34,9 @@
       }
 
       this._type = type;
+      this._currentParams = {};
+      this._trackParams(options);
+
       var unnormalized = unnormalizedParams(options, this._type);
       Tone.PolySynth.call(this, undefined, ctr, unnormalized);
 
@@ -44,7 +47,7 @@
     Tone.extend(Instrument, Tone.PolySynth);
 
     r.addInstrument = function(type, options, id) {
-      instr = new Instrument(type, options, id);
+      var instr = new Instrument(type, options, id);
 
       if (instr === null || instr === undefined) {
         return;
@@ -61,7 +64,7 @@
       } else {
         id = +id;
       }
-      return index;
+      return id;
     }
 
     r.removeInstrument = function(instrOrId) {
@@ -109,12 +112,44 @@
       this._triggered = {};
     };
 
+    function mergeInObject(base, toAdd) {
+      if (typeof toAdd !== "object") {
+        return;
+      }
+
+      var addKeys = Object.keys(toAdd);
+      for (var idx in addKeys) {
+        var key = addKeys[idx];
+        var value = toAdd[key];
+
+        if (value === undefined || value === null) {
+          continue;
+        }
+
+        if (key in base) {
+          var oldValue = base[key];
+          if (typeof oldValue === "object" && typeof value === "object") {
+            mergeInObject(base[key], value);
+          } else {
+            base[key] = value;
+          }
+        } else {
+          base[key] = value;
+        }
+      }
+    }
+
+    Instrument.prototype._trackParams = function(params) {
+      mergeInObject(this._currentParams, params);
+    };
+
     Instrument.prototype.toJSON = function() {
       var jsonVersion = {
         "_id": this._id,
-        "_type": this._type
+        "_type": this._type,
+        "_params": this._currentParams
       };
-      return JSON.stringify(jsonVersion);
+      return jsonVersion;
     };
 
     // Common mapping styles.
@@ -310,6 +345,7 @@
     }
 
     Instrument.prototype.normalizedSet = function(params) {
+      this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
     };
