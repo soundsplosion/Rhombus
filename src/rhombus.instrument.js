@@ -35,7 +35,7 @@
 
       this._type = type;
       this._currentParams = {};
-      this._trackParameters(options);
+      this._trackParams(options);
 
       var unnormalized = unnormalizedParams(options, this._type);
       Tone.PolySynth.call(this, undefined, ctr, unnormalized);
@@ -139,7 +139,7 @@
       }
     }
 
-    Instrument.prototype._trackParameters = function(params) {
+    Instrument.prototype._trackParams = function(params) {
       mergeInObject(this._currentParams, params);
     };
 
@@ -345,6 +345,7 @@
     }
 
     Instrument.prototype.normalizedSet = function(params) {
+      this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
     };
