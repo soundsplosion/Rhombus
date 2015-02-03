@@ -41,6 +41,8 @@ ins(63, 3600, 240);
 <body>
 
 <p id="timeDisplay"></p>
+<p id="elapsedDisplay"></p>
+<p id="driftDisplay"></p>
 <p id="loopEnabled"></p>
 <button onclick="rhomb.startPlayback()">Start</button>
 <button onclick="rhomb.stopPlayback()">Stop</button>
@@ -60,15 +62,25 @@ ins(63, 3600, 240);
 
 <script>
 var timeDisplay = document.getElementById("timeDisplay");
+var elapsedDisplay = document.getElementById("elapsedDisplay");
+var driftDisplay = document.getElementById("driftDisplay");
 var loopEnabled = document.getElementById("loopEnabled");
 var wetGain = document.getElementById("wetGain");
 var feedbackGain = document.getElementById("feedbackGain");
 function updateTime() {
   var seconds = rhomb.getPosition();
   var ticks = rhomb.seconds2Ticks(seconds);
+
+  var elapsedSeconds = rhomb.getElapsedTime();
+  var elapsedTicks = rhomb.seconds2Ticks(elapsedSeconds);
+
+  var drift = (rhomb.isPlaying() && rhomb.getLoopEnabled()) ? (elapsedTicks % 1920) - ticks : 0;
+
   rhomb.setWetGain(wetGain.value/100);
   rhomb.setFeedbackGain(feedbackGain.value/100);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
+  elapsedDisplay.innerHTML = "Elapsed time: (" + elapsedTicks.toFixed(0) + " ticks, " + elapsedSeconds.toFixed(3) + " seconds)";
+  driftDisplay.innerHTML = "Drift: (" + drift.toFixed(0) + " ticks)";
   loopEnabled.innerHTML = "Loop Enabled: " + rhomb.getLoopEnabled();
   requestAnimationFrame(updateTime);
 }

@@ -43,7 +43,6 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    r._song.instruments = {};
     r.addInstrument = function(type, options, id) {
       instr = new Instrument(type, options, id);
 
@@ -51,7 +50,7 @@
         return;
       }
 
-      r._song.instruments[instr._id] = instr;
+      r._song._instruments[instr._id] = instr;
       return instr._id;
     };
 
@@ -71,7 +70,7 @@
         return;
       }
 
-      delete r._song.instruments[id];
+      delete r._song._instruments[id];
     };
 
     Instrument.prototype.triggerAttack = function(id, pitch, delay) {
@@ -317,7 +316,7 @@
 
     // HACK: these are here until proper note routing is implemented
     var instrId = r.addInstrument("mono");
-    r.Instrument = r._song.instruments[instrId];
+    r.Instrument = r._song._instruments[instrId];
     r.Instrument.normalizedSet({ volume: 0.1 });
     // HACK: end
 
@@ -335,25 +334,25 @@
     };
 
     r.startPreviewNote = function(pitch) {
-      var keys = Object.keys(r._song.instruments);
+      var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
         return;
       }
 
       if (previewNote === undefined) {
         previewNote = new Note(pitch, 0);
-        r._song.instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
+        r._song._instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
-      var keys = Object.keys(r._song.instruments);
+      var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
         return;
       }
 
       if (previewNote !== undefined) {
-        r._song.instruments[keys[0]].triggerRelease(previewNote._id, 0);
+        r._song._instruments[keys[0]].triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };

@@ -122,6 +122,7 @@
 
     var playing = false;
     var time = 0;
+    var startTime = 0;
 
     // Loop start and end position in ticks, default is one measure
     var loopStart   = 0;
@@ -156,7 +157,9 @@
 
       // Begin slightly before the start position to prevent
       // missing notes at the beginning
-      r.moveToPositionSeconds(-0.010);
+      r.moveToPositionSeconds(-0.001);
+
+      startTime = r._ctx.currentTime;
 
       // Force the first round of scheduling
       scheduleNotes();
@@ -180,8 +183,10 @@
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
+
+        // TODO: Remove this awful kludge
         // make sure the notes near the start of the loop aren't missed
-        r.moveToPositionTicks(loopStart - 0.001);
+        r.moveToPositionTicks(loopStart - 1);
         scheduleNotes();
 
         // adjust the playback position to help mitigate timing drift
@@ -201,6 +206,14 @@
 
     r.getPosition = function() {
       return getPosition(playing);
+    };
+
+    r.getElapsedTime = function() {
+      return r._ctx.currentTime - startTime;
+    };
+
+    r.getElapsedTicks = function() {
+      return r.seconds2Ticks(r.getElapsedTime());
     };
 
     r.moveToPositionTicks = function(ticks) {

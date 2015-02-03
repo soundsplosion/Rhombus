@@ -205,13 +205,18 @@
       "duo"  : duo
     };
 
-    function Instrument(type, options) {
+    // TODO: put this on the Rhombus object
+    function Instrument(type, options, id) {
       var ctr = typeMap[type];
       if (ctr === null || ctr === undefined) {
         ctr = mono;
       }
 
-      r._newId(this);
+      if (id === undefined || id === null) {
+        r._newId(this);
+      } else {
+        r._setId(this, id);
+      }
 
       this._type = type;
       var unnormalized = unnormalizedParams(options, this._type);
@@ -223,15 +228,14 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    r._song.instruments = {};
-    r.addInstrument = function(type, options) {
-      instr = new Instrument(type, options);
+    r.addInstrument = function(type, options, id) {
+      instr = new Instrument(type, options, id);
 
       if (instr === null || instr === undefined) {
         return;
       }
 
-      r._song.instruments[instr._id] = instr;
+      r._song._instruments[instr._id] = instr;
       return instr._id;
     };
 
@@ -251,7 +255,7 @@
         return;
       }
 
-      delete r._song.instruments[id];
+      delete r._song._instruments[id];
     };
 
     Instrument.prototype.triggerAttack = function(id, pitch, delay) {
@@ -288,6 +292,14 @@
       }
       Tone.PolySynth.prototype.triggerRelease.call(this, freqs);
       this._triggered = {};
+    };
+
+    Instrument.prototype.toJSON = function() {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type
+      };
+      return JSON.stringify(jsonVersion);
     };
 
     // Common mapping styles.
@@ -489,7 +501,7 @@
 
     // HACK: these are here until proper note routing is implemented
     var instrId = r.addInstrument("mono");
-    r.Instrument = r._song.instruments[instrId];
+    r.Instrument = r._song._instruments[instrId];
     r.Instrument.normalizedSet({ volume: 0.1 });
     // HACK: end
 
@@ -507,25 +519,25 @@
     };
 
     r.startPreviewNote = function(pitch) {
-      var keys = Object.keys(r._song.instruments);
+      var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
         return;
       }
 
       if (previewNote === undefined) {
         previewNote = new Note(pitch, 0);
-        r._song.instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
+        r._song._instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
-      var keys = Object.keys(r._song.instruments);
+      var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
         return;
       }
 
       if (previewNote !== undefined) {
-        r._song.instruments[keys[0]].triggerRelease(previewNote._id, 0);
+        r._song._instruments[keys[0]].triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };
@@ -551,11 +563,10 @@
 
       // pattern structure data
       this._noteMap = {};
-
-      // TODO: determine if length should be defined here,
-      // or in Track....
     };
 
+    // TODO: make this interface a little more sanitary...
+    //       It's a rather direct as-is
     r.Pattern.prototype = {
       addNote: function(note) {
         this._noteMap[note._id] = note;
@@ -793,12 +804,13 @@
 
     r.importSong = function(json) {
       r._song = new Song();
-      r._song.setTitle(JSON.parse(json)._title);
-      r._song.setArtist(JSON.parse(json)._artist);
+      var parsed = JSON.parse(json);
+      r._song.setTitle(parsed._title);
+      r._song.setArtist(parsed._artist);
 
-      var tracks      = JSON.parse(json)._tracks;
-      var patterns    = JSON.parse(json)._patterns;
-      var instruments = JSON.parse(json)._instruments;
+      var tracks      = parsed._tracks;
+      var patterns    = parsed._patterns;
+      var instruments = parsed._instruments;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -844,6 +856,11 @@
         }
 
         r._song._tracks[trkId] = newTrack;
+      }
+
+      for (var instId in instruments) {
+        var inst = instruments[instId];
+        r.addInstrument(inst._type, undefined, instId);
       }
     }
 
@@ -978,6 +995,7 @@
 
     var playing = false;
     var time = 0;
+    var startTime = 0;
 
     // Loop start and end position in ticks, default is one measure
     var loopStart   = 0;
@@ -1012,7 +1030,9 @@
 
       // Begin slightly before the start position to prevent
       // missing notes at the beginning
-      r.moveToPositionSeconds(-0.010);
+      r.moveToPositionSeconds(-0.001);
+
+      startTime = r._ctx.currentTime;
 
       // Force the first round of scheduling
       scheduleNotes();
@@ -1057,6 +1077,14 @@
 
     r.getPosition = function() {
       return getPosition(playing);
+    };
+
+    r.getElapsedTime = function() {
+      return r._ctx.currentTime - startTime;
+    };
+
+    r.getElapsedTicks = function() {
+      return r.seconds2Ticks(r.getElapsedTime());
     };
 
     r.moveToPositionTicks = function(ticks) {
@@ -1162,8 +1190,9 @@
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (note === undefined)
+      if (note === undefined) {
         return;
+      }
 
       if (pitch === note.getPitch()) {
         return;
@@ -1171,6 +1200,32 @@
 
       r.Instrument.triggerRelease(note._id, 0);
       note._pitch = pitch;
+    };
+
+    // Makes a copy of the source pattern and adds it to the song's
+    // pattern set. It might be preferable to just return the copy
+    // without adding it to the song -- I dunno.
+    r.Edit.copyPattern = function(ptnId) {
+      var src = r._song._patterns[ptnId];
+      
+      if (src === undefined) {
+        return undefined;
+      }
+
+      var dst = new r.Pattern();
+
+      for (var noteId in src._noteMap) {
+        var srcNote = src._noteMap[noteId];
+        var dstNote = new r.Note(srcNote._pitch,
+                                 srcNote._start,
+                                 srcNote._length);
+
+        dst._noteMap[dstNote._id] = dstNote;
+      }
+      
+      r._song._patterns[dst._id] = dst;
+
+      return dst._id;
     };
   };
 })(this.Rhombus);

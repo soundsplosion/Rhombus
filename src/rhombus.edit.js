@@ -57,8 +57,9 @@
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (note === undefined)
+      if (note === undefined) {
         return;
+      }
 
       if (pitch === note.getPitch()) {
         return;
@@ -66,6 +67,32 @@
 
       r.Instrument.triggerRelease(note._id, 0);
       note._pitch = pitch;
+    };
+
+    // Makes a copy of the source pattern and adds it to the song's
+    // pattern set. It might be preferable to just return the copy
+    // without adding it to the song -- I dunno.
+    r.Edit.copyPattern = function(ptnId) {
+      var src = r._song._patterns[ptnId];
+      
+      if (src === undefined) {
+        return undefined;
+      }
+
+      var dst = new r.Pattern();
+
+      for (var noteId in src._noteMap) {
+        var srcNote = src._noteMap[noteId];
+        var dstNote = new r.Note(srcNote._pitch,
+                                 srcNote._start,
+                                 srcNote._length);
+
+        dst._noteMap[dstNote._id] = dstNote;
+      }
+      
+      r._song._patterns[dst._id] = dst;
+
+      return dst._id;
     };
   };
 })(this.Rhombus);
