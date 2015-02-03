@@ -205,15 +205,23 @@
       "duo"  : duo
     };
 
-    function Instrument(type, options) {
+    // TODO: put this on the Rhombus object
+    function Instrument(type, options, id) {
       var ctr = typeMap[type];
       if (ctr === null || ctr === undefined) {
         ctr = mono;
       }
 
-      r._newId(this);
+      if (id === undefined || id === null) {
+        r._newId(this);
+      } else {
+        r._setId(this, id);
+      }
 
       this._type = type;
+      this._currentParams = {};
+      this._trackParams(options);
+
       var unnormalized = unnormalizedParams(options, this._type);
       Tone.PolySynth.call(this, undefined, ctr, unnormalized);
 
@@ -223,15 +231,14 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    r._song.instruments = {};
-    r.addInstrument = function(type, options) {
-      instr = new Instrument(type, options);
+    r.addInstrument = function(type, options, id) {
+      var instr = new Instrument(type, options, id);
 
       if (instr === null || instr === undefined) {
         return;
       }
 
-      r._song.instruments[instr._id] = instr;
+      r._song._instruments[instr._id] = instr;
       return instr._id;
     };
 
@@ -242,7 +249,7 @@
       } else {
         id = +id;
       }
-      return index;
+      return id;
     }
 
     r.removeInstrument = function(instrOrId) {
@@ -251,7 +258,7 @@
         return;
       }
 
-      delete r._song.instruments[id];
+      delete r._song._instruments[id];
     };
 
     Instrument.prototype.triggerAttack = function(id, pitch, delay) {
@@ -288,6 +295,46 @@
       }
       Tone.PolySynth.prototype.triggerRelease.call(this, freqs);
       this._triggered = {};
+    };
+
+    function mergeInObject(base, toAdd) {
+      if (typeof toAdd !== "object") {
+        return;
+      }
+
+      var addKeys = Object.keys(toAdd);
+      for (var idx in addKeys) {
+        var key = addKeys[idx];
+        var value = toAdd[key];
+
+        if (value === undefined || value === null) {
+          continue;
+        }
+
+        if (key in base) {
+          var oldValue = base[key];
+          if (typeof oldValue === "object" && typeof value === "object") {
+            mergeInObject(base[key], value);
+          } else {
+            base[key] = value;
+          }
+        } else {
+          base[key] = value;
+        }
+      }
+    }
+
+    Instrument.prototype._trackParams = function(params) {
+      mergeInObject(this._currentParams, params);
+    };
+
+    Instrument.prototype.toJSON = function() {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type,
+        "_params": this._currentParams
+      };
+      return jsonVersion;
     };
 
     // Common mapping styles.
@@ -483,13 +530,14 @@
     }
 
     Instrument.prototype.normalizedSet = function(params) {
+      this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
     };
 
     // HACK: these are here until proper note routing is implemented
     var instrId = r.addInstrument("mono");
-    r.Instrument = r._song.instruments[instrId];
+    r.Instrument = r._song._instruments[instrId];
     r.Instrument.normalizedSet({ volume: 0.1 });
     // HACK: end
 
@@ -507,25 +555,25 @@
     };
 
     r.startPreviewNote = function(pitch) {
-      var keys = Object.keys(r._song.instruments);
+      var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
         return;
       }
 
       if (previewNote === undefined) {
         previewNote = new Note(pitch, 0);
-        r._song.instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
+        r._song._instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
-      var keys = Object.keys(r._song.instruments);
+      var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
         return;
       }
 
       if (previewNote !== undefined) {
-        r._song.instruments[keys[0]].triggerRelease(previewNote._id, 0);
+        r._song._instruments[keys[0]].triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };
@@ -751,12 +799,13 @@
     //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       r._song = new Song();
-      r._song.setTitle(JSON.parse(json)._title);
-      r._song.setArtist(JSON.parse(json)._artist);
+      var parsed = JSON.parse(json);
+      r._song.setTitle(parsed._title);
+      r._song.setArtist(parsed._artist);
 
-      var tracks      = JSON.parse(json)._tracks;
-      var patterns    = JSON.parse(json)._patterns;
-      var instruments = JSON.parse(json)._instruments;
+      var tracks      = parsed._tracks;
+      var patterns    = parsed._patterns;
+      var instruments = parsed._instruments;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -772,12 +821,12 @@
           var note = new r.Note(noteMap[noteId]._pitch,
                                 noteMap[noteId]._start,
                                 noteMap[noteId]._length,
-                                noteId);
+                                +noteId);
 
-          newPattern._noteMap[noteId] = note;
+          newPattern._noteMap[+noteId] = note;
         }
 
-        r._song._patterns[ptnId] = newPattern;
+        r._song._patterns[+ptnId] = newPattern;
       }
 
       // TODO: tracks and instruments will need to be imported
@@ -798,10 +847,15 @@
                                            item._end,
                                            item._id)
 
-          newTrack._playlist[itemId] = newItem;
+          newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks[trkId] = newTrack;
+        r._song._tracks[+trkId] = newTrack;
+      }
+
+      for (var instId in instruments) {
+        var inst = instruments[instId];
+        r.addInstrument(inst._type, inst._params, +instId);
       }
     }
 

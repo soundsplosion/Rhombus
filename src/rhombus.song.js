@@ -59,12 +59,13 @@
     //       patterns, etc., need to be defined first, of course...
     r.importSong = function(json) {
       r._song = new Song();
-      r._song.setTitle(JSON.parse(json)._title);
-      r._song.setArtist(JSON.parse(json)._artist);
+      var parsed = JSON.parse(json);
+      r._song.setTitle(parsed._title);
+      r._song.setArtist(parsed._artist);
 
-      var tracks      = JSON.parse(json)._tracks;
-      var patterns    = JSON.parse(json)._patterns;
-      var instruments = JSON.parse(json)._instruments;
+      var tracks      = parsed._tracks;
+      var patterns    = parsed._patterns;
+      var instruments = parsed._instruments;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -80,12 +81,12 @@
           var note = new r.Note(noteMap[noteId]._pitch,
                                 noteMap[noteId]._start,
                                 noteMap[noteId]._length,
-                                noteId);
+                                +noteId);
 
-          newPattern._noteMap[noteId] = note;
+          newPattern._noteMap[+noteId] = note;
         }
 
-        r._song._patterns[ptnId] = newPattern;
+        r._song._patterns[+ptnId] = newPattern;
       }
 
       // TODO: tracks and instruments will need to be imported
@@ -106,10 +107,15 @@
                                            item._end,
                                            item._id)
 
-          newTrack._playlist[itemId] = newItem;
+          newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks[trkId] = newTrack;
+        r._song._tracks[+trkId] = newTrack;
+      }
+
+      for (var instId in instruments) {
+        var inst = instruments[instId];
+        r.addInstrument(inst._type, inst._params, +instId);
       }
     }
 
