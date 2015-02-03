@@ -1063,8 +1063,8 @@
     var loopEnd     = 1920;
     var loopEnabled = false;
 
-    function resetPlayback() {
-      lastScheduled = -1;
+    function resetPlayback(resetPoint) {
+      lastScheduled = resetPoint;
 
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
@@ -1090,7 +1090,7 @@
 
       // Begin slightly before the start position to prevent
       // missing notes at the beginning
-      r.moveToPositionSeconds(-0.001);
+      r.moveToPositionSeconds(time);
 
       startTime = r._ctx.currentTime;
 
@@ -1106,30 +1106,23 @@
       }
 
       playing = false;
-
-      resetPlayback();
-
-      time = getPosition(true);
       scheduleWorker.postMessage({ playing: false });
+      resetPlayback(r.seconds2Ticks(time));
+      time = getPosition(true);
     };
 
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
       if (tickDiff >= 0 && loopEnabled === true) {
-
-        // TODO: Remove this awful kludge
-        // make sure the notes near the start of the loop aren't missed
-
+        // Schedule notes at the beginning of the loop
         lastScheduled = loopStart;
-
         r.moveToPositionTicks(loopStart);
         scheduleNotes();
-
-        // adjust the playback position to help mitigate timing drift
-        r.moveToPositionTicks(loopStart + tickDiff);
-
-        scheduleNotes();
       }
+
+      // Adjust the playback position to help mitigate timing drift
+      r.moveToPositionTicks(loopStart + tickDiff);
+      scheduleNotes();
     };
 
     function getPosition(playing) {
@@ -1159,7 +1152,7 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        resetPlayback();
+        resetPlayback(r.seconds2Ticks(seconds));
         time = seconds - r._ctx.currentTime;
       } else {
         time = seconds;
