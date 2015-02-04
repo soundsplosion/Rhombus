@@ -18,7 +18,7 @@
         "}\n" +
         "function triggerSchedule() {\n" +
         "  postMessage(0);\n" +
-        "  scheduleId = setTimeout(triggerSchedule, 10);\n" +
+        "  scheduleId = setTimeout(triggerSchedule, 5);\n" +
         "}\n";
       var blob = new Blob([code], {type: "application/javascript"});
       return new Worker(URL.createObjectURL(blob));
@@ -28,12 +28,13 @@
     scheduleWorker.onmessage = scheduleNotes;
 
     // Number of seconds to schedule ahead
-    var scheduleAhead = 0.030;
+    var scheduleAhead = 0.050;
     var lastScheduled = -1;
 
     // TODO: scheduling needs to happen relative to that start time of the
     // pattern
     function scheduleNotes() {
+
       // capturing the current time and position so that all scheduling actions
       // in this time frame are on the same "page," so to speak
       var curTime = r.getElapsedTime();
@@ -57,7 +58,7 @@
         var playingNotes = track._playingNotes;
 
         // Schedule note-offs for notes playing on the current track.
-        // Do this before schedyling note-ons to prevent back-to-back notes from
+        // Do this before scheduling note-ons to prevent back-to-back notes from
         // interfering with each other.
         for (var rtNoteId in playingNotes) {
           var rtNote = playingNotes[rtNoteId];
@@ -65,7 +66,6 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-
             r.Instrument.triggerRelease(rtNote._id, delay);
             delete playingNotes[rtNoteId];
           }
@@ -78,7 +78,7 @@
           var noteMap = r._song._patterns[ptnId]._noteMap;
 
           // TODO: Handle note start and end times relative to the start of
-          //       the originating pattern
+          //       the originating playlist item
 
           // TODO: find a more efficient way to determine which notes to play
           if (r.isPlaying()) {
@@ -149,6 +149,8 @@
     function resetPlayback(resetPoint) {
       lastScheduled = resetPoint;
 
+      scheduleWorker.postMessage({ playing: false });
+
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
@@ -158,6 +160,8 @@
           delete playingNotes[rtNoteId];
         }
       }
+
+      scheduleWorker.postMessage({ playing: true });
     }
 
     r.startPlayback = function() {
@@ -192,9 +196,16 @@
 
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
+
+      if (tickDiff > 0) {
+        console.log("[Rhomb] Loopback missed loop start by " + tickDiff + " ticks");
+        resetPlayback(loopStart);
+        r.moveToPositionTicks(loopStart);
+      }
+
       resetPlayback(loopStart + tickDiff);
       r.moveToPositionTicks(loopStart + tickDiff);
-      scheduleNotes();      
+      scheduleNotes();
     };
 
     function getPosition(playing) {
