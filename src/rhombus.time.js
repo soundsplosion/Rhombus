@@ -192,18 +192,9 @@
 
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
-      if (tickDiff >= 0) {
-        // Schedule notes at the beginning of the loop
-        lastScheduled = loopStart;
-        r.moveToPositionTicks(loopStart);
-        scheduleNotes();
-      }
-      else {
-        // Adjust the playback position to help mitigate timing drift
-        lastScheduled = loopStart + tickDiff;
-        r.moveToPositionTicks(loopStart + tickDiff);
-        scheduleNotes();
-      }
+      resetPlayback(loopStart + tickDiff);
+      r.moveToPositionTicks(loopStart + tickDiff);
+      scheduleNotes();      
     };
 
     function getPosition(playing) {
