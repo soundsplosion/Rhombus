@@ -992,16 +992,14 @@
         //       based on the current playback position
         for (var playlistId in track._playlist) {
           var ptnId   = track._playlist[playlistId]._ptnId;
+          var offset  = track._playlist[playlistId]._start;
           var noteMap = r._song._patterns[ptnId]._noteMap;
-
-          // TODO: Handle note start and end times relative to the start of
-          //       the originating playlist item
 
           // TODO: find a more efficient way to determine which notes to play
           if (r.isPlaying()) {
             for (var noteId in noteMap) {
               var note = noteMap[noteId];
-              var start = note.getStart();
+              var start = note.getStart() + offset;
 
               if (start >= scheduleStart && start < scheduleEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
