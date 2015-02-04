@@ -86,7 +86,7 @@
               var note = noteMap[noteId];
               var start = note.getStart();
 
-              if (start >= scheduleStart && start <= scheduleEnd) {
+              if (start >= scheduleStart && start < scheduleEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
 
                 var startTime = curTime + delay;
@@ -158,8 +158,6 @@
           delete playingNotes[rtNoteId];
         }
       }
-
-      r.Instrument.killAllNotes();
     }
 
     r.startPlayback = function() {
@@ -167,19 +165,17 @@
         return;
       }
 
+      // Flush any notes that might be lingering
+      resetPlayback(r.seconds2Ticks(time));
+
       playing = true;
-
-      // TODO: song start position needs to be defined somewhere
-
-      // Begin slightly before the start position to prevent
-      // missing notes at the beginning
       r.moveToPositionSeconds(time);
-
       startTime = r._ctx.currentTime;
 
       // Force the first round of scheduling
       scheduleNotes();
 
+      // Restart the worker
       scheduleWorker.postMessage({ playing: true });
     };
 
@@ -196,16 +192,18 @@
 
     r.loopPlayback = function (nowTicks) {
       var tickDiff = nowTicks - loopEnd;
-      if (tickDiff >= 0 && loopEnabled === true) {
+      if (tickDiff >= 0) {
         // Schedule notes at the beginning of the loop
         lastScheduled = loopStart;
         r.moveToPositionTicks(loopStart);
         scheduleNotes();
       }
-
-      // Adjust the playback position to help mitigate timing drift
-      r.moveToPositionTicks(loopStart + tickDiff);
-      scheduleNotes();
+      else {
+        // Adjust the playback position to help mitigate timing drift
+        lastScheduled = loopStart + tickDiff;
+        r.moveToPositionTicks(loopStart + tickDiff);
+        scheduleNotes();
+      }
     };
 
     function getPosition(playing) {
@@ -235,7 +233,6 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        resetPlayback(r.seconds2Ticks(seconds));
         time = seconds - r._ctx.currentTime;
       } else {
         time = seconds;
