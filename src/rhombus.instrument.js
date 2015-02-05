@@ -24,6 +24,7 @@
     function Instrument(type, options, id) {
       var ctr = typeMap[type];
       if (ctr === null || ctr === undefined) {
+        type = "mono";
         ctr = mono;
       }
 
