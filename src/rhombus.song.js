@@ -15,6 +15,8 @@
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
+
+      this._curId = 0;
     };
 
     Song.prototype = {
@@ -149,9 +151,19 @@
         var inst = instruments[instId];
         r.addInstrument(inst._type, inst._params, +instId);
       }
-    }
+
+      // restore curId
+      var curId;
+      if (parsed._curId === undefined) {
+        console.log("[Rhomb Import] curId not found -- beware");
+      }
+      else {
+        r.setCurId(parsed._curId);
+      }
+    };
 
     r.exportSong = function() {
+      r._song._curId = r.getCurId();
       return JSON.stringify(r._song);
     };
 

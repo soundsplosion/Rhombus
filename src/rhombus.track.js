@@ -19,8 +19,7 @@
     };
 
     r.RtNote = function(pitch, start, end) {
-      r._newId(this);
-
+      r._newRtId(this);
       this._pitch = pitch || 60;
       this._start = start || 0;
       this._end = end || 0;

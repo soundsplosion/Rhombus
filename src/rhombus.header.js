@@ -34,6 +34,18 @@
       }
     };
 
+
+    // This run-time ID is used for IDs that don't need to be exported/imported
+    // with the song (e.g., RtNotes)
+    var rtId = 0;
+    this._newRtId = function(t) {
+      Object.defineProperty(t, '_id', {
+        value: rtId,
+        enumerable: true
+      });
+      rtId = rtId + 1;
+    };
+
     var curId = 0;
     this._setId = function(t, id) {
       if (id >= curId) {
@@ -48,6 +60,14 @@
 
     this._newId = function(t) {
       this._setId(t, curId);
+    };
+
+    this.setCurId = function(id) {
+      curId = id;
+    };
+
+    this.getCurId = function() {
+      return curId;
     };
 
     root.Rhombus._graphSetup(this);
