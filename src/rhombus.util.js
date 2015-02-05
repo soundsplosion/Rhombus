@@ -110,4 +110,37 @@
     }
   }
 
+  Rhombus._map.unnormalizedParams = function(params, type, globalMaps, unnormalizeMaps) {
+    if (params === undefined || params === null ||
+        typeof(params) !== "object") {
+      return params;
+    }
+
+    function unnormalized(obj, thisLevelMap) {
+      var returnObj = {};
+      var keys = Object.keys(obj);
+      for (var idx in keys) {
+        var key = keys[idx];
+        var value = obj[key];
+        if (typeof(value) === "object") {
+          var nextLevelMap = thisLevelMap[key];
+          returnObj[key] = unnormalized(value, nextLevelMap);
+        } else {
+          var globalXformer = globalMaps[key];
+          var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key] : undefined;
+          if (globalXformer !== undefined) {
+            returnObj[key] = globalXformer(value);
+          } else if (ctrXformer !== undefined) {
+            returnObj[key] = ctrXformer(value);
+          } else {
+            returnObj[key] = value;
+          }
+        }
+      }
+      return returnObj;
+    }
+
+    return unnormalized(params, unnormalizeMaps[type]);
+  };
+
 })(this.Rhombus);
