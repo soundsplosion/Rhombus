@@ -598,12 +598,23 @@
       this._name = "Default Pattern Name";
 
       // pattern structure data
+      this._length = 1920;
       this._noteMap = {};
     };
 
     // TODO: make this interface a little more sanitary...
     //       It's a rather direct as-is
     r.Pattern.prototype = {
+
+      getLength: function() {
+        return this._length;
+      },
+
+      setLength: function(length) {
+        if (length !== undefined && length >= 0)
+          this._length = length;
+      },
+
       addNote: function(note) {
         this._noteMap[note._id] = note;
       },
@@ -863,6 +874,7 @@
         var newPattern = new r.Pattern(pattern._id);
 
         newPattern._name = pattern._name;
+        newPattern._length = pattern._length;
 
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier

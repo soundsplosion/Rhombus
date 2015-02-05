@@ -105,6 +105,7 @@
         var newPattern = new r.Pattern(pattern._id);
 
         newPattern._name = pattern._name;
+        newPattern._length = pattern._length;
 
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
