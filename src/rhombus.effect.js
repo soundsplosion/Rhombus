@@ -28,13 +28,17 @@
       eff._type = type;
       eff._currentParams = {};
       eff._trackParams(options);
+
+      return eff;
     }
 
     function installFunctions(eff) {
-      eff.set
+      eff.normalizedSet = normalizedSet;
+      eff.toJSON = toJSON;
+      eff._trackParams = trackParams;
     }
 
-    r.addEffect(type, options, id) {
+    r.addEffect = function(type, options, id) {
       var effect = makeEffect(type, options, id);
 
       if (effect === null || effect === undefined) {
@@ -64,9 +68,13 @@
       delete r._song._effects[id];
     }
 
-    
+    var globalMaps = {
+      "dry" : Rhombus._map.mapIdentity,
+      "wet" : Rhombus._map.mapIdentity
+    };
+
     var unnormalizeMaps = {
-      "dry" : mapIdentity,
+      // TODO: put this here
     };
 
     function unnormalizedParams(params, type) {
@@ -85,8 +93,11 @@
             var nextLevelMap = thisLevelMap[key];
             returnObj[key] = unnormalized(value, nextLevelMap);
           } else {
+            var globalXformer = globalMaps[key];
             var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key] : undefined;
-            if (ctrXformer !== undefined) {
+            if (globalXformer !== undefined) {
+              returnObj[key] = globalXformer(value);
+            } else if (ctrXformer !== undefined) {
               returnObj[key] = ctrXformer(value);
             } else {
               returnObj[key] = value;
@@ -103,6 +114,19 @@
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
+    }
+
+    function toJSON(params) {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type,
+        "_params": this._currentParams
+      };
+      return jsonVersion;
+    }
+
+    function trackParams(params) {
+      Rhombus._map.mergeInObject(this._currentParams, params);
     }
 
   };
