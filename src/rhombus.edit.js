@@ -45,6 +45,8 @@
 
       var curTicks = r.seconds2Ticks(r.getPosition());
 
+      // TODO: See note in deleteNote()
+      /*
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
@@ -54,6 +56,7 @@
           delete playingNotes[rtNoteId];
         }
       }
+      */
 
       note._start = start;
       note._length = length;
