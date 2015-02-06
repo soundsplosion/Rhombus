@@ -133,6 +133,16 @@
           delete this._playlist[itemId.toString()];
 
         return itemId;
+      },
+
+      toJSON: function() {
+        // Don't include "_playingNotes"
+        var toReturn = {};
+        toReturn._id = this._id;
+        toReturn._name = this._name;
+        toReturn._targets = this._targets;
+        toReturn._playlist = this._playlist;
+        return toReturn;
       }
     };
   };

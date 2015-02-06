@@ -100,7 +100,7 @@
       if (key in base) {
         var oldValue = base[key];
         if (typeof oldValue === "object" && typeof value === "object") {
-          mergeInObject(base[key], value);
+          Rhombus._map.mergeInObject(base[key], value);
         } else {
           base[key] = value;
         }
@@ -110,7 +110,22 @@
     }
   }
 
-  Rhombus._map.unnormalizedParams = function(params, type, globalMaps, unnormalizeMaps) {
+  Rhombus._map.subtreeCount = function(obj) {
+    var count = 0;
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (typeof value === "object") {
+        count += Rhombus._map.subtreeCount(value);
+      } else {
+        count += 1;
+      }
+    }
+    return count;
+  };
+
+  Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
     if (params === undefined || params === null ||
         typeof(params) !== "object") {
       return params;
@@ -126,11 +141,8 @@
           var nextLevelMap = thisLevelMap[key];
           returnObj[key] = unnormalized(value, nextLevelMap);
         } else {
-          var globalXformer = globalMaps[key];
           var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key] : undefined;
-          if (globalXformer !== undefined) {
-            returnObj[key] = globalXformer(value);
-          } else if (ctrXformer !== undefined) {
+          if (ctrXformer !== undefined) {
             returnObj[key] = ctrXformer(value);
           } else {
             returnObj[key] = value;
@@ -142,5 +154,52 @@
 
     return unnormalized(params, unnormalizeMaps[type]);
   };
+
+  Rhombus._map.generateSetObject = function(obj, leftToCount, paramValue) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (typeof value === "object") {
+        var generated = Rhombus._map.generateSetObject(value, leftToCount, paramValue);
+        if (typeof generated === "object") {
+          var toRet = {};
+          toRet[key] = generated;
+          return toRet;
+        } else {
+          leftToCount = generated;
+        }
+      } else if (leftToCount === 0) {
+        var toRet = {};
+        toRet[key] = paramValue;
+        return toRet;
+      } else {
+        leftToCount -= 1;
+      }
+    }
+    return leftToCount;
+  };
+
+  Rhombus._map.getParameterName = function(obj, leftToCount) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (typeof value === "object") {
+        var name = Rhombus._map.getParameterName(value, leftToCount);
+        if (typeof name === "string") {
+          return key + ":" + name;
+        } else {
+          leftToCount = name;
+        }
+      } else if (leftToCount === 0) {
+        return key;
+      } else {
+        leftToCount -= 1;
+      }
+    }
+    return leftToCount;
+  };
+
 
 })(this.Rhombus);
