@@ -15,6 +15,7 @@
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
+      this._effects = {};
     };
 
     Song.prototype = {
@@ -97,6 +98,7 @@
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
       var instruments = parsed._instruments;
+      var effects     = parsed._effects;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -148,6 +150,11 @@
       for (var instId in instruments) {
         var inst = instruments[instId];
         r.addInstrument(inst._type, inst._params, +instId);
+      }
+
+      for (var effId in effects) {
+        var eff = effects[effId];
+        r.addEffect(eff._type, eff._params, +effId);
       }
     }
 
