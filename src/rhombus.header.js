@@ -75,6 +75,7 @@
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._instrumentSetup(this);
+    root.Rhombus._effectSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
   };

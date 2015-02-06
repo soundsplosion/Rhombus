@@ -15,6 +15,7 @@
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
+      this._effects = {};
 
       this._curId = 0;
     };
@@ -99,6 +100,7 @@
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
       var instruments = parsed._instruments;
+      var effects     = parsed._effects;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -159,6 +161,11 @@
       }
       else {
         r.setCurId(parsed._curId);
+      }
+
+      for (var effId in effects) {
+        var eff = effects[effId];
+        r.addEffect(eff._type, eff._params, +effId);
       }
     };
 

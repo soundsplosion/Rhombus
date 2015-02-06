@@ -75,6 +75,7 @@
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._instrumentSetup(this);
+    root.Rhombus._effectSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
   };
@@ -102,6 +103,129 @@
   Rhombus.Util.noteNum2Freq = function(noteNum) {
     return table[noteNum];
   }
+
+  Rhombus._map = {};
+
+  // Common mapping styles.
+  // mapIdentity: maps x to x.
+  Rhombus._map.mapIdentity = function(x) {
+    return x;
+  }
+  // mapLinear(x, y): maps [0,1] linearly to [x,y].
+  Rhombus._map.mapLinear = function(x, y) {
+    function mapper(t) {
+      return x + t*(y-x);
+    }
+    return mapper;
+  }
+  // mapExp(x, y): maps [0,1] exponentially to [x,y].
+  // x, y should both be strictly positive.
+  Rhombus._map.mapExp = function(x, y) {
+    var c0 = x;
+    var c1 = Math.log(y / x);
+    function mapper(t) {
+      return c0*Math.exp(c1*t);
+    }
+    return mapper;
+  }
+  // mapLog(x, y): maps [0,1] logarithmically to [x,y].
+  // Really, it maps [smallvalue, 1] logarithmically to [x,y]
+  // because log functions aren't defined at 0.
+  Rhombus._map.mapLog = function(x, y) {
+    var threshold = 0.0001;
+    var logc1, c1, c0;
+    if (y === 0) {
+      c1 = 1;
+      c0 = x / Math.log(threshold);
+    } else {
+      logc1 = Math.log(threshold) / ((x/y) - 1);
+      c1 = Math.exp(logc1);
+      c0 = y / logc1;
+    }
+
+    function mapper(t) {
+      if (t < threshold) {
+        t = threshold;
+      }
+      return c0*Math.log(c1*t);
+    }
+    return mapper;
+  }
+  // mapDiscrete(arg1, ...): divides [0,1] into equal-sized
+  // boxes, with each box mapping to an argument.
+  Rhombus._map.mapDiscrete = function() {
+    var maxIdx = arguments.length-1;
+    var binSize = 1.0 / arguments.length;
+    var args = arguments;
+    function mapper(t) {
+      var idx = Math.floor(t / binSize);
+      if (idx >= maxIdx) {
+        idx = maxIdx;
+      }
+      return args[idx];
+    }
+    return mapper;
+  }
+
+  Rhombus._map.mergeInObject = function(base, toAdd) {
+    if (typeof toAdd !== "object") {
+      return;
+    }
+
+    var addKeys = Object.keys(toAdd);
+    for (var idx in addKeys) {
+      var key = addKeys[idx];
+      var value = toAdd[key];
+
+      if (value === undefined || value === null) {
+        continue;
+      }
+
+      if (key in base) {
+        var oldValue = base[key];
+        if (typeof oldValue === "object" && typeof value === "object") {
+          mergeInObject(base[key], value);
+        } else {
+          base[key] = value;
+        }
+      } else {
+        base[key] = value;
+      }
+    }
+  }
+
+  Rhombus._map.unnormalizedParams = function(params, type, globalMaps, unnormalizeMaps) {
+    if (params === undefined || params === null ||
+        typeof(params) !== "object") {
+      return params;
+    }
+
+    function unnormalized(obj, thisLevelMap) {
+      var returnObj = {};
+      var keys = Object.keys(obj);
+      for (var idx in keys) {
+        var key = keys[idx];
+        var value = obj[key];
+        if (typeof(value) === "object") {
+          var nextLevelMap = thisLevelMap[key];
+          returnObj[key] = unnormalized(value, nextLevelMap);
+        } else {
+          var globalXformer = globalMaps[key];
+          var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key] : undefined;
+          if (globalXformer !== undefined) {
+            returnObj[key] = globalXformer(value);
+          } else if (ctrXformer !== undefined) {
+            returnObj[key] = ctrXformer(value);
+          } else {
+            returnObj[key] = value;
+          }
+        }
+      }
+      return returnObj;
+    }
+
+    return unnormalized(params, unnormalizeMaps[type]);
+  };
 
 })(this.Rhombus);
 
@@ -229,6 +353,7 @@
     function Instrument(type, options, id) {
       var ctr = typeMap[type];
       if (ctr === null || ctr === undefined) {
+        type = "mono";
         ctr = mono;
       }
 
@@ -317,35 +442,8 @@
       this._triggered = {};
     };
 
-    function mergeInObject(base, toAdd) {
-      if (typeof toAdd !== "object") {
-        return;
-      }
-
-      var addKeys = Object.keys(toAdd);
-      for (var idx in addKeys) {
-        var key = addKeys[idx];
-        var value = toAdd[key];
-
-        if (value === undefined || value === null) {
-          continue;
-        }
-
-        if (key in base) {
-          var oldValue = base[key];
-          if (typeof oldValue === "object" && typeof value === "object") {
-            mergeInObject(base[key], value);
-          } else {
-            base[key] = value;
-          }
-        } else {
-          base[key] = value;
-        }
-      }
-    }
-
     Instrument.prototype._trackParams = function(params) {
-      mergeInObject(this._currentParams, params);
+      Rhombus._map.mergeInObject(this._currentParams, params);
     };
 
     Instrument.prototype.toJSON = function() {
@@ -357,74 +455,13 @@
       return jsonVersion;
     };
 
-    // Common mapping styles.
-    // mapIdentity: maps x to x.
-    function mapIdentity(x) {
-      return x;
-    }
-    // mapLinear(x, y): maps [0,1] linearly to [x,y].
-    function mapLinear(x, y) {
-      function mapper(t) {
-        return x + t*(y-x);
-      }
-      return mapper;
-    }
-    // mapExp(x, y): maps [0,1] exponentially to [x,y].
-    // x, y should both be strictly positive.
-    function mapExp(x, y) {
-      var c0 = x;
-      var c1 = Math.log(y / x);
-      function mapper(t) {
-        return c0*Math.exp(c1*t);
-      }
-      return mapper;
-    }
-    // mapLog(x, y): maps [0,1] logarithmically to [x,y].
-    // Really, it maps [smallvalue, 1] logarithmically to [x,y]
-    // because log functions aren't defined at 0.
-    function mapLog(x, y) {
-      var threshold = 0.0001;
-      var logc1, c1, c0;
-      if (y === 0) {
-        c1 = 1;
-        c0 = x / Math.log(threshold);
-      } else {
-        logc1 = Math.log(threshold) / ((x/y) - 1);
-        c1 = Math.exp(logc1);
-        c0 = y / logc1;
-      }
-
-      function mapper(t) {
-        if (t < threshold) {
-          t = threshold;
-        }
-        return c0*Math.log(c1*t);
-      }
-      return mapper;
-    }
-    // mapDiscrete(arg1, ...): divides [0,1] into equal-sized
-    // boxes, with each box mapping to an argument.
-    function mapDiscrete() {
-      var maxIdx = arguments.length-1;
-      var binSize = 1.0 / arguments.length;
-      var args = arguments;
-      function mapper(t) {
-        var idx = Math.floor(t / binSize);
-        if (idx >= maxIdx) {
-          idx = maxIdx;
-        }
-        return args[idx];
-      }
-      return mapper;
-    }
-
     // Frequently used mappings.
     // TODO: fix envelope function mappings
-    var timeMapFn = mapExp(0.0001, 60);
-    var freqMapFn = mapExp(1, 22100);
-    var lowFreqMapFn = mapExp(1, 100);
-    var exponentMapFn = mapExp(0.01, 10);
-    var harmMapFn = mapLinear(-1000, 1000);
+    var timeMapFn = Rhombus._map.mapExp(0.0001, 60);
+    var freqMapFn = Rhombus._map.mapExp(1, 22100);
+    var lowFreqMapFn = Rhombus._map.mapExp(1, 100);
+    var exponentMapFn = Rhombus._map.mapExp(0.01, 10);
+    var harmMapFn = Rhombus._map.mapLinear(-1000, 1000);
 
     var envelopeMap = {
       "attack" : timeMapFn,
@@ -435,14 +472,14 @@
     };
 
     var filterMap = {
-      "type" : mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
+      "type" : Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
                            "highshelp", "peaking", "notch", "allpass"),
       "frequency" : freqMapFn,
-      "rolloff" : mapDiscrete(-12, -24, -48),
+      "rolloff" : Rhombus._map.mapDiscrete(-12, -24, -48),
       // TODO: verify this is good
-      "Q" : mapLinear(1, 15),
+      "Q" : Rhombus._map.mapLinear(1, 15),
       // TODO: verify this is good
-      "gain" : mapIdentity
+      "gain" : Rhombus._map.mapIdentity
     };
 
     var filterEnvelopeMap = {
@@ -459,14 +496,14 @@
     // These mappings apply to all instruments
     // at any level in a params object.
     var globalMaps = {
-      "portamento" : mapLinear(0, 10),
+      "portamento" : Rhombus._map.mapLinear(0, 10),
       // TODO: verify this is good
-      "volume" : mapLog(-96.32, 0)
+      "volume" : Rhombus._map.mapLog(-96.32, 0)
     };
 
     var monoSynthMap = {
       "oscillator" : {
-        "type" : mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm")
+        "type" : Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm")
       },
       "envelope" : envelopeMap,
       "filter" : filterMap,
@@ -488,14 +525,14 @@
         // TODO: verify this is good
         "harmonicity" : harmMapFn,
         // TODO: verify this is good
-        "modulationIndex" : mapLinear(-5, 5),
+        "modulationIndex" : Rhombus._map.mapLinear(-5, 5),
         "carrier" : monoSynthMap,
         "modulator" : monoSynthMap
       },
 
       "noise" : {
         "noise" : {
-          "type" : mapDiscrete("white", "pink", "brown")
+          "type" : Rhombus._map.mapDiscrete("white", "pink", "brown")
         },
         "envelope" : envelopeMap,
         "filter" : filterMap,
@@ -507,7 +544,7 @@
       },
 
       "duo" : {
-        "vibratoAmount" : mapLinear(0, 20),
+        "vibratoAmount" : Rhombus._map.mapLinear(0, 20),
         "vibratoRate" : freqMapFn,
         "vibratoDelay" : timeMapFn,
         "harmonicity" : harmMapFn,
@@ -517,36 +554,7 @@
     };
 
     function unnormalizedParams(params, type) {
-      if (params === undefined || params === null ||
-          typeof(params) !== "object") {
-        return params;
-      }
-
-      function unnormalized(obj, thisLevelMap) {
-        var returnObj = {};
-        var keys = Object.keys(obj);
-        for (var idx in keys) {
-          var key = keys[idx];
-          var value = obj[key];
-          if (typeof(value) === "object") {
-            var nextLevelMap = thisLevelMap[key];
-            returnObj[key] = unnormalized(value, nextLevelMap);
-          } else {
-            var globalXformer = globalMaps[key];
-            var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key] : undefined;
-            if (globalXformer !== undefined) {
-              returnObj[key] = globalXformer(value);
-            } else if (ctrXformer !== undefined) {
-              returnObj[key] = ctrXformer(value);
-            } else {
-              returnObj[key] = value;
-            }
-          }
-        }
-        return returnObj;
-      }
-
-      return unnormalized(params, unnormalizeMaps[type]);
+      return Rhombus._map.unnormalizedParams(params, type, globalMaps, unnormalizeMaps);
     }
 
     Instrument.prototype.normalizedSet = function(params) {
@@ -597,6 +605,111 @@
         previewNote = undefined;
       }
     };
+  };
+})(this.Rhombus);
+
+//! rhombus.effect.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+(function (Rhombus) {
+  Rhombus._effectSetup = function(r) {
+
+    var dist = Tone.Distortion;
+    var typeMap = {
+      "dist": dist
+    };
+
+    function makeEffect(type, options, id) {
+      var ctr = typeMap[type];
+      if (ctr === null || ctr === undefined) {
+        type = "dist";
+        ctr = dist;
+      }
+
+      var unnormalized = unnormalizedParams(options, type);
+      var eff = new ctr(unnormalized);
+      if (id === undefined || id === null) {
+        r._newId(eff);
+      } else {
+        r._setId(eff, id);
+      }
+
+      installFunctions(eff);
+      eff._type = type;
+      eff._currentParams = {};
+      eff._trackParams(options);
+
+      return eff;
+    }
+
+    function installFunctions(eff) {
+      eff.normalizedSet = normalizedSet;
+      eff.toJSON = toJSON;
+      eff._trackParams = trackParams;
+    }
+
+    r.addEffect = function(type, options, id) {
+      var effect = makeEffect(type, options, id);
+
+      if (effect === null || effect === undefined) {
+        return;
+      }
+
+      r._song._effects[effect._id] = effect;
+      return effect._id;
+    }
+
+    function inToId(effectOrId) {
+      var id;
+      if (typeof effectOrId === "object") {
+        id = effectOrId._id;
+      } else {
+        id = +id;
+      }
+      return id;
+    }
+
+    r.removeEffect = function(effectOrId) {
+      var id = inToId(effectOrId);
+      if (id < 0) {
+        return;
+      }
+
+      delete r._song._effects[id];
+    }
+
+    var globalMaps = {
+      "dry" : Rhombus._map.mapIdentity,
+      "wet" : Rhombus._map.mapIdentity
+    };
+
+    var unnormalizeMaps = {
+      // TODO: put this here
+    };
+
+    function unnormalizedParams(params, type) {
+      return Rhombus._map.unnormalizedParams(params, type, globalMaps, unnormalizeMaps);
+    }
+
+    function normalizedSet(params) {
+      this._trackParams(params);
+      var unnormalized = unnormalizedParams(params, this._type);
+      this.set(unnormalized);
+    }
+
+    function toJSON(params) {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type,
+        "_params": this._currentParams
+      };
+      return jsonVersion;
+    }
+
+    function trackParams(params) {
+      Rhombus._map.mergeInObject(this._currentParams, params);
+    }
+
   };
 })(this.Rhombus);
 
@@ -709,7 +822,7 @@
         if (typeof start === 'undefined') {
           return undefined;
         }
-        
+
         var startVal = parseInt(start);
         if (startVal < 0) {
           return undefined;
@@ -720,13 +833,13 @@
 
       getStart: function() {
         return this._start;
-      },      
+      },
 
       setLength: function(length) {
         if (typeof length === 'undefined') {
           return undefined;
         }
-        
+
         var lenVal = parseInt(length);
         if (lenVal < 0) {
           return undefined;
@@ -840,6 +953,7 @@
       this._tracks = {};
       this._patterns = {};
       this._instruments = {};
+      this._effects = {};
 
       this._curId = 0;
     };
@@ -924,6 +1038,7 @@
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
       var instruments = parsed._instruments;
+      var effects     = parsed._effects;
 
       for (var ptnId in patterns) {
         var pattern = patterns[ptnId];
@@ -984,6 +1099,11 @@
       }
       else {
         r.setCurId(parsed._curId);
+      }
+
+      for (var effId in effects) {
+        var eff = effects[effId];
+        r.addEffect(eff._type, eff._params, +effId);
       }
     };
 
