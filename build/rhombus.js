@@ -195,6 +195,21 @@
     }
   }
 
+  Rhombus._map.subtreeCount = function(obj) {
+    var count = 0;
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (typeof value === "object") {
+        count += Rhombus._map.subtreeCount(value);
+      } else {
+        count += 1;
+      }
+    }
+    return count;
+  };
+
   Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
     if (params === undefined || params === null ||
         typeof(params) !== "object") {
@@ -617,22 +632,7 @@
 
     // Parameter list interface
     Instrument.prototype.parameterCount = function() {
-      function subtreeCount(obj) {
-        var count = 0;
-        var keys = Object.keys(obj);
-        for (var keyIdx in keys) {
-          var key = keys[keyIdx];
-          var value = obj[key];
-          if (typeof value === "object") {
-            count += subtreeCount(value);
-          } else {
-            count += 1;
-          }
-        }
-        return count;
-      }
-
-      return subtreeCount(unnormalizeMaps[this._type]);
+      return Rhombus._map.subtreeCount(unnormalizeMaps[this._type]);
     };
 
     Instrument.prototype.parameterName = function(paramIdx) {
@@ -693,9 +693,6 @@
         previewNote = undefined;
       }
     };
-
-
-
   };
 })(this.Rhombus);
 
@@ -735,6 +732,9 @@
     }
 
     function installFunctions(eff) {
+      eff.normalizedObjectSet = normalizedObjectSet;
+      eff.parameterCount = parameterCount;
+      eff.parameterName = parameterName;
       eff.normalizedSet = normalizedSet;
       eff.toJSON = toJSON;
       eff._trackParams = trackParams;
@@ -770,6 +770,16 @@
       delete r._song._effects[id];
     }
 
+    function toJSON(params) {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type,
+        "_params": this._currentParams
+      };
+      return jsonVersion;
+    }
+
+    // Parameter stuff
     var unnormalizeMaps = {
       "dist" : {
         "dry" : Rhombus._map.mapIdentity,
@@ -782,19 +792,31 @@
       return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
     }
 
-    function normalizedSet(params) {
+    function normalizedObjectSet(params) {
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
     }
 
-    function toJSON(params) {
-      var jsonVersion = {
-        "_id": this._id,
-        "_type": this._type,
-        "_params": this._currentParams
-      };
-      return jsonVersion;
+    // Parameter list interface
+    function parameterCount() {
+      return Rhombus._map.subtreeCount(unnormalizeMaps[this._type]);
+    }
+
+    function parameterName(paramIdx) {
+      var name = Rhombus._map.getParameterName(unnormalizeMaps[this._type], paramIdx);
+      if (typeof name !== "string") {
+        return;
+      }
+      return name;
+    }
+
+    function normalizedSet(paramIdx, paramValue) {
+      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
+      if (typeof setObj !== "object") {
+        return;
+      }
+      this.normalizedObjectSet(setObj);
     }
 
     function trackParams(params) {

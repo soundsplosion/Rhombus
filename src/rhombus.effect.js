@@ -34,6 +34,9 @@
     }
 
     function installFunctions(eff) {
+      eff.normalizedObjectSet = normalizedObjectSet;
+      eff.parameterCount = parameterCount;
+      eff.parameterName = parameterName;
       eff.normalizedSet = normalizedSet;
       eff.toJSON = toJSON;
       eff._trackParams = trackParams;
@@ -69,6 +72,16 @@
       delete r._song._effects[id];
     }
 
+    function toJSON(params) {
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": this._type,
+        "_params": this._currentParams
+      };
+      return jsonVersion;
+    }
+
+    // Parameter stuff
     var unnormalizeMaps = {
       "dist" : {
         "dry" : Rhombus._map.mapIdentity,
@@ -81,19 +94,31 @@
       return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
     }
 
-    function normalizedSet(params) {
+    function normalizedObjectSet(params) {
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
     }
 
-    function toJSON(params) {
-      var jsonVersion = {
-        "_id": this._id,
-        "_type": this._type,
-        "_params": this._currentParams
-      };
-      return jsonVersion;
+    // Parameter list interface
+    function parameterCount() {
+      return Rhombus._map.subtreeCount(unnormalizeMaps[this._type]);
+    }
+
+    function parameterName(paramIdx) {
+      var name = Rhombus._map.getParameterName(unnormalizeMaps[this._type], paramIdx);
+      if (typeof name !== "string") {
+        return;
+      }
+      return name;
+    }
+
+    function normalizedSet(paramIdx, paramValue) {
+      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
+      if (typeof setObj !== "object") {
+        return;
+      }
+      this.normalizedObjectSet(setObj);
     }
 
     function trackParams(params) {

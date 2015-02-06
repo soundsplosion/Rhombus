@@ -243,22 +243,7 @@
 
     // Parameter list interface
     Instrument.prototype.parameterCount = function() {
-      function subtreeCount(obj) {
-        var count = 0;
-        var keys = Object.keys(obj);
-        for (var keyIdx in keys) {
-          var key = keys[keyIdx];
-          var value = obj[key];
-          if (typeof value === "object") {
-            count += subtreeCount(value);
-          } else {
-            count += 1;
-          }
-        }
-        return count;
-      }
-
-      return subtreeCount(unnormalizeMaps[this._type]);
+      return Rhombus._map.subtreeCount(unnormalizeMaps[this._type]);
     };
 
     Instrument.prototype.parameterName = function(paramIdx) {
@@ -319,8 +304,5 @@
         previewNote = undefined;
       }
     };
-
-
-
   };
 })(this.Rhombus);

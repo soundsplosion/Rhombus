@@ -111,6 +111,21 @@
     }
   }
 
+  Rhombus._map.subtreeCount = function(obj) {
+    var count = 0;
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (typeof value === "object") {
+        count += Rhombus._map.subtreeCount(value);
+      } else {
+        count += 1;
+      }
+    }
+    return count;
+  };
+
   Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
     if (params === undefined || params === null ||
         typeof(params) !== "object") {
