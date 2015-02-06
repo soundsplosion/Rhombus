@@ -16,6 +16,8 @@
       this._patterns = {};
       this._instruments = {};
       this._effects = {};
+
+      this._curId = 0;
     };
 
     Song.prototype = {
@@ -138,7 +140,7 @@
           var item = playlist[itemId];
           var newItem = new r.PlaylistItem(item._ptnId,
                                            item._start,
-                                           item._end,
+                                           item._length,
                                            item._id)
 
           newTrack._playlist[+itemId] = newItem;
@@ -152,13 +154,23 @@
         r.addInstrument(inst._type, inst._params, +instId);
       }
 
+      // restore curId
+      var curId;
+      if (parsed._curId === undefined) {
+        console.log("[Rhomb Import] curId not found -- beware");
+      }
+      else {
+        r.setCurId(parsed._curId);
+      }
+
       for (var effId in effects) {
         var eff = effects[effId];
         r.addEffect(eff._type, eff._params, +effId);
       }
-    }
+    };
 
     r.exportSong = function() {
+      r._song._curId = r.getCurId();
       return JSON.stringify(r._song);
     };
 
