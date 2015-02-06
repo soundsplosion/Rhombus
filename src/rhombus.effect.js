@@ -6,6 +6,7 @@
 
     var dist = Tone.Distortion;
     var typeMap = {
+      // TODO: more effect types
       "dist": dist
     };
 
@@ -68,17 +69,16 @@
       delete r._song._effects[id];
     }
 
-    var globalMaps = {
-      "dry" : Rhombus._map.mapIdentity,
-      "wet" : Rhombus._map.mapIdentity
-    };
-
     var unnormalizeMaps = {
-      // TODO: put this here
+      "dist" : {
+        "dry" : Rhombus._map.mapIdentity,
+        "wet" : Rhombus._map.mapIdentity
+      },
+      // TODO: more stuff here
     };
 
     function unnormalizedParams(params, type) {
-      return Rhombus._map.unnormalizedParams(params, type, globalMaps, unnormalizeMaps);
+      return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
     }
 
     function normalizedSet(params) {
