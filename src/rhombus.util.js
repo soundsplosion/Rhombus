@@ -78,7 +78,6 @@
       if (idx >= maxIdx) {
         idx = maxIdx;
       }
-      console.log("setting: " + args[idx]);
       return args[idx];
     }
     return mapper;
