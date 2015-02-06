@@ -34,6 +34,18 @@
       }
     };
 
+
+    // This run-time ID is used for IDs that don't need to be exported/imported
+    // with the song (e.g., RtNotes)
+    var rtId = 0;
+    this._newRtId = function(t) {
+      Object.defineProperty(t, '_id', {
+        value: rtId,
+        enumerable: true
+      });
+      rtId = rtId + 1;
+    };
+
     var curId = 0;
     this._setId = function(t, id) {
       if (id >= curId) {
@@ -48,6 +60,14 @@
 
     this._newId = function(t) {
       this._setId(t, curId);
+    };
+
+    this.setCurId = function(id) {
+      curId = id;
+    };
+
+    this.getCurId = function() {
+      return curId;
     };
 
     root.Rhombus._graphSetup(this);
@@ -784,7 +804,7 @@
 
   Rhombus._trackSetup = function(r) {
 
-    r.PlaylistItem = function(ptnId, start, end, id) {
+    r.PlaylistItem = function(ptnId, start, length, id) {
       if (id) {
         r._setId(this, id);
       } else {
@@ -793,12 +813,48 @@
 
       this._ptnId = ptnId;
       this._start = start;
-      this._end = end;
+      this._length = length;
+    };
+
+    r.PlaylistItem.prototype = {
+
+      setStart: function(start) {
+        if (typeof start === 'undefined') {
+          return undefined;
+        }
+
+        var startVal = parseInt(start);
+        if (startVal < 0) {
+          return undefined;
+        }
+
+        return this._start = startVal;
+      },
+
+      getStart: function() {
+        return this._start;
+      },
+
+      setLength: function(length) {
+        if (typeof length === 'undefined') {
+          return undefined;
+        }
+
+        var lenVal = parseInt(length);
+        if (lenVal < 0) {
+          return undefined;
+        }
+
+        return this._length = lenVal;
+      },
+
+      getLength: function() {
+        return this._length;
+      }
     };
 
     r.RtNote = function(pitch, start, end) {
-      r._newId(this);
-
+      r._newRtId(this);
       this._pitch = pitch || 60;
       this._start = start || 0;
       this._end = end || 0;
@@ -823,22 +879,22 @@
     };
 
     r.Track.prototype = {
-
       // Determine if a playlist item exists that overlaps with the given range
       checkOverlap: function(start, end) {
         for (var id in this._playlist) {
           var item = this._playlist[id];
+          var itemEnd = item._start + item._length;
 
-          if (item._start <= start && item._end > start)
+          if (item._start <= start && itemEnd > start)
             return true;
 
-          if (item._end > start && item._end < end)
+          if (itemEnd > start && itemEnd < end)
             return true;
 
-          if (item._start <= start && item._end >= end)
+          if (item._start <= start && itemEnd >= end)
             return true;
 
-          if (start <= item._start && end >= item._end)
+          if (start <= item._start && end >= itemEnd)
             return true;
         }
 
@@ -898,6 +954,8 @@
       this._patterns = {};
       this._instruments = {};
       this._effects = {};
+
+      this._curId = 0;
     };
 
     Song.prototype = {
@@ -1020,7 +1078,7 @@
           var item = playlist[itemId];
           var newItem = new r.PlaylistItem(item._ptnId,
                                            item._start,
-                                           item._end,
+                                           item._length,
                                            item._id)
 
           newTrack._playlist[+itemId] = newItem;
@@ -1034,13 +1092,23 @@
         r.addInstrument(inst._type, inst._params, +instId);
       }
 
+      // restore curId
+      var curId;
+      if (parsed._curId === undefined) {
+        console.log("[Rhomb Import] curId not found -- beware");
+      }
+      else {
+        r.setCurId(parsed._curId);
+      }
+
       for (var effId in effects) {
         var eff = effects[effId];
         r.addEffect(eff._type, eff._params, +effId);
       }
-    }
+    };
 
     r.exportSong = function() {
+      r._song._curId = r.getCurId();
       return JSON.stringify(r._song);
     };
 
