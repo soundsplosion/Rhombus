@@ -138,7 +138,7 @@
           var item = playlist[itemId];
           var newItem = new r.PlaylistItem(item._ptnId,
                                            item._start,
-                                           item._end,
+                                           item._length,
                                            item._id)
 
           newTrack._playlist[+itemId] = newItem;
