@@ -77,9 +77,13 @@
       // TODO: put this here
     };
 
+    function unnormalizedParams(params, type) {
+      return Rhombus._map.unnormalizedParams(params, type, globalMaps, unnormalizeMaps);
+    }
+
     function normalizedSet(params) {
       this._trackParams(params);
-      var unnormalized = Rhombus._map.unnormalizedParams(params, this._type, globalMaps, unnormalizeMaps);
+      var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
     }
 
