@@ -1005,6 +1005,21 @@
     };
 
     r.Track.prototype = {
+
+      getName: function() {
+        return this._name;
+      },
+
+      setName: function(name) {
+        if (typeof name === undefined) {
+          return undefined;
+        }
+        else {
+          this._name = name.toString();
+          return this._name;
+        }
+      },
+
       // Determine if a playlist item exists that overlaps with the given range
       checkOverlap: function(start, end) {
         for (var id in this._playlist) {
