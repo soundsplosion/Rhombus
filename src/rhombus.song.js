@@ -61,7 +61,7 @@
 
       deletePattern: function(ptnId) {
         var pattern = this._patterns[ptnId];
-        
+
         if (typeof pattern === 'undefined') {
           return undefined;
         }
@@ -86,7 +86,7 @@
           // TODO: find a more robust way to terminate playing notes
           for (var rtNoteId in this._playingNotes) {
             var note = this._playingNotes[rtNoteId];
-            
+
             for (var instId in r._song._instruments) {
               r._song._instruments[instId].triggerRelease(rtNoteId, 0);
             }
@@ -170,7 +170,12 @@
         r._song._instruments[instId].normalizedObjectSet({ volume: 0.1 });
       }
 
-      // restore curId
+      for (var effId in effects) {
+        var eff = effects[effId];
+        r.addEffect(eff._type, eff._params, +effId);
+      }
+
+      // restore curId -- this should be the last step of importing
       var curId;
       if (parsed._curId === undefined) {
         console.log("[Rhomb Import] curId not found -- beware");
@@ -179,10 +184,6 @@
         r.setCurId(parsed._curId);
       }
 
-      for (var effId in effects) {
-        var eff = effects[effId];
-        r.addEffect(eff._type, eff._params, +effId);
-      }
     };
 
     r.exportSong = function() {

@@ -1492,6 +1492,7 @@
         newTrack._name = track._name;
 
         for (var itemId in playlist) {
+          console.log("[Rhomb] Importing playlist item " + itemId + " to track " + trkId);
           var item = playlist[itemId];
           var newItem = new r.PlaylistItem(item._ptnId,
                                            item._start,
