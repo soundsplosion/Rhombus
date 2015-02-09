@@ -452,7 +452,7 @@
 
     Tone.extend(SuperToneSampler, Tone.Sampler);
 
-    function Sampler(buffers, names, id) {
+    function Sampler(options, id) {
       if (id === undefined || id === null) {
         r._newId(this);
       } else {
@@ -464,8 +464,35 @@
       this.names = [];
       this.samples = [];
       this._triggered = {};
+      this._currentParams = {};
 
-      this.setBuffers(buffers, names);
+      if (options !== undefined) {
+        var params = options.params;
+        var names = options.names;
+        var buffs = options.buffs;
+
+        var setNames = names;
+        var setBufs = [];
+        for (var i = 0; i < buffs.length; i++) {
+          var channels = buffs[i];
+          var setBuf = Tone.context.createBuffer(channels.length, channels[0].length, Tone.context.sampleRate);
+
+          for (var chI = 0; chI < channels.length; chI++) {
+            var getChanData = channels[chI];
+            var setChanData = setBuf.getChannelData(chI);
+            for (var sI = 0; sI < getChanData.length; sI++) {
+              var dat = getChanData[sI];
+              if (dat === undefined) {
+                dat = 0;
+              }
+              setChanData[sI] = dat;
+            }
+          }
+          setBufs.push(setBuf);
+        }
+
+        this.setBuffers(setBufs, setNames);
+      }
     }
 
     Tone.extend(Sampler, Tone.Instrument);
@@ -481,9 +508,12 @@
       }
 
       this.killAllNotes();
+
       this._names = [];
       this.samples = [];
       this._triggered = {};
+      this._currentParams = {};
+
       for (var i = 0; i < buffers.length; ++i) {
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
@@ -492,7 +522,7 @@
         sampler.toMaster();
 
         this.samples.push(sampler);
-        if (useDefaultNames) {
+        if (useDefaultNames || names[i] === undefined) {
           this._names.push("" + i);
         } else {
           this._names.push(names[i]);
@@ -537,14 +567,36 @@
     };
 
     Sampler.prototype._trackParams = function(params) {
-      // TODO: this is an important part of serialization
-      // need to clear this data when buffers are reset
+      Rhombus._map.mergeInObject(this._currentParams, params);
     };
 
     Sampler.prototype.toJSON = function() {
-      // TODO: we need a way to not save the actual audio data inside
-      // the JSON data
-      return undefined;
+      var buffs = [];
+      for (var sampIdx = 0; sampIdx < this.samples.length; sampIdx++) {
+        var channels = [];
+        var audioBuf = this.samples[sampIdx].player._buffer;
+        for (var chanIdx = 0; chanIdx < audioBuf.numberOfChannels; chanIdx++) {
+          var chan = [];
+          var audioData = audioBuf.getChannelData(chanIdx);
+          for (var sIdx = 0; sIdx < audioData.length; sIdx++) {
+            chan[sIdx] = audioData[sIdx];
+          }
+          channels.push(chan);
+        }
+        buffs.push(channels);
+      }
+
+      var params = {
+        "params": this._currentParams,
+        "names": this._names,
+        "buffs": buffs
+      };
+      var jsonVersion = {
+        "_id": this._id,
+        "_type": "samp",
+        "_params": params
+      };
+      return jsonVersion;
     };
 
     // The map is structured like this for the Rhombus._map.unnormalizedParams call.
