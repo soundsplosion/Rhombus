@@ -64,7 +64,10 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            r.Instrument.triggerRelease(rtNote._id, delay);
+            
+            for (var instId in r._song._instruments) {
+              r._song._instruments[instId].triggerRelease(rtNote._id, delay);
+            }
             delete playingNotes[rtNoteId];
           }
         }
@@ -100,7 +103,10 @@
                 var rtNote = new r.RtNote(note._pitch, startTime, endTime);
                 playingNotes[rtNote._id] = rtNote;
 
-                r.Instrument.triggerAttack(rtNote._id, note.getPitch(), delay);
+                for (var instId in r._song._instruments) {
+                  console.log("[Rhomb] triggering note on instrument " + instId);
+                  r._song._instruments[instId].triggerAttack(rtNote._id, note.getPitch(), delay);
+                }
               }
             }
           }
@@ -161,7 +167,9 @@
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
-          r.Instrument.triggerRelease(rtNoteId, 0);
+          for (var instId in r._song._instruments) {
+            r._song._instruments[instId].triggerRelease(rtNoteId, 0);
+          }
           delete playingNotes[rtNoteId];
         }
       }

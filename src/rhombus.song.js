@@ -86,7 +86,11 @@
           // TODO: find a more robust way to terminate playing notes
           for (var rtNoteId in this._playingNotes) {
             var note = this._playingNotes[rtNoteId];
-            r.Instrument.triggerRelease(note._id, 0);
+            
+            for (var instId in r._song._instruments) {
+              r._song._instruments[instId].triggerRelease(rtNoteId, 0);
+            }
+
             delete this._playingNotes[rtNoteId];
           }
 
@@ -162,7 +166,8 @@
 
       for (var instId in instruments) {
         var inst = instruments[instId];
-        r.addInstrument(inst._type, inst._params, +instId);
+        var instId = r.addInstrument(inst._type, inst._params, +instId);
+        r._song._instruments[instId].normalizedObjectSet({ volume: 0.1 });
       }
 
       // restore curId
