@@ -31,8 +31,6 @@
     var scheduleAhead = 0.050;
     var lastScheduled = -1;
 
-    // TODO: scheduling needs to happen relative to that start time of the
-    // pattern
     function scheduleNotes() {
 
       // capturing the current time and position so that all scheduling actions
@@ -48,7 +46,7 @@
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
 
-      // TODO: decide to used the elapsed time since playback started,
+      // TODO: decide to use the elapsed time since playback started,
       //       or the context time
       var scheduleEndTime = curTime + scheduleAhead;
 
@@ -71,18 +69,25 @@
           }
         }
 
-        // TODO: Find a way to determine which patterns are really schedulable,
-        //       based on the current playback position
-        for (var playlistId in track._playlist) {
-          var ptnId   = track._playlist[playlistId]._ptnId;
-          var offset  = track._playlist[playlistId]._start;
-          var noteMap = r._song._patterns[ptnId]._noteMap;
+        if (r.isPlaying()) {
+          for (var playlistId in track._playlist) {
+            var ptnId     = track._playlist[playlistId]._ptnId;
+            var itemStart = track._playlist[playlistId]._start;
+            var itemEnd   = itemStart + track._playlist[playlistId]._length;
 
-          // TODO: find a more efficient way to determine which notes to play
-          if (r.isPlaying()) {
+            // Don't schedule notes from playlist items that aren't in this
+            // scheduling window
+            if ((itemStart < scheduleStart && itemEnd < scheduleStart) ||
+                (itemStart > scheduleEnd)) {
+              continue;
+            }
+
+            var noteMap   = r._song._patterns[ptnId]._noteMap;
+
+            // TODO: find a more efficient way to determine which notes to play
             for (var noteId in noteMap) {
               var note = noteMap[noteId];
-              var start = note.getStart() + offset;
+              var start = note.getStart() + itemStart;
 
               if (start >= scheduleStart && start < scheduleEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
