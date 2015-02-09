@@ -1612,14 +1612,16 @@
               continue;
             }
 
-            var noteMap   = r._song._patterns[ptnId]._noteMap;
+            var noteMap = r._song._patterns[ptnId]._noteMap;
 
             // TODO: find a more efficient way to determine which notes to play
             for (var noteId in noteMap) {
               var note = noteMap[noteId];
               var start = note.getStart() + itemStart;
 
-              if (start >= scheduleStart && start < scheduleEnd) {
+              if (start >= scheduleStart &&
+                  start < scheduleEnd && 
+                  start < itemEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
 
                 var startTime = curTime + delay;
