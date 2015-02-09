@@ -9,14 +9,12 @@
     var am = Tone.AMSynth;
     var fm = Tone.FMSynth;
     var noise = Tone.NoiseSynth;
-    var samp = Tone.MultiSampler;
     var duo = Tone.DuoSynth;
     var typeMap = {
       "mono" : mono,
       "am"   : am,
       "fm"   : fm,
       "noise": noise,
-      "samp" : samp,
       "duo"  : duo
     };
 
@@ -48,7 +46,12 @@
     Tone.extend(Instrument, Tone.PolySynth);
 
     r.addInstrument = function(type, options, id) {
-      var instr = new Instrument(type, options, id);
+      var instr;
+      if (type === "samp") {
+        instr = new r._Sampler(options, id);
+      } else {
+        instr = new Instrument(type, options, id);
+      }
 
       if (instr === null || instr === undefined) {
         return;
@@ -126,44 +129,6 @@
       return jsonVersion;
     };
 
-    // Frequently used mappings.
-    // TODO: fix envelope function mappings
-    var timeMapFn = Rhombus._map.mapExp(0.0001, 60);
-    var freqMapFn = Rhombus._map.mapExp(1, 22100);
-    var lowFreqMapFn = Rhombus._map.mapExp(1, 100);
-    var exponentMapFn = Rhombus._map.mapExp(0.01, 10);
-    var harmMapFn = Rhombus._map.mapLinear(-1000, 1000);
-
-    var envelopeMap = {
-      "attack" : timeMapFn,
-      "decay" : timeMapFn,
-      "sustain" : timeMapFn,
-      "release" : timeMapFn,
-      "exponent" : exponentMapFn
-    };
-
-    var filterMap = {
-      "type" : Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
-                           "highshelf", "peaking", "notch", "allpass"),
-      "frequency" : freqMapFn,
-      "rolloff" : Rhombus._map.mapDiscrete(-12, -24, -48),
-      // TODO: verify this is good
-      "Q" : Rhombus._map.mapLinear(1, 15),
-      // TODO: verify this is good
-      "gain" : Rhombus._map.mapIdentity
-    };
-
-    var filterEnvelopeMap = {
-      "attack" : timeMapFn,
-      "decay" : timeMapFn,
-      // TODO: fix this
-      "sustain" : timeMapFn,
-      "release" : timeMapFn,
-      "min" : freqMapFn,
-      "max" : freqMapFn,
-      "exponent" : exponentMapFn
-    };
-
     var monoSynthMap = {
       "portamento" : Rhombus._map.mapLinear(0, 10),
       // TODO: verify this is good
@@ -171,10 +136,10 @@
       "oscillator" : {
         "type" : Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm")
       },
-      "envelope" : envelopeMap,
-      "filter" : filterMap,
-      "filterEnvelope" : filterEnvelopeMap,
-      "detune" : harmMapFn
+      "envelope" : Rhombus._map.envelopeMap,
+      "filter" : Rhombus._map.filterMap,
+      "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
+      "detune" : Rhombus._map.harmMapFn
     };
 
     var unnormalizeMaps = {
@@ -185,7 +150,7 @@
         // TODO: verify this is good
         "volume" : Rhombus._map.mapLog(-96.32, 0),
         // TODO: verify this is good
-        "harmonicity" : harmMapFn,
+        "harmonicity" : Rhombus._map.harmMapFn,
         "carrier" : monoSynthMap,
         "modulator" : monoSynthMap
       },
@@ -195,7 +160,7 @@
         // TODO: verify this is good
         "volume" : Rhombus._map.mapLog(-96.32, 0),
         // TODO: verify this is good
-        "harmonicity" : harmMapFn,
+        "harmonicity" : Rhombus._map.harmMapFn,
         // TODO: verify this is good
         "modulationIndex" : Rhombus._map.mapLinear(-5, 5),
         "carrier" : monoSynthMap,
@@ -209,13 +174,9 @@
         "noise" : {
           "type" : Rhombus._map.mapDiscrete("white", "pink", "brown")
         },
-        "envelope" : envelopeMap,
-        "filter" : filterMap,
-        "filterEnvelope" : filterEnvelopeMap,
-      },
-
-      "samp" : {
-        // TODO: anything here?
+        "envelope" : Rhombus._map.envelopeMap,
+        "filter" : Rhombus._map.filterMap,
+        "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
       },
 
       "duo" : {
@@ -223,9 +184,9 @@
         // TODO: verify this is good
         "volume" : Rhombus._map.mapLog(-96.32, 0),
         "vibratoAmount" : Rhombus._map.mapLinear(0, 20),
-        "vibratoRate" : freqMapFn,
-        "vibratoDelay" : timeMapFn,
-        "harmonicity" : harmMapFn,
+        "vibratoRate" : Rhombus._map.freqMapFn,
+        "vibratoDelay" : Rhombus._map.timeMapFn,
+        "harmonicity" : Rhombus._map.harmMapFn,
         "voice0" : monoSynthMap,
         "voice1" : monoSynthMap
       }
@@ -239,7 +200,7 @@
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
-    }
+    };
 
     // Parameter list interface
     Instrument.prototype.parameterCount = function() {
@@ -263,6 +224,17 @@
     };
 
     // HACK: these are here until proper note routing is implemented
+    var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
+    var sampleCount = Tone.context.sampleRate * 2.0;
+    var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
+    for (var i = 0; i < 2; i++) {
+      var buffering = buffer.getChannelData(i);
+      for (var v = 0; v < sampleCount; v++) {
+        buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
+      }
+    }
+    r.buf = buffer;
+
     var instrId = r.addInstrument("mono");
     r.Instrument = r._song._instruments[instrId];
     r.Instrument.normalizedObjectSet({ volume: 0.1 });
