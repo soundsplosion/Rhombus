@@ -33,6 +33,20 @@
           this._length = length;
       },
 
+      getName: function() {
+        return this._name;
+      },
+
+      setName: function(name) {
+        if (typeof name === 'undefined') {
+          return undefined;
+        }
+        else {
+          this._name = name.toString();
+          return this._name;
+        }
+      },
+
       addNote: function(note) {
         this._noteMap[note._id] = note;
       },
