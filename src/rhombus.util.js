@@ -201,5 +201,42 @@
     return leftToCount;
   };
 
+  // Frequently used mappings.
+  // TODO: fix envelope function mappings
+  Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.0001, 60);
+  Rhombus._map.freqMapFn = Rhombus._map.mapExp(1, 22100);
+  Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);
+  Rhombus._map.exponentMapFn = Rhombus._map.mapExp(0.01, 10);
+  Rhombus._map.harmMapFn = Rhombus._map.mapLinear(-1000, 1000);
+
+  Rhombus._map.envelopeMap = {
+    "attack" : Rhombus._map.timeMapFn,
+    "decay" : Rhombus._map.timeMapFn,
+    "sustain" : Rhombus._map.timeMapFn,
+    "release" : Rhombus._map.timeMapFn,
+    "exponent" : Rhombus._map.exponentMapFn
+  };
+
+  Rhombus._map.filterMap = {
+    "type" : Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
+                         "highshelf", "peaking", "notch", "allpass"),
+    "frequency" : Rhombus._map.freqMapFn,
+    "rolloff" : Rhombus._map.mapDiscrete(-12, -24, -48),
+    // TODO: verify this is good
+    "Q" : Rhombus._map.mapLinear(1, 15),
+    // TODO: verify this is good
+    "gain" : Rhombus._map.mapIdentity
+  };
+
+  Rhombus._map.filterEnvelopeMap = {
+    "attack" : Rhombus._map.timeMapFn,
+    "decay" : Rhombus._map.timeMapFn,
+    // TODO: fix this
+    "sustain" : Rhombus._map.timeMapFn,
+    "release" : Rhombus._map.timeMapFn,
+    "min" : Rhombus._map.freqMapFn,
+    "max" : Rhombus._map.freqMapFn,
+    "exponent" : Rhombus._map.exponentMapFn
+  };
 
 })(this.Rhombus);
