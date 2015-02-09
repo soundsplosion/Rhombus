@@ -60,7 +60,11 @@
       this._triggered = {};
       for (var i = 0; i < buffers.length; ++i) {
         var sampler = new SuperToneSampler();
-        sampler.setBuffer(buffers[i]);
+        sampler.player.setBuffer(buffers[i]);
+
+        // TODO: proper routing
+        sampler.toMaster();
+
         this.samples.push(sampler);
         if (useDefaultNames) {
           this._names.push("" + i);

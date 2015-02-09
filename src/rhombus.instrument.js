@@ -224,6 +224,17 @@
     };
 
     // HACK: these are here until proper note routing is implemented
+    var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
+    var sampleCount = Tone.context.sampleRate * 2.0;
+    var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
+    for (var i = 0; i < 2; i++) {
+      var buffering = buffer.getChannelData(i);
+      for (var v = 0; v < sampleCount; v++) {
+        buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
+      }
+    }
+    r.buf = buffer;
+
     var instrId = r.addInstrument("mono");
     r.Instrument = r._song._instruments[instrId];
     r.Instrument.normalizedObjectSet({ volume: 0.1 });
