@@ -9,6 +9,7 @@ gulp.task("make", function() {
     "src/rhombus.header.js",
     "src/rhombus.util.js",
     "src/rhombus.graph.js",
+    "src/rhombus.sampler.js",
     "src/rhombus.instrument.js",
     "src/rhombus.effect.js",
     "src/rhombus.pattern.js",
