@@ -38,7 +38,7 @@
       },
 
       setName: function(name) {
-        if (typeof name === undefined) {
+        if (typeof name === 'undefined') {
           return undefined;
         }
         else {
