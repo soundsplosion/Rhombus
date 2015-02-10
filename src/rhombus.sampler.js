@@ -66,6 +66,7 @@
         }
 
         this.setBuffers(setBufs, setNames);
+        this.normalizedObjectSet(params);
       }
     }
 
@@ -102,6 +103,8 @@
           this._names.push(names[i]);
         }
       }
+
+      // TODO: default params here
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay) {
@@ -177,7 +180,7 @@
     var unnormalizeMaps = {
       "samp" : {
         "player" : {
-          "loop" : Rhombus._map.mapDiscrete(false, true)
+          "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
         },
         "envelope" : Rhombus._map.envelopeMap,
         "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
@@ -214,6 +217,40 @@
         return;
       }
       return this._names[sampleIdx] + ":" + name;
+    };
+
+    // Parameter display stuff
+    Sampler.prototype.parameterDisplayString = function(paramIdx) {
+      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
+    };
+
+    Sampler.prototype.parameterDisplayStringByName = function(paramName) {
+      // TODO: fix probable bugs here
+      var pieces = paramName.split(":");
+
+      var curValue = this._currentParams;
+      for (var i = 0; i < pieces.length; i++) {
+        curValue = curValue[pieces[i]];
+      }
+      if (curValue === undefined) {
+        return;
+      }
+
+      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps["samp"], paramName, curValue);
+      var realObj = unnormalizedParams(setObj, this._type);
+
+      curValue = realObj;
+      for (var i = 0; i < pieces.length; i++) {
+        curValue = curValue[pieces[i]];
+      }
+      if (curValue === undefined) {
+        return;
+      }
+
+      var displayValue = curValue;
+      var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps["samp"], paramName);
+      return disp(displayValue);
+
     };
 
     Sampler.prototype.normalizedSet = function(paramsIdx, paramValue) {
