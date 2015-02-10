@@ -946,11 +946,16 @@
     var previewNote = undefined;
 
     r.setParameter = function(paramIdx, value) {
-      
       for (var instId in r._song._instruments) {
         r._song._instruments[instId].normalizedSet(paramIdx, value);
       }
-    },
+    };
+
+    r.setParameterByName = function(paramName, value) {
+      for (var instId in r._song._instruments) {
+        r._song._instruments[instId].normalizedSetByName(paramName, value);
+      }
+    }
 
     r.startPreviewNote = function(pitch) {
       var keys = Object.keys(r._song._instruments);
