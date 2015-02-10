@@ -55,11 +55,12 @@
       }
     };
 
-    r.RtNote = function(pitch, start, end) {
+    r.RtNote = function(pitch, start, end, target) {
       r._newRtId(this);
       this._pitch = pitch || 60;
       this._start = start || 0;
       this._end = end || 0;
+      this._target = target;
     };
 
     r.Track = function(id) {

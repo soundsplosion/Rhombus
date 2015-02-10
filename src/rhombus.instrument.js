@@ -322,13 +322,14 @@
       }
 
       if (previewNote === undefined) {
-        var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
+        var targetId = getInstIdByIndex(r._globalTarget);
+        var inst = r._song._instruments[targetId];
         if (typeof inst === "undefined") {
           console.log("[Rhomb] - Trying to trigger note on undefined instrument");
           return;
         }
 
-        previewNote = new r.RtNote(pitch, 0);
+        previewNote = new r.RtNote(pitch, 0, 0, targetId);
         inst.triggerAttack(previewNote._id, pitch, 0);
       }
     };
@@ -340,7 +341,7 @@
       }
 
       if (previewNote !== undefined) {
-        var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
+        var inst = r._song._instruments[previewNote._target];
         if (typeof inst === "undefined") {
           console.log("[Rhomb] - Trying to release note on undefined instrument");
           return;

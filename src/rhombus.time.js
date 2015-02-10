@@ -64,7 +64,7 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            r._song._instruments[track._target].triggerRelease(rtNote._id, delay);
+            r._song._instruments[rtNote._target].triggerRelease(rtNote._id, delay);
             delete playingNotes[rtNoteId];
           }
         }
@@ -97,7 +97,7 @@
                 var startTime = curTime + delay;
                 var endTime = startTime + r.ticks2Seconds(note._length);
 
-                var rtNote = new r.RtNote(note._pitch, startTime, endTime);
+                var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
                 playingNotes[rtNote._id] = rtNote;
 
                 r._song._instruments[track._target].triggerAttack(rtNote._id, note.getPitch(), delay);
