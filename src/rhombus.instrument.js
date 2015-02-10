@@ -244,19 +244,23 @@
     r.buf = buffer;
 
     var instrId = r.addInstrument("mono");
-    r.Instrument = r._song._instruments[instrId];
-    r.Instrument.normalizedObjectSet({ volume: 0.1 });
+    r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
     // HACK: end
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
 
     r.setParameter = function(paramIdx, value) {
-      
       for (var instId in r._song._instruments) {
         r._song._instruments[instId].normalizedSet(paramIdx, value);
       }
-    },
+    };
+
+    r.setParameterByName = function(paramName, value) {
+      for (var instId in r._song._instruments) {
+        r._song._instruments[instId].normalizedSetByName(paramName, value);
+      }
+    }
 
     r.startPreviewNote = function(pitch) {
       var keys = Object.keys(r._song._instruments);
