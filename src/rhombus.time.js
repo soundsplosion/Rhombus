@@ -104,7 +104,6 @@
                 playingNotes[rtNote._id] = rtNote;
 
                 for (var instId in r._song._instruments) {
-                  console.log("[Rhomb] triggering note on instrument " + instId);
                   r._song._instruments[instId].triggerAttack(rtNote._id, note.getPitch(), delay);
                 }
               }
