@@ -116,7 +116,7 @@
     for (var keyIdx in keys) {
       var key = keys[keyIdx];
       var value = obj[key];
-      if (typeof value === "object") {
+      if (!Array.isArray(value)) {
         count += Rhombus._map.subtreeCount(value);
       } else {
         count += 1;
@@ -137,7 +137,7 @@
       for (var idx in keys) {
         var key = keys[idx];
         var value = obj[key];
-        if (typeof(value) === "object") {
+        if (typeof value === "object") {
           var nextLevelMap = thisLevelMap[key];
           returnObj[key] = unnormalized(value, nextLevelMap);
         } else {
@@ -160,7 +160,7 @@
     for (var keyIdx in keys) {
       var key = keys[keyIdx];
       var value = obj[key];
-      if (typeof value === "object") {
+      if (!Array.isArray(value)) {
         var generated = Rhombus._map.generateSetObject(value, leftToCount, paramValue);
         if (typeof generated === "object") {
           var toRet = {};
@@ -211,7 +211,7 @@
     for (var keyIdx in keys) {
       var key = keys[keyIdx];
       var value = obj[key];
-      if (typeof value === "object") {
+      if (!Array.isArray(value)) {
         var name = Rhombus._map.getParameterName(value, leftToCount);
         if (typeof name === "string") {
           return key + ":" + name;
@@ -244,12 +244,27 @@
     }
   };
 
+  Rhombus._map.generateDefaultSetObj = function(obj) {
+    var keys = Object.keys(obj);
+    var toRet = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var value = obj[key];
+      if (!Array.isArray(value)) {
+        toRet[key] = Rhombus._map.generateDefaultSetObj(value);
+      } else {
+        toRet[key] = value[2];
+      }
+    }
+    return toRet;
+  };
+
   // Frequently used mappings.
   // TODO: fix envelope function mappings
-  Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.0001, 60);
+  Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.001, 60);
   Rhombus._map.freqMapFn = Rhombus._map.mapExp(1, 22100);
   Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);
-  Rhombus._map.exponentMapFn = Rhombus._map.mapExp(0.01, 10);
+  Rhombus._map.exponentMapFn = Rhombus._map.mapExp(0.1, 10);
   Rhombus._map.harmMapFn = Rhombus._map.mapLinear(-1000, 1000);
 
   function secondsDisplay(v) {
@@ -273,33 +288,33 @@
   Rhombus._map.hzDisplay = hzDisplay;
 
   Rhombus._map.envelopeMap = {
-    "attack" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "decay" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "release" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "exponent" : [Rhombus._map.exponentMapFn, rawDisplay]
+    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.01],
+    "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0],
+    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+    "exponent" : [Rhombus._map.exponentMapFn, rawDisplay, 0.5]
   };
 
   Rhombus._map.filterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
-                         "highshelf", "peaking", "notch", "allpass"), rawDisplay],
-    "frequency" : [Rhombus._map.freqMapFn, hzDisplay],
-    "rolloff" : [Rhombus._map.mapDiscrete(-12, -24, -48), dbDisplay],
+                         "highshelf", "peaking", "notch", "allpass"), rawDisplay, 0],
+    "frequency" : [Rhombus._map.freqMapFn, hzDisplay, 0.5],
+    "rolloff" : [Rhombus._map.mapDiscrete(-12, -24, -48), dbDisplay, 0],
     // TODO: verify this is good
-    "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay],
+    "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0.5],
     // TODO: verify this is good
-    "gain" : [Rhombus._map.mapIdentity, rawDisplay]
+    "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0.0]
   };
 
   Rhombus._map.filterEnvelopeMap = {
-    "attack" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "decay" : [Rhombus._map.timeMapFn, secondsDisplay],
+    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.01],
+    "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0],
     // TODO: fix this
-    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "release" : [Rhombus._map.timeMapFn, secondsDisplay],
-    "min" : [Rhombus._map.freqMapFn, hzDisplay],
-    "max" : [Rhombus._map.freqMapFn, hzDisplay],
-    "exponent" : [Rhombus._map.exponentMapFn, rawDisplay]
+    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+    "min" : [Rhombus._map.freqMapFn, hzDisplay, 0],
+    "max" : [Rhombus._map.freqMapFn, hzDisplay, 1],
+    "exponent" : [Rhombus._map.exponentMapFn, rawDisplay, 0.5]
   };
 
 })(this.Rhombus);

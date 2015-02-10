@@ -66,6 +66,7 @@
         }
 
         this.setBuffers(setBufs, setNames);
+        this.normalizedObjectSet(params);
       }
     }
 
@@ -102,6 +103,8 @@
           this._names.push(names[i]);
         }
       }
+
+      // TODO: default params here
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay) {
@@ -177,7 +180,7 @@
     var unnormalizeMaps = {
       "samp" : {
         "player" : {
-          "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay]
+          "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
         },
         "envelope" : Rhombus._map.envelopeMap,
         "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
@@ -222,6 +225,7 @@
     };
 
     Sampler.prototype.parameterDisplayStringByName = function(paramName) {
+      // TODO: fix probable bugs here
       var pieces = paramName.split(":");
 
       var curValue = this._currentParams;
