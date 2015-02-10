@@ -133,7 +133,7 @@
     var dbDisplay = Rhombus._map.dbDisplay;
     var rawDisplay = Rhombus._map.rawDisplay;
     var hzDisplay = Rhombus._map.hzDisplay;
-    
+
     var monoSynthMap = {
       "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
@@ -283,18 +283,28 @@
       }
     }
     r.buf = buffer;
-
-    var instrId = r.addInstrument("mono");
-    r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
     // HACK: end
 
-    // only one preview note is allowed at a time
-    var previewNote = undefined;
+    getInstIdByIndex = function(instrIdx) {
+      var keys = [];
+      for (var k in r._song._instruments) {
+        keys.push(k);
+      }
+
+      var instId = keys[instrIdx];
+      return instId;
+    };
 
     r.setParameter = function(paramIdx, value) {
-      for (var instId in r._song._instruments) {
-        r._song._instruments[instId].normalizedSet(paramIdx, value);
+      var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
+
+      if (typeof inst === "undefined") {
+        console.log("[Rhomb] - Trying to set parameter on undefined instrument -- dame dayo!");
+        return undefined;
       }
+
+      inst.normalizedSet(paramIdx, value);
+      return value;
     };
 
     r.setParameterByName = function(paramName, value) {
@@ -303,6 +313,8 @@
       }
     }
 
+    // only one preview note is allowed at a time
+    var previewNote = undefined;
     r.startPreviewNote = function(pitch) {
       var keys = Object.keys(r._song._instruments);
       if (keys.length === 0) {
@@ -310,8 +322,15 @@
       }
 
       if (previewNote === undefined) {
-        previewNote = new Note(pitch, 0);
-        r._song._instruments[keys[0]].triggerAttack(previewNote._id, pitch, 0);
+        var targetId = getInstIdByIndex(r._globalTarget);
+        var inst = r._song._instruments[targetId];
+        if (typeof inst === "undefined") {
+          console.log("[Rhomb] - Trying to trigger note on undefined instrument");
+          return;
+        }
+
+        previewNote = new r.RtNote(pitch, 0, 0, targetId);
+        inst.triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
@@ -322,7 +341,13 @@
       }
 
       if (previewNote !== undefined) {
-        r._song._instruments[keys[0]].triggerRelease(previewNote._id, 0);
+        var inst = r._song._instruments[previewNote._target];
+        if (typeof inst === "undefined") {
+          console.log("[Rhomb] - Trying to release note on undefined instrument");
+          return;
+        }
+
+        inst.triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };

@@ -64,10 +64,7 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            
-            for (var instId in r._song._instruments) {
-              r._song._instruments[instId].triggerRelease(rtNote._id, delay);
-            }
+            r._song._instruments[rtNote._target].triggerRelease(rtNote._id, delay);
             delete playingNotes[rtNoteId];
           }
         }
@@ -93,19 +90,17 @@
               var start = note.getStart() + itemStart;
 
               if (start >= scheduleStart &&
-                  start < scheduleEnd && 
+                  start < scheduleEnd &&
                   start < itemEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
 
                 var startTime = curTime + delay;
                 var endTime = startTime + r.ticks2Seconds(note._length);
 
-                var rtNote = new r.RtNote(note._pitch, startTime, endTime);
+                var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
                 playingNotes[rtNote._id] = rtNote;
 
-                for (var instId in r._song._instruments) {
-                  r._song._instruments[instId].triggerAttack(rtNote._id, note.getPitch(), delay);
-                }
+                r._song._instruments[track._target].triggerAttack(rtNote._id, note.getPitch(), delay);
               }
             }
           }

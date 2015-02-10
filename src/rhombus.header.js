@@ -14,6 +14,7 @@
     this._active = true;
     this._disposed = false;
     this._ctx = Tone.context;
+    this._globalTarget = 0;
 
     this.setActive = function(active) {
       if (this._disposed) {
@@ -34,6 +35,10 @@
       }
     };
 
+    this.setGlobalTarget = function(target) {
+      console.log("[Rhomb] setting global target to " + target);
+      this._globalTarget = +target;
+    };
 
     // This run-time ID is used for IDs that don't need to be exported/imported
     // with the song (e.g., RtNotes)
