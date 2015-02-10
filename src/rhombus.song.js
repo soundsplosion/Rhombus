@@ -9,7 +9,7 @@
       // song metadata
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
-      this._length = 1920; // not really metadata, but it's fixed for now..
+      this._length = 1920;
 
       // song structure data
       this._tracks = {};
@@ -97,6 +97,27 @@
           delete this._tracks[trkId];
           return trkId;
         }
+      },
+
+      // Song length here is defined as the end of the last
+      // playlist item on any track
+      findSongLength: function() {
+        var length = 0;
+
+        for (var trkId in this._tracks) {
+          var track = this._tracks[trkId];
+
+          for (var itemId in track._playlist) {
+            var item = track._playlist[itemId];
+            var itemEnd = item._start + item._length;
+
+            if (itemEnd > length) {
+              length = itemEnd;
+            }
+          }
+        }
+
+        return length;
       }
     };
 
@@ -111,6 +132,7 @@
       var parsed = JSON.parse(json);
       r._song.setTitle(parsed._title);
       r._song.setArtist(parsed._artist);
+      r._song._length = parsed._length;
 
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
@@ -139,9 +161,6 @@
 
         r._song._patterns[+ptnId] = newPattern;
       }
-
-      // TODO: tracks and instruments will need to be imported
-      //       in a similar manner
 
       for (var trkId in tracks) {
         var track = tracks[trkId];
@@ -188,6 +207,7 @@
 
     r.exportSong = function() {
       r._song._curId = r.getCurId();
+      r._song._length = r._song.findSongLength();
       return JSON.stringify(r._song);
     };
 
