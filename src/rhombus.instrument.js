@@ -133,7 +133,7 @@
     var dbDisplay = Rhombus._map.dbDisplay;
     var rawDisplay = Rhombus._map.rawDisplay;
     var hzDisplay = Rhombus._map.hzDisplay;
-    
+
     var monoSynthMap = {
       "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
@@ -284,8 +284,7 @@
     }
     r.buf = buffer;
 
-    var instrId = r.addInstrument("mono");
-    r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
+
     // HACK: end
 
     // only one preview note is allowed at a time

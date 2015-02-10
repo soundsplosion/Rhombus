@@ -1069,8 +1069,7 @@
     }
     r.buf = buffer;
 
-    var instrId = r.addInstrument("mono");
-    r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
+    
     // HACK: end
 
     // only one preview note is allowed at a time
@@ -1416,7 +1415,7 @@
       this._name = "Default Track Name";
 
       // track structure data
-      this._targets = {};
+      this._target = undefined;
       this._playingNotes = {};
 
       // TODO: define some kind of pattern playlist
@@ -1505,7 +1504,7 @@
         var toReturn = {};
         toReturn._id = this._id;
         toReturn._name = this._name;
-        toReturn._targets = this._targets;
+        toReturn._target = this._target;
         toReturn._playlist = this._playlist;
         return toReturn;
       }
@@ -1586,8 +1585,16 @@
       },
 
       addTrack: function() {
+        // Create a new Track object
         var track = new r.Track();
         this._tracks[track._id] = track;
+
+        // Create a new Instrument and set it as the new Track's target
+        var instrId = r.addInstrument("mono");
+        r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
+        track._target = instrId;
+
+        // Return the ID of the new Track
         return track._id;
       },
 
@@ -1601,14 +1608,14 @@
           // TODO: find a more robust way to terminate playing notes
           for (var rtNoteId in this._playingNotes) {
             var note = this._playingNotes[rtNoteId];
-
-            for (var instId in r._song._instruments) {
-              r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-            }
-
+            r._song._instruments[track._target].triggerRelease(rtNoteId, 0); 
             delete this._playingNotes[rtNoteId];
           }
 
+          // TODO: Figure out why this doesn't work
+          //r.removeInstrument(track._target);
+          
+          delete this._instruments[track._target];
           delete this._tracks[trkId];
           return trkId;
         }
@@ -1684,6 +1691,7 @@
         var newTrack = new r.Track(track._id);
 
         newTrack._name = track._name;
+        newTrack._target = +track._target;
 
         for (var itemId in playlist) {
           var item = playlist[itemId];
@@ -1700,7 +1708,7 @@
 
       for (var instId in instruments) {
         var inst = instruments[instId];
-        var instId = r.addInstrument(inst._type, inst._params, +instId);
+        r.addInstrument(inst._type, inst._params, +instId);
         r._song._instruments[instId].normalizedObjectSet({ volume: 0.1 });
       }
 
@@ -1795,10 +1803,7 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            
-            for (var instId in r._song._instruments) {
-              r._song._instruments[instId].triggerRelease(rtNote._id, delay);
-            }
+            r._song._instruments[track._target].triggerRelease(rtNote._id, delay);
             delete playingNotes[rtNoteId];
           }
         }
@@ -1833,10 +1838,8 @@
 
                 var rtNote = new r.RtNote(note._pitch, startTime, endTime);
                 playingNotes[rtNote._id] = rtNote;
-
-                for (var instId in r._song._instruments) {
-                  r._song._instruments[instId].triggerAttack(rtNote._id, note.getPitch(), delay);
-                }
+                
+                r._song._instruments[track._target].triggerAttack(rtNote._id, note.getPitch(), delay);
               }
             }
           }

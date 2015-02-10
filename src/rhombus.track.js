@@ -73,7 +73,7 @@
       this._name = "Default Track Name";
 
       // track structure data
-      this._targets = {};
+      this._target = undefined;
       this._playingNotes = {};
 
       // TODO: define some kind of pattern playlist
@@ -162,7 +162,7 @@
         var toReturn = {};
         toReturn._id = this._id;
         toReturn._name = this._name;
-        toReturn._targets = this._targets;
+        toReturn._target = this._target;
         toReturn._playlist = this._playlist;
         return toReturn;
       }
