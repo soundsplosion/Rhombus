@@ -244,8 +244,7 @@
     r.buf = buffer;
 
     var instrId = r.addInstrument("mono");
-    r.Instrument = r._song._instruments[instrId];
-    r.Instrument.normalizedObjectSet({ volume: 0.1 });
+    r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
     // HACK: end
 
     // only one preview note is allowed at a time
