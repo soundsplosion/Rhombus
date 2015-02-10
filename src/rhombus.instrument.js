@@ -136,15 +136,14 @@
     
     var monoSynthMap = {
       "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
       "oscillator" : {
-        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0],
+        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0.3],
       },
       "envelope" : Rhombus._map.envelopeMap,
       "filter" : Rhombus._map.filterMap,
       "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-      "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0]
+      "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0.5]
     };
 
     var unnormalizeMaps = {

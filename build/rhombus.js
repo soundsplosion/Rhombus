@@ -338,7 +338,9 @@
       if (!Array.isArray(value)) {
         toRet[key] = Rhombus._map.generateDefaultSetObj(value);
       } else {
-        toRet[key] = value[2];
+        if (value[2] !== undefined) {
+          toRet[key] = value[2];
+        }
       }
     }
     return toRet;
@@ -373,10 +375,10 @@
   Rhombus._map.hzDisplay = hzDisplay;
 
   Rhombus._map.envelopeMap = {
-    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.01],
+    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.25],
     "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0],
-    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
-    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.65],
+    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.64],
     "exponent" : [Rhombus._map.exponentMapFn, rawDisplay, 0.5]
   };
 
@@ -384,21 +386,21 @@
     "type" : [Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
                          "highshelf", "peaking", "notch", "allpass"), rawDisplay, 0],
     "frequency" : [Rhombus._map.freqMapFn, hzDisplay, 0.5],
-    "rolloff" : [Rhombus._map.mapDiscrete(-12, -24, -48), dbDisplay, 0],
+    "rolloff" : [Rhombus._map.mapDiscrete(-12, -24, -48), dbDisplay, 0.5],
     // TODO: verify this is good
-    "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0.5],
+    "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     // TODO: verify this is good
-    "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0.0]
+    "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
 
   Rhombus._map.filterEnvelopeMap = {
-    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.01],
-    "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0],
+    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.38],
+    "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.49],
     // TODO: fix this
-    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
-    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
-    "min" : [Rhombus._map.freqMapFn, hzDisplay, 0],
-    "max" : [Rhombus._map.freqMapFn, hzDisplay, 1],
+    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.57],
+    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.7],
+    "min" : [Rhombus._map.freqMapFn, hzDisplay, 0.37],
+    "max" : [Rhombus._map.freqMapFn, hzDisplay, 0.84],
     "exponent" : [Rhombus._map.exponentMapFn, rawDisplay, 0.5]
   };
 
@@ -919,15 +921,14 @@
     
     var monoSynthMap = {
       "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
       "oscillator" : {
-        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0],
+        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0.3],
       },
       "envelope" : Rhombus._map.envelopeMap,
       "filter" : Rhombus._map.filterMap,
       "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-      "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0]
+      "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0.5]
     };
 
     var unnormalizeMaps = {
