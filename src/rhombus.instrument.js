@@ -18,7 +18,6 @@
       "duo"  : duo
     };
 
-    // TODO: put this on the Rhombus object
     function Instrument(type, options, id) {
       var ctr = typeMap[type];
       if (ctr === null || ctr === undefined) {
@@ -34,14 +33,15 @@
 
       this._type = type;
       this._currentParams = {};
-      this._trackParams(options);
+      this._triggered = {};
 
-      var unnormalized = unnormalizedParams(options, this._type);
-      Tone.PolySynth.call(this, undefined, ctr, unnormalized);
+      Tone.PolySynth.call(this, undefined, ctr);
+      var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps[this._type]);
+      this.normalizedObjectSet(def);
+      this.normalizedObjectSet(options);
 
       // TODO: don't route everything to master
       this.toMaster();
-      this._triggered = {};
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
@@ -129,50 +129,54 @@
       return jsonVersion;
     };
 
+    var secondsDisplay = Rhombus._map.secondsDisplay;
+    var dbDisplay = Rhombus._map.dbDisplay;
+    var rawDisplay = Rhombus._map.rawDisplay;
+    var hzDisplay = Rhombus._map.hzDisplay;
+    
     var monoSynthMap = {
-      "portamento" : Rhombus._map.mapLinear(0, 10),
-      // TODO: verify this is good
-      "volume" : Rhombus._map.mapLog(-96.32, 0),
+      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
+      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
       "oscillator" : {
-        "type" : Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm")
+        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0.3],
       },
       "envelope" : Rhombus._map.envelopeMap,
       "filter" : Rhombus._map.filterMap,
       "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-      "detune" : Rhombus._map.harmMapFn
+      "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0.5]
     };
 
     var unnormalizeMaps = {
       "mono" : monoSynthMap,
 
       "am" : {
-        "portamento" : Rhombus._map.mapLinear(0, 10),
+        "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
         // TODO: verify this is good
-        "volume" : Rhombus._map.mapLog(-96.32, 0),
+        "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
         // TODO: verify this is good
-        "harmonicity" : Rhombus._map.harmMapFn,
+        "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
         "carrier" : monoSynthMap,
         "modulator" : monoSynthMap
       },
 
       "fm" : {
-        "portamento" : Rhombus._map.mapLinear(0, 10),
+        "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
         // TODO: verify this is good
-        "volume" : Rhombus._map.mapLog(-96.32, 0),
+        "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
         // TODO: verify this is good
-        "harmonicity" : Rhombus._map.harmMapFn,
+        "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
         // TODO: verify this is good
-        "modulationIndex" : Rhombus._map.mapLinear(-5, 5),
+        "modulationIndex" : [Rhombus._map.mapLinear(-5, 5), rawDisplay, 0.5],
         "carrier" : monoSynthMap,
         "modulator" : monoSynthMap
       },
 
       "noise" : {
-        "portamento" : Rhombus._map.mapLinear(0, 10),
+        "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
         // TODO: verify this is good
-        "volume" : Rhombus._map.mapLog(-96.32, 0),
+        "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
         "noise" : {
-          "type" : Rhombus._map.mapDiscrete("white", "pink", "brown")
+          "type" : [Rhombus._map.mapDiscrete("white", "pink", "brown"), rawDisplay, 0.0]
         },
         "envelope" : Rhombus._map.envelopeMap,
         "filter" : Rhombus._map.filterMap,
@@ -180,13 +184,13 @@
       },
 
       "duo" : {
-        "portamento" : Rhombus._map.mapLinear(0, 10),
+        "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
         // TODO: verify this is good
-        "volume" : Rhombus._map.mapLog(-96.32, 0),
-        "vibratoAmount" : Rhombus._map.mapLinear(0, 20),
-        "vibratoRate" : Rhombus._map.freqMapFn,
-        "vibratoDelay" : Rhombus._map.timeMapFn,
-        "harmonicity" : Rhombus._map.harmMapFn,
+        "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
+        "vibratoAmount" : [Rhombus._map.mapLinear(0, 20), rawDisplay, 0.025],
+        "vibratoRate" : [Rhombus._map.freqMapFn, hzDisplay, 0.1],
+        "vibratoDelay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+        "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
         "voice0" : monoSynthMap,
         "voice1" : monoSynthMap
       }
@@ -197,6 +201,10 @@
     }
 
     Instrument.prototype.normalizedObjectSet = function(params) {
+      if (typeof params !== "object") {
+        return;
+      }
+
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
@@ -213,8 +221,41 @@
         return;
       }
       return name;
-    }
+    };
 
+    // Parameter display string stuff
+    Instrument.prototype.parameterDisplayString = function(paramIdx) {
+      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
+    };
+
+    Instrument.prototype.parameterDisplayStringByName = function(paramName) {
+      var pieces = paramName.split(":");
+
+      var curValue = this._currentParams;
+      for (var i = 0; i < pieces.length; i++) {
+        curValue = curValue[pieces[i]];
+      }
+      if (curValue === undefined) {
+        return;
+      }
+
+      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps[this._type], paramName, curValue);
+      var realObj = unnormalizedParams(setObj, this._type);
+
+      curValue = realObj;
+      for (var i = 0; i < pieces.length; i++) {
+        curValue = curValue[pieces[i]];
+      }
+      if (curValue === undefined) {
+        return;
+      }
+
+      var displayValue = curValue;
+      var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps[this._type], paramName);
+      return disp(displayValue);
+    };
+
+    // Parameter setting stuff
     Instrument.prototype.normalizedSet = function(paramIdx, paramValue) {
       var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
       if (typeof setObj !== "object") {
