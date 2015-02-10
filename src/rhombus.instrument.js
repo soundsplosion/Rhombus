@@ -223,6 +223,14 @@
       this.normalizedObjectSet(setObj);
     };
 
+    Instrument.prototype.normalizedSetByName = function(paramName, paramValue) {
+      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps[this._type], paramName, paramValue);
+      if (typeof setObj !== "object") {
+        return;
+      }
+      this.normalizedObjectSet(setObj);
+    };
+
     // HACK: these are here until proper note routing is implemented
     var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
     var sampleCount = Tone.context.sampleRate * 2.0;
