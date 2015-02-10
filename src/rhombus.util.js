@@ -180,6 +180,32 @@
     return leftToCount;
   };
 
+  Rhombus._map.generateSetObjectByName = function(obj, name, paramValue) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (name.substring(0, key.length) === key) {
+        if (name.length === key.length) {
+          var toRet = {};
+          toRet[key] = paramValue;
+          return toRet;
+        } else if (name[key.length] === ':') {
+          // We matched the first part of the name
+          var newName = name.substring(key.length+1);
+          var generated = Rhombus._map.generateSetObjectByName(value, newName, paramValue);
+          if (typeof generated === "object") {
+            var toRet = {};
+            toRet[key] = generated;
+            return toRet;
+          } else {
+            return;
+          }
+        }
+      }
+    }
+  };
+
   Rhombus._map.getParameterName = function(obj, leftToCount) {
     var keys = Object.keys(obj);
     for (var keyIdx in keys) {

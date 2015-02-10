@@ -228,6 +228,14 @@
       this.normalizedSetObj({ sampleIdx : setObj });
     };
 
+    Sampler.prototype.normalizedSetByName = function(paramName, paramValue) {
+      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps["samp"], paramName, paramValue);
+      if (typeof setObj !== "object") {
+        return;
+      }
+      this.normalizedObjectSet(setObj);
+    };
+
     r._Sampler = Sampler;
   };
 })(this.Rhombus);
