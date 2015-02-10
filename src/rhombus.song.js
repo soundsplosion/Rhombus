@@ -9,7 +9,7 @@
       // song metadata
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
-      this._length = 1920; // not really metadata, but it's fixed for now..
+      this._length = 1920;
 
       // song structure data
       this._tracks = {};
@@ -61,7 +61,7 @@
 
       deletePattern: function(ptnId) {
         var pattern = this._patterns[ptnId];
-        
+
         if (typeof pattern === 'undefined') {
           return undefined;
         }
@@ -86,13 +86,38 @@
           // TODO: find a more robust way to terminate playing notes
           for (var rtNoteId in this._playingNotes) {
             var note = this._playingNotes[rtNoteId];
-            r.Instrument.triggerRelease(note._id, 0);
+
+            for (var instId in r._song._instruments) {
+              r._song._instruments[instId].triggerRelease(rtNoteId, 0);
+            }
+
             delete this._playingNotes[rtNoteId];
           }
 
           delete this._tracks[trkId];
           return trkId;
         }
+      },
+
+      // Song length here is defined as the end of the last
+      // playlist item on any track
+      findSongLength: function() {
+        var length = 0;
+
+        for (var trkId in this._tracks) {
+          var track = this._tracks[trkId];
+
+          for (var itemId in track._playlist) {
+            var item = track._playlist[itemId];
+            var itemEnd = item._start + item._length;
+
+            if (itemEnd > length) {
+              length = itemEnd;
+            }
+          }
+        }
+
+        return length;
       }
     };
 
@@ -107,6 +132,7 @@
       var parsed = JSON.parse(json);
       r._song.setTitle(parsed._title);
       r._song.setArtist(parsed._artist);
+      r._song._length = parsed._length;
 
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
@@ -136,9 +162,6 @@
         r._song._patterns[+ptnId] = newPattern;
       }
 
-      // TODO: tracks and instruments will need to be imported
-      //       in a similar manner
-
       for (var trkId in tracks) {
         var track = tracks[trkId];
         var playlist = track._playlist;
@@ -162,10 +185,16 @@
 
       for (var instId in instruments) {
         var inst = instruments[instId];
-        r.addInstrument(inst._type, inst._params, +instId);
+        var instId = r.addInstrument(inst._type, inst._params, +instId);
+        r._song._instruments[instId].normalizedObjectSet({ volume: 0.1 });
       }
 
-      // restore curId
+      for (var effId in effects) {
+        var eff = effects[effId];
+        r.addEffect(eff._type, eff._params, +effId);
+      }
+
+      // restore curId -- this should be the last step of importing
       var curId;
       if (parsed._curId === undefined) {
         console.log("[Rhomb Import] curId not found -- beware");
@@ -174,14 +203,11 @@
         r.setCurId(parsed._curId);
       }
 
-      for (var effId in effects) {
-        var eff = effects[effId];
-        r.addEffect(eff._type, eff._params, +effId);
-      }
     };
 
     r.exportSong = function() {
       r._song._curId = r.getCurId();
+      r._song._length = r._song.findSongLength();
       return JSON.stringify(r._song);
     };
 
