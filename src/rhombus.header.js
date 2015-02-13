@@ -36,7 +36,7 @@
     };
 
     this.setGlobalTarget = function(target) {
-      console.log("[Rhomb] setting global target to " + target);
+      console.log("[Rhomb] - setting global target to " + target);
       this._globalTarget = +target;
     };
 

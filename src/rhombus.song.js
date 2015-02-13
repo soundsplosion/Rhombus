@@ -10,6 +10,7 @@
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
       this._length = 1920;
+      this._bpm    = 120;
 
       // song structure data
       this._tracks = {};
@@ -140,7 +141,8 @@
       var parsed = JSON.parse(json);
       r._song.setTitle(parsed._title);
       r._song.setArtist(parsed._artist);
-      r._song._length = parsed._length;
+      r._song._length = parsed._length || 1920;
+      r._song._bpm    = parsed._bpm || 120;
 
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
