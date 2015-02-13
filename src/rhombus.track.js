@@ -21,7 +21,7 @@
     r.PlaylistItem.prototype = {
 
       setStart: function(start) {
-        if (!isDefined(start)) {
+        if (notDefined(start)) {
           return undefined;
         }
 
@@ -38,7 +38,7 @@
       },
 
       setLength: function(length) {
-        if (!isDefined(length)) {
+        if (notDefined(length)) {
           return undefined;
         }
 
@@ -88,7 +88,7 @@
       },
 
       setName: function(name) {
-        if (!isDefined(name)) {
+        if (notDefined(name)) {
           return undefined;
         }
         else {
@@ -125,12 +125,12 @@
         var end = start + length;
 
         // ptnId myst belong to an existing pattern
-        if (!isDefined(r._song._patterns[ptnId])) {
+        if (notDefined(r._song._patterns[ptnId])) {
           return undefined;
         }
-        
+
         // All arguments must be defined
-        if (!isDefined(ptnId) || !isDefined(start) || !isDefined(length)) {
+        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
           return undefined;
         }
 

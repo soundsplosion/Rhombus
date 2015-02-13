@@ -20,12 +20,12 @@
 
     function Instrument(type, options, id) {
       var ctr = typeMap[type];
-      if (isNull(ctr) || !isDefined(ctr)) {
+      if (isNull(ctr) || notDefined(ctr)) {
         type = "mono";
         ctr = mono;
       }
 
-      if (isNull(id) || !isDefined(id)) {
+      if (isNull(id) || notDefined(id)) {
         r._newId(this);
       } else {
         r._setId(this, id);
@@ -53,7 +53,7 @@
         instr = new Instrument(type, options, id);
       }
 
-      if (isNull(instr) || !isDefined(instr)) {
+      if (isNull(instr) || notDefined(instr)) {
         return;
       }
 
@@ -235,7 +235,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (!isDefined(curValue)) {
+      if (notDefined(curValue)) {
         return;
       }
 
@@ -246,7 +246,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (!isDefined(curValue)) {
+      if (notDefined(curValue)) {
         return;
       }
 
@@ -298,7 +298,7 @@
     r.setParameter = function(paramIdx, value) {
       var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
 
-      if (!isDefined(inst)) {
+      if (notDefined(inst)) {
         console.log("[Rhomb] - Trying to set parameter on undefined instrument -- dame dayo!");
         return undefined;
       }
@@ -321,10 +321,10 @@
         return;
       }
 
-      if (!isDefined(previewNote)) {
+      if (notDefined(previewNote)) {
         var targetId = getInstIdByIndex(r._globalTarget);
         var inst = r._song._instruments[targetId];
-        if (!isDefined(inst)) {
+        if (notDefined(inst)) {
           console.log("[Rhomb] - Trying to trigger note on undefined instrument");
           return;
         }
@@ -342,7 +342,7 @@
 
       if (isDefined(previewNote)) {
         var inst = r._song._instruments[previewNote._target];
-        if (!isDefined(inst)) {
+        if (notDefined(inst)) {
           console.log("[Rhomb] - Trying to release note on undefined instrument");
           return;
         }

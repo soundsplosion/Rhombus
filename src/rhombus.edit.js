@@ -42,7 +42,7 @@
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (!isDefined(note))
+      if (notDefinedn(note))
         return;
 
       var curTicks = r.seconds2Ticks(r.getPosition());
@@ -67,7 +67,7 @@
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (!isDefined(note)) {
+      if (notDefined(note)) {
         return;
       }
 
@@ -87,7 +87,7 @@
     r.Edit.copyPattern = function(ptnId) {
       var src = r._song._patterns[ptnId];
 
-      if (!isDefined(src)) {
+      if (notDefined(src)) {
         return undefined;
       }
 

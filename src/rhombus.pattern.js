@@ -38,7 +38,7 @@
       },
 
       setName: function(name) {
-        if (!isDefined(name)) {
+        if (notDefined(name)) {
           return undefined;
         }
         else {
@@ -54,7 +54,7 @@
       deleteNote: function(noteId) {
         var note = this._noteMap[noteId];
 
-        if (!isDefined(note))
+        if (notDefined(note))
           return undefined;
 
         delete this._noteMap[note._id];

@@ -52,7 +52,7 @@
       },
 
       addPattern: function(pattern) {
-        if (!isDefined(pattern)) {
+        if (notDefined(pattern)) {
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
@@ -62,7 +62,7 @@
       deletePattern: function(ptnId) {
         var pattern = this._patterns[ptnId];
 
-        if (!isDefined(pattern)) {
+        if (notDefined(pattern)) {
           return undefined;
         }
 
@@ -87,7 +87,7 @@
       deleteTrack: function(trkId) {
         var track = this._tracks[trkId];
 
-        if (!isDefined(track)) {
+        if (notDefined(track)) {
           return undefined;
         }
         else {
@@ -205,7 +205,7 @@
 
       // restore curId -- this should be the last step of importing
       var curId;
-      if (!isDefined(parsed._curId)) {
+      if (notDefined(parsed._curId)) {
         console.log("[Rhomb Import] curId not found -- beware");
       }
       else {

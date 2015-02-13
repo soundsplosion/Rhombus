@@ -10,9 +10,18 @@
     return typeof obj !== "undefined";
   };
 
+  window.notDefined = function(obj) {
+    return typeof obj === "undefined";
+  };
+
   window.isNull = function(obj) {
     return obj === null;
   };
+
+  window.notNull = function(obj) {
+    return obj !== null;
+  };
+
 
   function calculator(noteNum) {
     return Math.pow(2, (noteNum-69)/12) * 440;
@@ -101,7 +110,7 @@
       var key = addKeys[idx];
       var value = toAdd[key];
 
-      if (isNull(value) || !isDefined(value)) {
+      if (isNull(value) || notDefined(value)) {
         continue;
       }
 
@@ -134,7 +143,7 @@
   };
 
   Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
-    if (isNull(params) || !isDefined(params) ||
+    if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
     }
