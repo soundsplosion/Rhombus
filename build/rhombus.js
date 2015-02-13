@@ -2112,8 +2112,9 @@
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (notDefinedn(note))
+      if (notDefined(note)) {
         return;
+      }
 
       var curTicks = r.seconds2Ticks(r.getPosition());
 
