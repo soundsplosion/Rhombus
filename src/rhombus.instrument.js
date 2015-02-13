@@ -20,12 +20,12 @@
 
     function Instrument(type, options, id) {
       var ctr = typeMap[type];
-      if (ctr === null || ctr === undefined) {
+      if (isNull(ctr) || !isDefined(ctr)) {
         type = "mono";
         ctr = mono;
       }
 
-      if (id === undefined || id === null) {
+      if (isNull(id) || !isDefined(id)) {
         r._newId(this);
       } else {
         r._setId(this, id);
@@ -53,7 +53,7 @@
         instr = new Instrument(type, options, id);
       }
 
-      if (instr === null || instr === undefined) {
+      if (isNull(instr) || !isDefined(instr)) {
         return;
       }
 
@@ -235,7 +235,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (!isDefined(curValue)) {
         return;
       }
 
@@ -246,7 +246,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (!isDefined(curValue)) {
         return;
       }
 
@@ -298,7 +298,7 @@
     r.setParameter = function(paramIdx, value) {
       var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
 
-      if (typeof inst === "undefined") {
+      if (!isDefined(inst)) {
         console.log("[Rhomb] - Trying to set parameter on undefined instrument -- dame dayo!");
         return undefined;
       }
@@ -321,10 +321,10 @@
         return;
       }
 
-      if (previewNote === undefined) {
+      if (!isDefined(previewNote)) {
         var targetId = getInstIdByIndex(r._globalTarget);
         var inst = r._song._instruments[targetId];
-        if (typeof inst === "undefined") {
+        if (!isDefined(inst)) {
           console.log("[Rhomb] - Trying to trigger note on undefined instrument");
           return;
         }
@@ -340,9 +340,9 @@
         return;
       }
 
-      if (previewNote !== undefined) {
+      if (isDefined(previewNote)) {
         var inst = r._song._instruments[previewNote._target];
-        if (typeof inst === "undefined") {
+        if (!isDefined(inst)) {
           console.log("[Rhomb] - Trying to release note on undefined instrument");
           return;
         }

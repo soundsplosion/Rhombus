@@ -12,14 +12,14 @@
 
     function makeEffect(type, options, id) {
       var ctr = typeMap[type];
-      if (ctr === null || ctr === undefined) {
+      if (isNull(ctr) || !isDefined(ctr)) {
         type = "dist";
         ctr = dist;
       }
 
       var unnormalized = unnormalizedParams(options, type);
       var eff = new ctr(unnormalized);
-      if (id === undefined || id === null) {
+      if (isNull(id) || !isDefined(id)) {
         r._newId(eff);
       } else {
         r._setId(eff, id);
@@ -45,7 +45,7 @@
     r.addEffect = function(type, options, id) {
       var effect = makeEffect(type, options, id);
 
-      if (effect === null || effect === undefined) {
+      if (isNull(effect) || !isDefined(effect)) {
         return;
       }
 

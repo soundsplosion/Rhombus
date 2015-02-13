@@ -96,6 +96,14 @@
 
   Rhombus.Util = {};
 
+  window.isDefined = function(obj) {
+    return typeof obj !== "undefined";
+  };
+
+  window.isNull = function(obj) {
+    return obj === null;
+  };
+
   function calculator(noteNum) {
     return Math.pow(2, (noteNum-69)/12) * 440;
   }
@@ -183,7 +191,7 @@
       var key = addKeys[idx];
       var value = toAdd[key];
 
-      if (value === undefined || value === null) {
+      if (isNull(value) || !isDefined(value)) {
         continue;
       }
 
@@ -216,7 +224,7 @@
   };
 
   Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
-    if (params === undefined || params === null ||
+    if (isNull(params) || !isDefined(params) ||
         typeof(params) !== "object") {
       return params;
     }
@@ -231,8 +239,8 @@
           var nextLevelMap = thisLevelMap[key];
           returnObj[key] = unnormalized(value, nextLevelMap);
         } else {
-          var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key][0] : undefined;
-          if (ctrXformer !== undefined) {
+          var ctrXformer = isDefined(thisLevelMap) ? thisLevelMap[key][0] : undefined;
+          if (isDefined(ctrXformer)) {
             returnObj[key] = ctrXformer(value);
           } else {
             returnObj[key] = value;
@@ -343,7 +351,7 @@
       if (!Array.isArray(value)) {
         toRet[key] = Rhombus._map.generateDefaultSetObj(value);
       } else {
-        if (value[2] !== undefined) {
+        if (isDefined(value[2])) {
           toRet[key] = value[2];
         }
       }
@@ -523,7 +531,7 @@
     SuperToneSampler.prototype.triggerAttack = function(note, time, velocity, offset) {
       // Exactly as in Tone.Sampler, except add a parameter to let you control
       // sample offset.
-      if (offset === undefined) {
+      if (!isDefined(offset)) {
         offset = 0;
       }
 
@@ -538,7 +546,7 @@
     Tone.extend(SuperToneSampler, Tone.Sampler);
 
     function Sampler(options, id) {
-      if (id === undefined || id === null) {
+      if (isNull(id) || !isDefined(id)) {
         r._newId(this);
       } else {
         r._setId(this, id);
@@ -551,7 +559,7 @@
       this._triggered = {};
       this._currentParams = {};
 
-      if (options !== undefined) {
+      if (isDefined(options)) {
         var params = options.params;
         var names = options.names;
         var buffs = options.buffs;
@@ -567,7 +575,7 @@
             var setChanData = setBuf.getChannelData(chI);
             for (var sI = 0; sI < getChanData.length; sI++) {
               var dat = getChanData[sI];
-              if (dat === undefined) {
+              if (!isDefined(dat)) {
                 dat = 0;
               }
               setChanData[sI] = dat;
@@ -584,12 +592,12 @@
     Tone.extend(Sampler, Tone.Instrument);
 
     Sampler.prototype.setBuffers = function(buffers, names) {
-      if (buffers === undefined) {
+      if (!isDefined(buffers)) {
         return;
       }
 
       var useDefaultNames = false;
-      if (names === undefined) {
+      if (!isDefined(names)) {
         useDefaultNames = true;
       }
 
@@ -608,7 +616,7 @@
         sampler.toMaster();
 
         this.samples.push(sampler);
-        if (useDefaultNames || names[i] === undefined) {
+        if (useDefaultNames || !isDefined(names[i])) {
           this._names.push("" + i);
         } else {
           this._names.push(names[i]);
@@ -636,7 +644,7 @@
 
     Sampler.prototype.triggerRelease = function(id, delay) {
       var idx = this._triggered[id];
-      if (idx === undefined) {
+      if (!isDefined(idx)) {
         return;
       }
 
@@ -743,7 +751,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (!isDefined(curValue)) {
         return;
       }
 
@@ -754,7 +762,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (!isDefined(curValue)) {
         return;
       }
 
@@ -810,12 +818,12 @@
 
     function Instrument(type, options, id) {
       var ctr = typeMap[type];
-      if (ctr === null || ctr === undefined) {
+      if (isNull(ctr) || !isDefined(ctr)) {
         type = "mono";
         ctr = mono;
       }
 
-      if (id === undefined || id === null) {
+      if (isNull(id) || !isDefined(id)) {
         r._newId(this);
       } else {
         r._setId(this, id);
@@ -843,7 +851,7 @@
         instr = new Instrument(type, options, id);
       }
 
-      if (instr === null || instr === undefined) {
+      if (isNull(instr) || !isDefined(instr)) {
         return;
       }
 
@@ -1025,7 +1033,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (!isDefined(curValue)) {
         return;
       }
 
@@ -1036,7 +1044,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (!isDefined(curValue)) {
         return;
       }
 
@@ -1088,7 +1096,7 @@
     r.setParameter = function(paramIdx, value) {
       var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
 
-      if (typeof inst === "undefined") {
+      if (!isDefined(inst)) {
         console.log("[Rhomb] - Trying to set parameter on undefined instrument -- dame dayo!");
         return undefined;
       }
@@ -1111,10 +1119,10 @@
         return;
       }
 
-      if (previewNote === undefined) {
+      if (!isDefined(previewNote)) {
         var targetId = getInstIdByIndex(r._globalTarget);
         var inst = r._song._instruments[targetId];
-        if (typeof inst === "undefined") {
+        if (!isDefined(inst)) {
           console.log("[Rhomb] - Trying to trigger note on undefined instrument");
           return;
         }
@@ -1130,9 +1138,9 @@
         return;
       }
 
-      if (previewNote !== undefined) {
+      if (isDefined(previewNote)) {
         var inst = r._song._instruments[previewNote._target];
-        if (typeof inst === "undefined") {
+        if (!isDefined(inst)) {
           console.log("[Rhomb] - Trying to release note on undefined instrument");
           return;
         }
@@ -1158,14 +1166,14 @@
 
     function makeEffect(type, options, id) {
       var ctr = typeMap[type];
-      if (ctr === null || ctr === undefined) {
+      if (isNull(ctr) || !isDefined(ctr)) {
         type = "dist";
         ctr = dist;
       }
 
       var unnormalized = unnormalizedParams(options, type);
       var eff = new ctr(unnormalized);
-      if (id === undefined || id === null) {
+      if (isNull(id) || !isDefined(id)) {
         r._newId(eff);
       } else {
         r._setId(eff, id);
@@ -1191,7 +1199,7 @@
     r.addEffect = function(type, options, id) {
       var effect = makeEffect(type, options, id);
 
-      if (effect === null || effect === undefined) {
+      if (isNull(effect) || !isDefined(effect)) {
         return;
       }
 
@@ -1305,7 +1313,7 @@
       },
 
       setLength: function(length) {
-        if (length !== undefined && length >= 0)
+        if (isDefined(length) && length >= 0)
           this._length = length;
       },
 
@@ -1314,7 +1322,7 @@
       },
 
       setName: function(name) {
-        if (typeof name === 'undefined') {
+        if (!isDefined(name)) {
           return undefined;
         }
         else {
@@ -1330,7 +1338,7 @@
       deleteNote: function(noteId) {
         var note = this._noteMap[noteId];
 
-        if (note === undefined)
+        if (!isDefined(note))
           return undefined;
 
         delete this._noteMap[note._id];
@@ -1394,7 +1402,7 @@
     r.PlaylistItem.prototype = {
 
       setStart: function(start) {
-        if (typeof start === 'undefined') {
+        if (!isDefined(start)) {
           return undefined;
         }
 
@@ -1411,7 +1419,7 @@
       },
 
       setLength: function(length) {
-        if (typeof length === 'undefined') {
+        if (!isDefined(length)) {
           return undefined;
         }
 
@@ -1461,7 +1469,7 @@
       },
 
       setName: function(name) {
-        if (typeof name === 'undefined') {
+        if (!isDefined(name)) {
           return undefined;
         }
         else {
@@ -1498,12 +1506,14 @@
         var end = start + length;
 
         // ptnId myst belong to an existing pattern
-        if (r._song._patterns[ptnId] === undefined)
+        if (!isDefined(r._song._patterns[ptnId])) {
           return undefined;
-
+        }
+        
         // All arguments must be defined
-        if (ptnId === undefined || start === undefined || length === undefined)
+        if (!isDefined(ptnId) || !isDefined(start) || !isDefined(length)) {
           return undefined;
+        }
 
         // TODO: restore these checks
 
@@ -1584,7 +1594,7 @@
       },
 
       setLength: function(length) {
-        if (length !== undefined && length >= 480) {
+        if (isDefined(length) && length >= 480) {
           this._length = length;
           return length;
         }
@@ -1598,7 +1608,7 @@
       },
 
       addPattern: function(pattern) {
-        if (pattern === undefined) {
+        if (!isDefined(pattern)) {
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
@@ -1608,7 +1618,7 @@
       deletePattern: function(ptnId) {
         var pattern = this._patterns[ptnId];
 
-        if (typeof pattern === 'undefined') {
+        if (!isDefined(pattern)) {
           return undefined;
         }
 
@@ -1633,7 +1643,7 @@
       deleteTrack: function(trkId) {
         var track = this._tracks[trkId];
 
-        if (typeof track === 'undefined') {
+        if (!isDefined(track)) {
           return undefined;
         }
         else {
@@ -1751,7 +1761,7 @@
 
       // restore curId -- this should be the last step of importing
       var curId;
-      if (parsed._curId === undefined) {
+      if (!isDefined(parsed._curId)) {
         console.log("[Rhomb Import] curId not found -- beware");
       }
       else {
@@ -2093,7 +2103,7 @@
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (note === undefined)
+      if (!isDefined(note))
         return;
 
       var curTicks = r.seconds2Ticks(r.getPosition());
@@ -2118,7 +2128,7 @@
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (note === undefined) {
+      if (!isDefined(note)) {
         return;
       }
 
@@ -2138,7 +2148,7 @@
     r.Edit.copyPattern = function(ptnId) {
       var src = r._song._patterns[ptnId];
 
-      if (src === undefined) {
+      if (!isDefined(src)) {
         return undefined;
       }
 
