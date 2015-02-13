@@ -39,6 +39,8 @@
       var curPos = r.getPosition();
       var nowTicks = r.seconds2Ticks(curPos);
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
+      var loopStart = r.getLoopStart();
+      var loopEnd = r.getLoopEnd();
 
       // Determine if playback needs to loop around in this time window
       var doWrap = r.getLoopEnabled() && (r.getLoopEnd() - nowTicks < aheadTicks);
@@ -88,6 +90,10 @@
             for (var noteId in noteMap) {
               var note = noteMap[noteId];
               var start = note.getStart() + itemStart;
+
+              if (r.getLoopEnabled() && start < loopStart) {
+                continue;
+              }
 
               if (start >= scheduleStart &&
                   start < scheduleEnd &&
@@ -146,11 +152,11 @@
     }
 
     r.ticks2Seconds = function(ticks) {
-      return ticks2Beats(ticks) / r._song._bpm * 60;
+      return (ticks2Beats(ticks) / r._song._bpm) * 60;
     }
 
     r.seconds2Ticks = function(seconds) {
-      var beats = seconds / 60 * r._song._bpm;
+      var beats = (seconds / 60) * r._song._bpm;
       return beats2Ticks(beats);
     }
 
@@ -165,7 +171,7 @@
 
     function resetPlayback(resetPoint) {
       lastScheduled = resetPoint;
-
+      /*
       scheduleWorker.postMessage({ playing: false });
 
       for (var trkId in r._song._tracks) {
@@ -179,9 +185,23 @@
           delete playingNotes[rtNoteId];
         }
       }
-
       scheduleWorker.postMessage({ playing: true });
+      */
     }
+
+    r.killAllNotes = function() {
+      for (var trkId in r._song._tracks) {
+        var track = r._song._tracks[trkId];
+        var playingNotes = track._playingNotes;
+
+        for (var rtNoteId in playingNotes) {
+          for (var instId in r._song._instruments) {
+            r._song._instruments[instId].triggerRelease(rtNoteId, 0);
+          }
+          delete playingNotes[rtNoteId];
+        }
+      }
+    };
 
     r.startPlayback = function() {
       if (!r._active || playing) {
@@ -210,6 +230,7 @@
       playing = false;
       scheduleWorker.postMessage({ playing: false });
       resetPlayback(r.seconds2Ticks(time));
+      r.killAllNotes();
       time = getPosition(true);
     };
 
