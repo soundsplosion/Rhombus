@@ -1961,26 +1961,6 @@
     var loopEnd     = 1920;
     var loopEnabled = false;
 
-    function resetPlayback(resetPoint) {
-      lastScheduled = resetPoint;
-      /*
-      scheduleWorker.postMessage({ playing: false });
-
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
-        var playingNotes = track._playingNotes;
-
-        for (var rtNoteId in playingNotes) {
-          for (var instId in r._song._instruments) {
-            r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-          }
-          delete playingNotes[rtNoteId];
-        }
-      }
-      scheduleWorker.postMessage({ playing: true });
-      */
-    }
-
     r.killAllNotes = function() {
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
@@ -2001,7 +1981,8 @@
       }
 
       // Flush any notes that might be lingering
-      resetPlayback(r.seconds2Ticks(time));
+      lastScheduled = r.seconds2Ticks(time);
+      r.killAllNotes();
 
       playing = true;
       r.moveToPositionSeconds(time);
@@ -2021,7 +2002,7 @@
 
       playing = false;
       scheduleWorker.postMessage({ playing: false });
-      resetPlayback(r.seconds2Ticks(time));
+      lastScheduled = r.seconds2Ticks(time);
       r.killAllNotes();
       time = getPosition(true);
     };
@@ -2031,11 +2012,11 @@
 
       if (tickDiff > 0) {
         console.log("[Rhomb] - Loopback missed loop start by " + tickDiff + " ticks");
-        resetPlayback(loopStart);
+        lastScheduled = loopStart;
         r.moveToPositionTicks(loopStart);
       }
 
-      resetPlayback(loopStart + tickDiff);
+      lastScheduled = loopStart + tickDiff;
       r.moveToPositionTicks(loopStart + tickDiff);
       scheduleNotes();
     };
@@ -2061,6 +2042,7 @@
     };
 
     r.moveToPositionTicks = function(ticks) {
+      lastScheduled = ticks;
       var seconds = r.ticks2Seconds(ticks);
       r.moveToPositionSeconds(seconds);
     };
