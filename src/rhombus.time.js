@@ -136,6 +136,15 @@
       return beats * TICKS_PER_BEAT;
     }
 
+    r.ticks2Seconds = function(ticks) {
+      return (ticks2Beats(ticks) / r._song._bpm) * 60;
+    }
+
+    r.seconds2Ticks = function(seconds) {
+      var beats = (seconds / 60) * r._song._bpm;
+      return beats2Ticks(beats);
+    }
+
     r.setBpm = function(bpm) {
       if (notDefined(bpm) || isNull(bpm) || +bpm < 1 || +bpm > 1000) {
         console.log("[Rhomb] - Invalid tempo");
@@ -151,13 +160,8 @@
       return bpm;
     }
 
-    r.ticks2Seconds = function(ticks) {
-      return (ticks2Beats(ticks) / r._song._bpm) * 60;
-    }
-
-    r.seconds2Ticks = function(seconds) {
-      var beats = (seconds / 60) * r._song._bpm;
-      return beats2Ticks(beats);
+    r.getBpm = function() {
+      return r._song._bpm;
     }
 
     var playing = false;
@@ -165,8 +169,8 @@
     var startTime = 0;
 
     // Loop start and end position in ticks, default is one measure
-    var loopStart   = 0;
-    var loopEnd     = 1920;
+    //var loopStart   = 0;
+    //var loopEnd     = 1920;
     var loopEnabled = false;
 
     r.killAllNotes = function() {
@@ -216,16 +220,16 @@
     };
 
     r.loopPlayback = function (nowTicks) {
-      var tickDiff = nowTicks - loopEnd;
+      var tickDiff = nowTicks - r._song._loopEnd;
 
       if (tickDiff > 0) {
         console.log("[Rhomb] - Loopback missed loop start by " + tickDiff + " ticks");
-        lastScheduled = loopStart;
-        r.moveToPositionTicks(loopStart);
+        lastScheduled = r._song._loopStart;
+        r.moveToPositionTicks(r._song._loopStart);
       }
 
-      lastScheduled = loopStart + tickDiff;
-      r.moveToPositionTicks(loopStart + tickDiff);
+      lastScheduled = r._song._loopStart + tickDiff;
+      r.moveToPositionTicks(r._song._loopStart + tickDiff);
       scheduleNotes();
     };
 
@@ -272,7 +276,7 @@
     };
 
     r.getLoopStart = function() {
-      return loopStart;
+      return r._song._loopStart;
     };
 
     r.setLoopStart = function(start) {
@@ -281,16 +285,16 @@
         return undefined;
       }
 
-      if (start >= loopEnd || (loopEnd - start) < 480) {
+      if (start >= r._song._loopEnd || (r._song._loopEnd - start) < 480) {
         console.log("[Rhomb] - Invalid loop range");
         return undefined;
       }
-      loopStart = start;
-      return loopStart;
+      r._song._loopStart = start;
+      return r._song._loopStart;
     };
 
     r.getLoopEnd = function() {
-      return loopEnd;
+      return r._song._loopEnd;
     };
 
     r.setLoopEnd = function(end) {
@@ -300,12 +304,12 @@
       }
 
 
-      if (loopStart >= end || (end - loopStart) < 480) {
+      if (r._song._loopStart >= end || (end - r._song._loopStart) < 480) {
         console.log("[Rhomb] - Invalid loop range");
         return undefined;
       }
-      loopEnd = end;
-      return loopEnd;
+      r._song._loopEnd = end;
+      return r._song._loopEnd;
     };
 
     r.isPlaying = function() {

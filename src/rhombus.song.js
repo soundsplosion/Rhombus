@@ -12,6 +12,9 @@
       this._length = 1920;
       this._bpm    = 120;
 
+      this._loopStart = 0;
+      this._loopEnd   = 1920;
+
       // song structure data
       this._tracks = {};
       this._patterns = {};
@@ -142,7 +145,10 @@
       r._song.setTitle(parsed._title);
       r._song.setArtist(parsed._artist);
       r._song._length = parsed._length || 1920;
-      r._song._bpm    = parsed._bpm || 120;
+      r._song._bpm = parsed._bpm || 120;
+
+      r._song._loopStart = parsed._loopStart || 0;
+      r._song._loopEnd = parsed._loopEnd || 1920;
 
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
