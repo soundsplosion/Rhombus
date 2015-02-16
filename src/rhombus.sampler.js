@@ -12,7 +12,7 @@
     SuperToneSampler.prototype.triggerAttack = function(note, time, velocity, offset) {
       // Exactly as in Tone.Sampler, except add a parameter to let you control
       // sample offset.
-      if (offset === undefined) {
+      if (notDefined(offset)) {
         offset = 0;
       }
 
@@ -27,7 +27,7 @@
     Tone.extend(SuperToneSampler, Tone.Sampler);
 
     function Sampler(options, id) {
-      if (id === undefined || id === null) {
+      if (isNull(id) || notDefined(id)) {
         r._newId(this);
       } else {
         r._setId(this, id);
@@ -40,7 +40,7 @@
       this._triggered = {};
       this._currentParams = {};
 
-      if (options !== undefined) {
+      if (isDefined(options)) {
         var params = options.params;
         var names = options.names;
         var buffs = options.buffs;
@@ -56,7 +56,7 @@
             var setChanData = setBuf.getChannelData(chI);
             for (var sI = 0; sI < getChanData.length; sI++) {
               var dat = getChanData[sI];
-              if (dat === undefined) {
+              if (notDefined(dat)) {
                 dat = 0;
               }
               setChanData[sI] = dat;
@@ -73,12 +73,12 @@
     Tone.extend(Sampler, Tone.Instrument);
 
     Sampler.prototype.setBuffers = function(buffers, names) {
-      if (buffers === undefined) {
+      if (notDefined(buffers)) {
         return;
       }
 
       var useDefaultNames = false;
-      if (names === undefined) {
+      if (notDefined(names)) {
         useDefaultNames = true;
       }
 
@@ -97,7 +97,7 @@
         sampler.toMaster();
 
         this.samples.push(sampler);
-        if (useDefaultNames || names[i] === undefined) {
+        if (useDefaultNames || notDefined(names[i])) {
           this._names.push("" + i);
         } else {
           this._names.push(names[i]);
@@ -125,7 +125,7 @@
 
     Sampler.prototype.triggerRelease = function(id, delay) {
       var idx = this._triggered[id];
-      if (idx === undefined) {
+      if (notDefined(idx)) {
         return;
       }
 
@@ -232,7 +232,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (notDefined(curValue)) {
         return;
       }
 
@@ -243,7 +243,7 @@
       for (var i = 0; i < pieces.length; i++) {
         curValue = curValue[pieces[i]];
       }
-      if (curValue === undefined) {
+      if (notDefined(curValue)) {
         return;
       }
 

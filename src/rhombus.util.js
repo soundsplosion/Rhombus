@@ -6,6 +6,23 @@
 
   Rhombus.Util = {};
 
+  window.isDefined = function(obj) {
+    return typeof obj !== "undefined";
+  };
+
+  window.notDefined = function(obj) {
+    return typeof obj === "undefined";
+  };
+
+  window.isNull = function(obj) {
+    return obj === null;
+  };
+
+  window.notNull = function(obj) {
+    return obj !== null;
+  };
+
+
   function calculator(noteNum) {
     return Math.pow(2, (noteNum-69)/12) * 440;
   }
@@ -93,7 +110,7 @@
       var key = addKeys[idx];
       var value = toAdd[key];
 
-      if (value === undefined || value === null) {
+      if (isNull(value) || notDefined(value)) {
         continue;
       }
 
@@ -126,7 +143,7 @@
   };
 
   Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
-    if (params === undefined || params === null ||
+    if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
     }
@@ -141,8 +158,8 @@
           var nextLevelMap = thisLevelMap[key];
           returnObj[key] = unnormalized(value, nextLevelMap);
         } else {
-          var ctrXformer = thisLevelMap != undefined ? thisLevelMap[key][0] : undefined;
-          if (ctrXformer !== undefined) {
+          var ctrXformer = isDefined(thisLevelMap) ? thisLevelMap[key][0] : undefined;
+          if (isDefined(ctrXformer)) {
             returnObj[key] = ctrXformer(value);
           } else {
             returnObj[key] = value;
@@ -253,7 +270,7 @@
       if (!Array.isArray(value)) {
         toRet[key] = Rhombus._map.generateDefaultSetObj(value);
       } else {
-        if (value[2] !== undefined) {
+        if (isDefined(value[2])) {
           toRet[key] = value[2];
         }
       }

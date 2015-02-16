@@ -39,6 +39,8 @@
       var curPos = r.getPosition();
       var nowTicks = r.seconds2Ticks(curPos);
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
+      var loopStart = r.getLoopStart();
+      var loopEnd = r.getLoopEnd();
 
       // Determine if playback needs to loop around in this time window
       var doWrap = r.getLoopEnabled() && (r.getLoopEnd() - nowTicks < aheadTicks);
@@ -89,6 +91,10 @@
               var note = noteMap[noteId];
               var start = note.getStart() + itemStart;
 
+              if (r.getLoopEnabled() && start < loopStart) {
+                continue;
+              }
+
               if (start >= scheduleStart &&
                   start < scheduleEnd &&
                   start < itemEnd) {
@@ -120,26 +126,42 @@
 
     // The smallest unit of musical time in Rhombus is one tick, and there are
     // 480 ticks per quarter note
-    var TICKS_PER_SECOND = 480;
+    var TICKS_PER_BEAT = 480;
 
     function ticks2Beats(ticks) {
-      return ticks / TICKS_PER_SECOND;
+      return ticks / TICKS_PER_BEAT;
     }
 
     function beats2Ticks(beats) {
-      return beats * TICKS_PER_SECOND;
+      return beats * TICKS_PER_BEAT;
     }
 
-    // TODO: implement variable BPM
-    var BPM = 120;
-
     r.ticks2Seconds = function(ticks) {
-      return ticks2Beats(ticks) / BPM * 60;
+      return (ticks2Beats(ticks) / r._song._bpm) * 60;
     }
 
     r.seconds2Ticks = function(seconds) {
-      var beats = seconds / 60 * BPM;
+      var beats = (seconds / 60) * r._song._bpm;
       return beats2Ticks(beats);
+    }
+
+    r.setBpm = function(bpm) {
+      if (notDefined(bpm) || isNull(bpm) || +bpm < 1 || +bpm > 1000) {
+        console.log("[Rhomb] - Invalid tempo");
+        return undefined;
+      }
+
+      // Cache the old position in ticks
+      var oldTicks = r.seconds2Ticks(r.getPosition());
+      r._song._bpm = +bpm;
+
+      // Set the time position to the adjusted location
+      r.moveToPositionTicks(oldTicks);
+      return bpm;
+    }
+
+    r.getBpm = function() {
+      return r._song._bpm;
     }
 
     var playing = false;
@@ -147,15 +169,11 @@
     var startTime = 0;
 
     // Loop start and end position in ticks, default is one measure
-    var loopStart   = 0;
-    var loopEnd     = 1920;
+    //var loopStart   = 0;
+    //var loopEnd     = 1920;
     var loopEnabled = false;
 
-    function resetPlayback(resetPoint) {
-      lastScheduled = resetPoint;
-
-      scheduleWorker.postMessage({ playing: false });
-
+    r.killAllNotes = function() {
       for (var trkId in r._song._tracks) {
         var track = r._song._tracks[trkId];
         var playingNotes = track._playingNotes;
@@ -167,9 +185,7 @@
           delete playingNotes[rtNoteId];
         }
       }
-
-      scheduleWorker.postMessage({ playing: true });
-    }
+    };
 
     r.startPlayback = function() {
       if (!r._active || playing) {
@@ -177,7 +193,8 @@
       }
 
       // Flush any notes that might be lingering
-      resetPlayback(r.seconds2Ticks(time));
+      lastScheduled = r.seconds2Ticks(time);
+      r.killAllNotes();
 
       playing = true;
       r.moveToPositionSeconds(time);
@@ -197,21 +214,22 @@
 
       playing = false;
       scheduleWorker.postMessage({ playing: false });
-      resetPlayback(r.seconds2Ticks(time));
+      lastScheduled = r.seconds2Ticks(time);
+      r.killAllNotes();
       time = getPosition(true);
     };
 
     r.loopPlayback = function (nowTicks) {
-      var tickDiff = nowTicks - loopEnd;
+      var tickDiff = nowTicks - r._song._loopEnd;
 
       if (tickDiff > 0) {
-        console.log("[Rhomb] Loopback missed loop start by " + tickDiff + " ticks");
-        resetPlayback(loopStart);
-        r.moveToPositionTicks(loopStart);
+        console.log("[Rhomb] - Loopback missed loop start by " + tickDiff + " ticks");
+        lastScheduled = r._song._loopStart;
+        r.moveToPositionTicks(r._song._loopStart);
       }
 
-      resetPlayback(loopStart + tickDiff);
-      r.moveToPositionTicks(loopStart + tickDiff);
+      lastScheduled = r._song._loopStart + tickDiff;
+      r.moveToPositionTicks(r._song._loopStart + tickDiff);
       scheduleNotes();
     };
 
@@ -236,6 +254,7 @@
     };
 
     r.moveToPositionTicks = function(ticks) {
+      lastScheduled = ticks;
       var seconds = r.ticks2Seconds(ticks);
       r.moveToPositionSeconds(seconds);
     };
@@ -257,19 +276,40 @@
     };
 
     r.getLoopStart = function() {
-      return loopStart;
+      return r._song._loopStart;
     };
 
-    r.setLoopStart = function(ticks) {
-      loopStart = ticks;
+    r.setLoopStart = function(start) {
+      if (notDefined(start) || isNull(start)) {
+        console.log("[Rhomb] - Loop start is undefined");
+        return undefined;
+      }
+
+      if (start >= r._song._loopEnd || (r._song._loopEnd - start) < 480) {
+        console.log("[Rhomb] - Invalid loop range");
+        return undefined;
+      }
+      r._song._loopStart = start;
+      return r._song._loopStart;
     };
 
     r.getLoopEnd = function() {
-      return loopEnd;
+      return r._song._loopEnd;
     };
 
-    r.setLoopEnd = function(ticks) {
-      loopEnd = ticks;
+    r.setLoopEnd = function(end) {
+      if (notDefined(end) || isNull(end)) {
+        console.log("[Rhomb] - Loop end is undefined");
+        return undefined;
+      }
+
+
+      if (r._song._loopStart >= end || (end - r._song._loopStart) < 480) {
+        console.log("[Rhomb] - Invalid loop range");
+        return undefined;
+      }
+      r._song._loopEnd = end;
+      return r._song._loopEnd;
     };
 
     r.isPlaying = function() {

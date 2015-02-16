@@ -10,6 +10,10 @@
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
       this._length = 1920;
+      this._bpm    = 120;
+
+      this._loopStart = 0;
+      this._loopEnd   = 1920;
 
       // song structure data
       this._tracks = {};
@@ -38,7 +42,7 @@
       },
 
       setLength: function(length) {
-        if (length !== undefined && length >= 480) {
+        if (isDefined(length) && length >= 480) {
           this._length = length;
           return length;
         }
@@ -52,7 +56,7 @@
       },
 
       addPattern: function(pattern) {
-        if (pattern === undefined) {
+        if (notDefined(pattern)) {
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
@@ -62,7 +66,7 @@
       deletePattern: function(ptnId) {
         var pattern = this._patterns[ptnId];
 
-        if (typeof pattern === 'undefined') {
+        if (notDefined(pattern)) {
           return undefined;
         }
 
@@ -87,7 +91,7 @@
       deleteTrack: function(trkId) {
         var track = this._tracks[trkId];
 
-        if (typeof track === 'undefined') {
+        if (notDefined(track)) {
           return undefined;
         }
         else {
@@ -140,7 +144,11 @@
       var parsed = JSON.parse(json);
       r._song.setTitle(parsed._title);
       r._song.setArtist(parsed._artist);
-      r._song._length = parsed._length;
+      r._song._length = parsed._length || 1920;
+      r._song._bpm = parsed._bpm || 120;
+
+      r._song._loopStart = parsed._loopStart || 0;
+      r._song._loopEnd = parsed._loopEnd || 1920;
 
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
@@ -205,7 +213,7 @@
 
       // restore curId -- this should be the last step of importing
       var curId;
-      if (parsed._curId === undefined) {
+      if (notDefined(parsed._curId)) {
         console.log("[Rhomb Import] curId not found -- beware");
       }
       else {

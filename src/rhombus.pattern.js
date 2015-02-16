@@ -29,7 +29,7 @@
       },
 
       setLength: function(length) {
-        if (length !== undefined && length >= 0)
+        if (isDefined(length) && length >= 0)
           this._length = length;
       },
 
@@ -38,7 +38,7 @@
       },
 
       setName: function(name) {
-        if (typeof name === 'undefined') {
+        if (notDefined(name)) {
           return undefined;
         }
         else {
@@ -54,7 +54,7 @@
       deleteNote: function(noteId) {
         var note = this._noteMap[noteId];
 
-        if (note === undefined)
+        if (notDefined(note))
           return undefined;
 
         delete this._noteMap[note._id];
