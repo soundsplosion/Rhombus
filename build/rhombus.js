@@ -1405,7 +1405,7 @@
   Rhombus._patternSetup = function(r) {
 
     r.Pattern = function(id) {
-      if (id) {
+      if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
