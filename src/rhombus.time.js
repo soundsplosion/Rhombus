@@ -53,8 +53,8 @@
       var scheduleEndTime = curTime + scheduleAhead;
 
       // Iterate over every track to find notes that can be scheduled
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         // Schedule note-offs for notes playing on the current track.
@@ -66,7 +66,7 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            r._song._instruments[rtNote._target].triggerRelease(rtNote._id, delay);
+            r._song._instruments.getObjById(rtNote._target).triggerRelease(rtNote._id, delay);
             delete playingNotes[rtNoteId];
           }
         }
@@ -106,12 +106,12 @@
                 var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
                 playingNotes[rtNote._id] = rtNote;
 
-                r._song._instruments[track._target].triggerAttack(rtNote._id, note.getPitch(), delay);
+                r._song._instruments.getObjById(track._target).triggerAttack(rtNote._id, note.getPitch(), delay);
               }
             }
           }
         }
-      }
+      });
 
       lastScheduled = scheduleEnd;
 
@@ -187,17 +187,17 @@
     var loopEnabled = false;
 
     r.killAllNotes = function() {
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
-          for (var instId in r._song._instruments) {
-            r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-          }
+          r._song._instruments.objIds().forEach(function(instId) {
+            r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+          });
           delete playingNotes[rtNoteId];
         }
-      }
+      });
     };
 
     r.startPlayback = function() {

@@ -45,7 +45,7 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    r.addInstrument = function(type, options, id) {
+    r.addInstrument = function(type, options, id, idx) {
       var instr;
       if (type === "samp") {
         instr = new r._Sampler(options, id);
@@ -57,7 +57,7 @@
         return;
       }
 
-      r._song._instruments[instr._id] = instr;
+      r._song._instruments.addObj(instr, idx);
       return instr._id;
     };
 
@@ -77,7 +77,7 @@
         return;
       }
 
-      delete r._song._instruments[id];
+      r._song._instruments.removeId(id);
     };
 
     Instrument.prototype.triggerAttack = function(id, pitch, delay) {
@@ -287,16 +287,16 @@
 
     getInstIdByIndex = function(instrIdx) {
       var keys = [];
-      for (var k in r._song._instruments) {
+      r._song._instruments.objIds().forEach(function(k) {
         keys.push(k);
-      }
+      });
 
       var instId = keys[instrIdx];
       return instId;
     };
 
     r.setParameter = function(paramIdx, value) {
-      var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
+      var inst = r._song._instruments.getObjById(getInstIdByIndex(r._globalTarget));
 
       if (notDefined(inst)) {
         console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
@@ -308,22 +308,22 @@
     };
 
     r.setParameterByName = function(paramName, value) {
-      for (var instId in r._song._instruments) {
-        r._song._instruments[instId].normalizedSetByName(paramName, value);
-      }
+      r._song._instruments.objIds().forEach(function(instId) {
+        r._song._instruments.getObjById(instId).normalizedSetByName(paramName, value);
+      });
     }
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
     r.startPreviewNote = function(pitch) {
-      var keys = Object.keys(r._song._instruments);
+      var keys = r._song._instruments.objIds();
       if (keys.length === 0) {
         return;
       }
 
       if (notDefined(previewNote)) {
         var targetId = getInstIdByIndex(r._globalTarget);
-        var inst = r._song._instruments[targetId];
+        var inst = r._song._instruments.getObjById(targetId);
         if (notDefined(inst)) {
           console.log("[Rhombus] - Trying to trigger note on undefined instrument");
           return;
@@ -335,13 +335,13 @@
     };
 
     r.stopPreviewNote = function() {
-      var keys = Object.keys(r._song._instruments);
+      var keys = r._song._instruments.objIds();
       if (keys.length === 0) {
         return;
       }
 
       if (isDefined(previewNote)) {
-        var inst = r._song._instruments[previewNote._target];
+        var inst = r._song._instruments.getObjById(previewNote._target);
         if (notDefined(inst)) {
           console.log("[Rhombus] - Trying to release note on undefined instrument");
           return;
