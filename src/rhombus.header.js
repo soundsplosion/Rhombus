@@ -84,6 +84,7 @@
     root.Rhombus._effectSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
+    root.Rhombus._undoSetup(this);
   };
 
 })(this);
