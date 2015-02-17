@@ -18,7 +18,7 @@
       // song structure data
       this._tracks = {};
       this._patterns = {};
-      this._instruments = {};
+      this._instruments = new Rhombus.Util.IdSlotContainer(16);
       this._effects = {};
 
       this._curId = 0;
@@ -81,7 +81,7 @@
 
         // Create a new Instrument and set it as the new Track's target
         var instrId = r.addInstrument("mono");
-        r._song._instruments[instrId].normalizedObjectSet({ volume: 0.1 });
+        r._song._instruments.getObjById(instrId).normalizedObjectSet({ volume: 0.1 });
         track._target = instrId;
 
         // Return the ID of the new Track
@@ -98,14 +98,14 @@
           // TODO: find a more robust way to terminate playing notes
           for (var rtNoteId in this._playingNotes) {
             var note = this._playingNotes[rtNoteId];
-            r._song._instruments[track._target].triggerRelease(rtNoteId, 0);
+            r._song._instruments.getObjById(track._target).triggerRelease(rtNoteId, 0);
             delete this._playingNotes[rtNoteId];
           }
 
           // TODO: Figure out why this doesn't work
           //r.removeInstrument(track._target);
 
-          delete this._instruments[track._target];
+          this._instruments.removeId(track._target);
           delete this._tracks[trkId];
           return trkId;
         }
@@ -203,7 +203,7 @@
       for (var instId in instruments) {
         var inst = instruments[instId];
         r.addInstrument(inst._type, inst._params, +instId);
-        r._song._instruments[instId].normalizedObjectSet({ volume: 0.1 });
+        r._song._instruments.getObjbyId(instId).normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {

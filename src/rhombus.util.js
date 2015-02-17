@@ -65,7 +65,7 @@
 
     for (var i = idx; i < (isc._count + idx); i++) {
       var realI = i % isc._count;
-      if (isUndefined(isc._slots[realI])) {
+      if (notDefined(isc._slots[realI])) {
         return realI;
       }
     }
@@ -73,7 +73,7 @@
     return -1;
   }
 
-  IdSlotContainer.prototype.addObject = function(obj, idx) {
+  IdSlotContainer.prototype.addObj = function(obj, idx) {
     var id = obj._id;
     if (id in this._map) {
       return undefined;
@@ -135,6 +135,10 @@
 
   IdSlotContainer.prototype.isFull = function() {
     return firstEmptySlot(this) == -1;
+  };
+
+  IdSlotContainer.prototype.objIds = function() {
+    return Object.keys(this._map);
   };
 
   Rhombus.Util.IdSlotContainer = IdSlotContainer;

@@ -10,9 +10,9 @@
       var curTicks = r.seconds2Ticks(r.getPosition());
       var playing = note.getStart() <= curTicks && curTicks <= note.getEnd();
       if (playing) {
-        for (var instId in r._song._instruments) {
-          r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-        }
+        r._song._instruments.objIds().forEach(function(instId) {
+          r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+        });
       }
     }
 
@@ -76,9 +76,9 @@
         return;
       }
 
-      for (var instId in r._song._instruments) {
-        r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-      }
+      r._song._instruments.objIds().forEach(function(instId) {
+        r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+      });
       note._pitch = pitch;
     };
 
