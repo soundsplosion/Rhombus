@@ -106,7 +106,7 @@
           //r.removeInstrument(track._target);
 
           this._instruments.removeId(track._target);
-          this._tracks.deleteId(trkId);
+          this._tracks.removeId(trkId);
           return trkId;
         }
       },
@@ -205,7 +205,7 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        r.addInstrument(inst.type, inst.params, +instId, instIdIdx);
+        r.addInstrument(inst._type, inst._params, +instId, instIdIdx);
         r._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
       }
 
@@ -217,7 +217,7 @@
       // restore curId -- this should be the last step of importing
       var curId;
       if (notDefined(parsed._curId)) {
-        console.log("[Rhomb Import] curId not found -- beware");
+        console.log("[Rhombus Import] curId not found -- beware");
       }
       else {
         r.setCurId(parsed._curId);

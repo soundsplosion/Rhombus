@@ -1777,7 +1777,7 @@
           //r.removeInstrument(track._target);
 
           this._instruments.removeId(track._target);
-          this._tracks.deleteId(trkId);
+          this._tracks.removeId(trkId);
           return trkId;
         }
       },
@@ -1876,7 +1876,7 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        r.addInstrument(inst.type, inst.params, +instId, instIdIdx);
+        r.addInstrument(inst._type, inst._params, +instId, instIdIdx);
         r._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
       }
 
@@ -1888,7 +1888,7 @@
       // restore curId -- this should be the last step of importing
       var curId;
       if (notDefined(parsed._curId)) {
-        console.log("[Rhomb Import] curId not found -- beware");
+        console.log("[Rhombus Import] curId not found -- beware");
       }
       else {
         r.setCurId(parsed._curId);
@@ -2053,7 +2053,7 @@
     }
 
     r.setBpm = function(bpm) {
-      if (notDefined(bpm) || isNull(bpm) || isNaN(+bpm) || 
+      if (notDefined(bpm) || isNull(bpm) || isNaN(+bpm) ||
           +bpm < 1 || +bpm > 1000) {
         console.log("[Rhombus] - Invalid tempo");
         return undefined;
@@ -2062,7 +2062,7 @@
       // Rescale the end time of notes that are currently playing
       var timeScale = r._song._bpm / +bpm;
       for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];        
+        var track = r._song._tracks[trkId];
         for (var noteId in track._playingNotes) {
           var note = track._playingNotes[noteId];
           var oldDuration = note._end - note._start;
