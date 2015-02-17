@@ -53,8 +53,8 @@
       var scheduleEndTime = curTime + scheduleAhead;
 
       // Iterate over every track to find notes that can be scheduled
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         // Schedule note-offs for notes playing on the current track.
@@ -111,7 +111,7 @@
             }
           }
         }
-      }
+      });
 
       lastScheduled = scheduleEnd;
 
@@ -174,8 +174,8 @@
     var loopEnabled = false;
 
     r.killAllNotes = function() {
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
@@ -184,7 +184,7 @@
           });
           delete playingNotes[rtNoteId];
         }
-      }
+      });
     };
 
     r.startPlayback = function() {

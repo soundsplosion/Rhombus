@@ -16,7 +16,7 @@
       this._loopEnd   = 1920;
 
       // song structure data
-      this._tracks = {};
+      this._tracks = new Rhombus.Util.IdSlotContainer(16);
       this._patterns = {};
       this._instruments = new Rhombus.Util.IdSlotContainer(16);
       this._effects = {};
@@ -77,7 +77,7 @@
       addTrack: function() {
         // Create a new Track object
         var track = new r.Track();
-        this._tracks[track._id] = track;
+        this._tracks.addObj(track);
 
         // Create a new Instrument and set it as the new Track's target
         var instrId = r.addInstrument("mono");
@@ -89,7 +89,7 @@
       },
 
       deleteTrack: function(trkId) {
-        var track = this._tracks[trkId];
+        var track = this._tracks.getObjById(trkId);
 
         if (notDefined(track)) {
           return undefined;
@@ -106,7 +106,7 @@
           //r.removeInstrument(track._target);
 
           this._instruments.removeId(track._target);
-          delete this._tracks[trkId];
+          this._tracks.deleteId(trkId);
           return trkId;
         }
       },
@@ -116,8 +116,8 @@
       findSongLength: function() {
         var length = 0;
 
-        for (var trkId in this._tracks) {
-          var track = this._tracks[trkId];
+        this._tracks.objIds().forEach(function(trkId) {
+          var track = this._tracks.getObjById(trkId);
 
           for (var itemId in track._playlist) {
             var item = track._playlist[itemId];
@@ -127,7 +127,7 @@
               length = itemEnd;
             }
           }
-        }
+        });
 
         return length;
       }
@@ -197,7 +197,7 @@
           newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks[+trkId] = newTrack;
+        r._song._tracks.addObj(newTrack);
       }
 
       for (var instId in instruments) {

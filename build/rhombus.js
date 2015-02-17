@@ -1687,7 +1687,7 @@
       this._loopEnd   = 1920;
 
       // song structure data
-      this._tracks = {};
+      this._tracks = new Rhombus.Util.IdSlotContainer(16);
       this._patterns = {};
       this._instruments = new Rhombus.Util.IdSlotContainer(16);
       this._effects = {};
@@ -1748,7 +1748,7 @@
       addTrack: function() {
         // Create a new Track object
         var track = new r.Track();
-        this._tracks[track._id] = track;
+        this._tracks.addObj(track);
 
         // Create a new Instrument and set it as the new Track's target
         var instrId = r.addInstrument("mono");
@@ -1760,7 +1760,7 @@
       },
 
       deleteTrack: function(trkId) {
-        var track = this._tracks[trkId];
+        var track = this._tracks.getObjById(trkId);
 
         if (notDefined(track)) {
           return undefined;
@@ -1777,7 +1777,7 @@
           //r.removeInstrument(track._target);
 
           this._instruments.removeId(track._target);
-          delete this._tracks[trkId];
+          this._tracks.deleteId(trkId);
           return trkId;
         }
       },
@@ -1787,8 +1787,8 @@
       findSongLength: function() {
         var length = 0;
 
-        for (var trkId in this._tracks) {
-          var track = this._tracks[trkId];
+        this._tracks.objIds().forEach(function(trkId) {
+          var track = this._tracks.getObjById(trkId);
 
           for (var itemId in track._playlist) {
             var item = track._playlist[itemId];
@@ -1798,7 +1798,7 @@
               length = itemEnd;
             }
           }
-        }
+        });
 
         return length;
       }
@@ -1868,7 +1868,7 @@
           newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks[+trkId] = newTrack;
+        r._song._tracks.addObj(newTrack);
       }
 
       for (var instId in instruments) {
@@ -1957,8 +1957,8 @@
       var scheduleEndTime = curTime + scheduleAhead;
 
       // Iterate over every track to find notes that can be scheduled
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         // Schedule note-offs for notes playing on the current track.
@@ -2015,7 +2015,7 @@
             }
           }
         }
-      }
+      });
 
       lastScheduled = scheduleEnd;
 
@@ -2078,8 +2078,8 @@
     var loopEnabled = false;
 
     r.killAllNotes = function() {
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
@@ -2088,7 +2088,7 @@
           });
           delete playingNotes[rtNoteId];
         }
-      }
+      });
     };
 
     r.startPlayback = function() {
@@ -2251,15 +2251,15 @@
       //       as things stand, deleted notes will stop playing
       //       naturally, but not when the pattern note is deleted
       /*
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         if (noteId in playingNotes) {
           r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
-      }
+      });
       */
     };
 
@@ -2274,15 +2274,15 @@
 
       // TODO: See note in deleteNote()
       /*
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         if (rtNoteId in playingNotes) {
           r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
-      }
+      });
       */
 
       note._start = start;

@@ -27,15 +27,15 @@
       //       as things stand, deleted notes will stop playing
       //       naturally, but not when the pattern note is deleted
       /*
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         if (noteId in playingNotes) {
           r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
-      }
+      });
       */
     };
 
@@ -50,15 +50,15 @@
 
       // TODO: See note in deleteNote()
       /*
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         if (rtNoteId in playingNotes) {
           r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
-      }
+      });
       */
 
       note._start = start;
