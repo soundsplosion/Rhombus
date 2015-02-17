@@ -104,6 +104,14 @@
     return typeof obj === "undefined";
   };
 
+  window.isNumber = function(obj) {
+    return typeof obj === "number";
+  }
+
+  window.notNumber = function(obj) {
+    return typeof obj !== "number";
+  }
+
   window.isNull = function(obj) {
     return obj === null;
   };
@@ -111,7 +119,6 @@
   window.notNull = function(obj) {
     return obj !== null;
   };
-
 
   function calculator(noteNum) {
     return Math.pow(2, (noteNum-69)/12) * 440;
@@ -126,6 +133,101 @@
   Rhombus.Util.noteNum2Freq = function(noteNum) {
     return table[noteNum];
   }
+
+  function IdSlotContainer(slotCount) {
+    this._slots = [];
+    this._map = {};
+    this._count = slotCount;
+  }
+
+  IdSlotContainer.prototype.getById = function(id) {
+    if (id in this._map) {
+      return this._map[id];
+    } else {
+      return undefined;
+    }
+  };
+
+  function firstEmptySlot(isc, idx) {
+    if (notNumber(idx)) {
+      idx = 0;
+    }
+
+    for (var i = idx; i < (isc._count + idx); i++) {
+      var realI = i % isc._count;
+      if (isUndefined(isc._slots[realI])) {
+        return realI;
+      }
+    }
+
+    return -1;
+  }
+
+  IdSlotContainer.prototype.addObject = function(obj, idx) {
+    var id = obj._id;
+    if (id in this._map) {
+      return undefined;
+    }
+
+    var idx = firstEmptySlot(this, idx);
+    if (idx < 0) {
+      return undefined;
+    }
+
+    this._slots[idx] = id;
+    this._map[id] = obj;
+    return obj;
+  };
+
+  IdSlotContainer.prototype.removeId = function(id) {
+    if (!(id in this._map)) {
+      return;
+    }
+
+    for (var idx = 0; idx < this._count; idx++) {
+      if (this._slots[idx] === id) {
+        this._slots[idx] = undefined;
+      }
+    }
+
+    var toRet = this._map[id];
+    delete this._map[id];
+    return toRet;
+  };
+
+  IdSlotContainer.prototype.removeObj = function(obj) {
+    return this.removeId(obj._id);
+  };
+
+  IdSlotContainer.prototype.getIdBySlot = function(idx) {
+    if (idx >= 0 && idx < this._count) {
+      return this._slots[idx];
+    } else {
+      return undefined;
+    }
+  };
+
+  IdSlotContainer.prototype.getObjBySlot = function(idx) {
+    return this.getObjById(this.getIdBySlot(idx));
+  };
+
+  IdSlotContainer.prototype.getObjById = function(id) {
+    return this._map[id];
+  }
+
+  IdSlotContainer.prototype.swapSlots = function(idx1, idx2) {
+    if (idx1 >= 0 && idx1 < this._count && idx2 >= 0 && idx2 < this._count) {
+      var from1 = this._slots[idx1];
+      this._slots[idx1] = this._slots[idx2];
+      this._slots[idx2] = from1;
+    }
+  };
+
+  IdSlotContainer.prototype.isFull = function() {
+    return firstEmptySlot(this) == -1;
+  };
+
+  Rhombus.Util.IdSlotContainer = IdSlotContainer;
 
   Rhombus._map = {};
 
