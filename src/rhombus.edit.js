@@ -10,9 +10,9 @@
       var curTicks = r.seconds2Ticks(r.getPosition());
       var playing = note.getStart() <= curTicks && curTicks <= note.getEnd();
       if (playing) {
-        for (var instId in r._song._instruments) {
-          r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-        }
+        r._song._instruments.objIds().forEach(function(instId) {
+          r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+        });
       }
     }
 
@@ -27,15 +27,15 @@
       //       as things stand, deleted notes will stop playing
       //       naturally, but not when the pattern note is deleted
       /*
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         if (noteId in playingNotes) {
           r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
-      }
+      });
       */
     };
 
@@ -50,15 +50,15 @@
 
       // TODO: See note in deleteNote()
       /*
-      for (var trkId in r._song._tracks) {
-        var track = r._song._tracks[trkId];
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         if (rtNoteId in playingNotes) {
           r.Instrument.triggerRelease(rtNoteId, 0);
           delete playingNotes[rtNoteId];
         }
-      }
+      });
       */
 
       note._start = start;
@@ -76,9 +76,9 @@
         return;
       }
 
-      for (var instId in r._song._instruments) {
-        r._song._instruments[instId].triggerRelease(rtNoteId, 0);
-      }
+      r._song._instruments.objIds().forEach(function(instId) {
+        r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+      });
       note._pitch = pitch;
     };
 
