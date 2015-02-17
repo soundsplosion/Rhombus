@@ -958,7 +958,7 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    r.addInstrument = function(type, options, id) {
+    r.addInstrument = function(type, options, id, idx) {
       var instr;
       if (type === "samp") {
         instr = new r._Sampler(options, id);
@@ -970,7 +970,7 @@
         return;
       }
 
-      r._song._instruments.addObj(instr);
+      r._song._instruments.addObj(instr, idx);
       return instr._id;
     };
 
@@ -1786,9 +1786,10 @@
       // playlist item on any track
       findSongLength: function() {
         var length = 0;
+        var thisSong = this;
 
         this._tracks.objIds().forEach(function(trkId) {
-          var track = this._tracks.getObjById(trkId);
+          var track = thisSong._tracks.getObjById(trkId);
 
           for (var itemId in track._playlist) {
             var item = track._playlist[itemId];
@@ -1849,8 +1850,9 @@
         r._song._patterns[+ptnId] = newPattern;
       }
 
-      for (var trkId in tracks) {
-        var track = tracks[trkId];
+      for (var trkIdIdx in tracks._slots) {
+        var trkId = tracks._slots[trkIdIdx];
+        var track = tracks._map[trkId];
         var playlist = track._playlist;
 
         var newTrack = new r.Track(track._id);
@@ -1868,13 +1870,14 @@
           newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks.addObj(newTrack);
+        r._song._tracks.addObj(newTrack, trkIdIdx);
       }
 
-      for (var instId in instruments) {
-        var inst = instruments[instId];
-        r.addInstrument(inst._type, inst._params, +instId);
-        r._song._instruments.getObjbyId(instId).normalizedObjectSet({ volume: 0.1 });
+      for (var instIdIdx in instruments._slots) {
+        var instId = instruments._slots[instIdIdx];
+        var inst = instruments._map[instId];
+        r.addInstrument(inst.type, inst.params, +instId, instIdIdx);
+        r._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {

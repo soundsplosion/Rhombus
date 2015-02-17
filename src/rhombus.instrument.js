@@ -45,7 +45,7 @@
     }
     Tone.extend(Instrument, Tone.PolySynth);
 
-    r.addInstrument = function(type, options, id) {
+    r.addInstrument = function(type, options, id, idx) {
       var instr;
       if (type === "samp") {
         instr = new r._Sampler(options, id);
@@ -57,7 +57,7 @@
         return;
       }
 
-      r._song._instruments.addObj(instr);
+      r._song._instruments.addObj(instr, idx);
       return instr._id;
     };
 
