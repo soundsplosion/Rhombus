@@ -299,7 +299,7 @@
       var inst = r._song._instruments[getInstIdByIndex(r._globalTarget)];
 
       if (notDefined(inst)) {
-        console.log("[Rhomb] - Trying to set parameter on undefined instrument -- dame dayo!");
+        console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
         return undefined;
       }
 
@@ -325,7 +325,7 @@
         var targetId = getInstIdByIndex(r._globalTarget);
         var inst = r._song._instruments[targetId];
         if (notDefined(inst)) {
-          console.log("[Rhomb] - Trying to trigger note on undefined instrument");
+          console.log("[Rhombus] - Trying to trigger note on undefined instrument");
           return;
         }
 
@@ -343,7 +343,7 @@
       if (isDefined(previewNote)) {
         var inst = r._song._instruments[previewNote._target];
         if (notDefined(inst)) {
-          console.log("[Rhomb] - Trying to release note on undefined instrument");
+          console.log("[Rhombus] - Trying to release note on undefined instrument");
           return;
         }
 
