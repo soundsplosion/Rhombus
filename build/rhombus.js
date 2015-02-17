@@ -1503,7 +1503,7 @@
   Rhombus._trackSetup = function(r) {
 
     r.PlaylistItem = function(ptnId, start, length, id) {
-      if (id) {
+      if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
