@@ -28,7 +28,11 @@
 
     // TODO: investigate ways to rescale RtNotes that are currently playing
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
-      // TODO: put checks on the input arguments
+
+      if (start < 0 || length < 1) {
+        return undefined;
+      }
+
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
       if (notDefined(note)) {
@@ -54,14 +58,12 @@
       });
 
       note._pitch = pitch;
-      
+
       // Could return anything here...
       return noteId;
     };
 
-    // Makes a copy of the source pattern and adds it to the song's
-    // pattern set. It might be preferable to just return the copy
-    // without adding it to the song -- I dunno.
+    // Makes a copy of the source pattern and adds it to the song's pattern set.
     r.Edit.copyPattern = function(ptnId) {
       var srcPtn = r._song._patterns[ptnId];
 
