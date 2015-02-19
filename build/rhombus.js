@@ -1621,34 +1621,21 @@
       },
 
       addToPlaylist: function(ptnId, start, length) {
-
-        var end = start + length;
+        // All arguments must be defined
+        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
+          return undefined;
+        }
 
         // ptnId myst belong to an existing pattern
         if (notDefined(r._song._patterns[ptnId])) {
           return undefined;
         }
 
-        // All arguments must be defined
-        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
-          return undefined;
-        }
-
-        // TODO: restore these checks
-
-        /*
-        // Minimum item length is 480 ticks (1 beat)
-        if (length < 480)
-          return undefined;
-
-        // Don't allow overlapping patterns
-        if (this.checkOverlap(start, end))
-          return undefined;
-        */
-
         var newItem = new r.PlaylistItem(ptnId, start, length);
         this._playlist[newItem._id] = newItem;
         return newItem._id;
+
+        // TODO: restore these length and overlap checks
       },
 
       removeFromPlaylist: function(itemId) {
@@ -2270,61 +2257,65 @@
       r._song._patterns[ptnId].deleteNote(noteId);
     };
 
+    // TODO: investigate ways to rescale RtNotes that are currently playing
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
-      // TODO: put checks on the input arguments
+
+      if (start < 0 || length < 1) {
+        return undefined;
+      }
+
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
       if (notDefined(note)) {
-        return;
+        return undefined;
       }
 
       note._start = start;
       note._length = length;
 
-      // TODO: investigate ways to rescale RtNotes that are currently playing
+      return noteId;
     };
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       // TODO: put checks on the input arguments
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (notDefined(note)) {
-        return;
-      }
-
-      if (pitch === note.getPitch()) {
-        return;
+      if (notDefined(note) || (pitch === note.getPitch())) {
+        return undefined;
       }
 
       r._song._instruments.objIds().forEach(function(instId) {
         r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
       });
+
       note._pitch = pitch;
+
+      // Could return anything here...
+      return noteId;
     };
 
-    // Makes a copy of the source pattern and adds it to the song's
-    // pattern set. It might be preferable to just return the copy
-    // without adding it to the song -- I dunno.
+    // Makes a copy of the source pattern and adds it to the song's pattern set.
     r.Edit.copyPattern = function(ptnId) {
-      var src = r._song._patterns[ptnId];
+      var srcPtn = r._song._patterns[ptnId];
 
-      if (notDefined(src)) {
+      if (notDefined(srcPtn)) {
         return undefined;
       }
 
-      var dst = new r.Pattern();
+      var dstPtn = new r.Pattern();
 
-      for (var noteId in src._noteMap) {
-        var srcNote = src._noteMap[noteId];
+      for (var noteId in srcPtn._noteMap) {
+        var srcPtnNote = srcPtn._noteMap[noteId];
         var dstNote = new r.Note(srcNote._pitch,
                                  srcNote._start,
                                  srcNote._length);
 
-        dst._noteMap[dstNote._id] = dstNote;
+        dstPtn._noteMap[dstNote._id] = dstNote;
       }
 
-      r._song._patterns[dst._id] = dst;
-      return dst._id;
+      dstPtn.setName(srcPtn.getName() + "-copy");
+      r._song._patterns[dstPtn._id] = dstPtn;
+      return dstPtn._id;
     };
 
     // Splits a source pattern into two destination patterns
@@ -2372,8 +2363,8 @@
       }
 
       // Uniquify the new pattern names (somewhat)
-      dstL.setName(srcPtn.getName() + "-01");
-      dstR.setName(srcPtn.getName() + "-02");
+      dstL.setName(srcPtn.getName() + "-A");
+      dstR.setName(srcPtn.getName() + "-B");
 
       // Add the two new patterns to the song pattern set
       r._song._patterns[dstL._id] = dstL;

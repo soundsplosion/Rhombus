@@ -121,34 +121,21 @@
       },
 
       addToPlaylist: function(ptnId, start, length) {
-
-        var end = start + length;
+        // All arguments must be defined
+        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
+          return undefined;
+        }
 
         // ptnId myst belong to an existing pattern
         if (notDefined(r._song._patterns[ptnId])) {
           return undefined;
         }
 
-        // All arguments must be defined
-        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
-          return undefined;
-        }
-
-        // TODO: restore these checks
-
-        /*
-        // Minimum item length is 480 ticks (1 beat)
-        if (length < 480)
-          return undefined;
-
-        // Don't allow overlapping patterns
-        if (this.checkOverlap(start, end))
-          return undefined;
-        */
-
         var newItem = new r.PlaylistItem(ptnId, start, length);
         this._playlist[newItem._id] = newItem;
         return newItem._id;
+
+        // TODO: restore these length and overlap checks
       },
 
       removeFromPlaylist: function(itemId) {
