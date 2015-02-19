@@ -14,6 +14,10 @@
     return typeof obj === "undefined";
   };
 
+  window.isInteger = function(obj) {
+    return Math.round(obj) === obj;
+  };
+
   window.isNumber = function(obj) {
     return typeof obj === "number";
   }
