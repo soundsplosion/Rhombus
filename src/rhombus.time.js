@@ -71,7 +71,7 @@
           }
         }
 
-        if (r.isPlaying()) {
+        if (r.isPlaying() && !track._mute) {
           for (var playlistId in track._playlist) {
             var ptnId     = track._playlist[playlistId]._ptnId;
             var itemStart = track._playlist[playlistId]._start;

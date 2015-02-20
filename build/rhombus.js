@@ -1572,12 +1572,12 @@
 
       // track metadata
       this._name = "Default Track Name";
+      this._mute = false;
+      this._solo = false;
 
       // track structure data
       this._target = undefined;
       this._playingNotes = {};
-
-      // TODO: define some kind of pattern playlist
       this._playlist = {};
     };
 
@@ -1595,6 +1595,24 @@
           this._name = name.toString();
           return this._name;
         }
+      },
+
+      getMute: function() {
+        return this._mute;
+      },
+
+      setMute: function(mute) {
+        if (typeof mute !== "boolean") {
+          return undefined;
+        }
+
+        this._mute = mute;
+        return mute;
+      },
+
+      toggleMute: function() {
+        this._mute = !this._mute;
+        return this._mute;
       },
 
       // Determine if a playlist item exists that overlaps with the given range
@@ -1969,7 +1987,7 @@
           }
         }
 
-        if (r.isPlaying()) {
+        if (r.isPlaying() && !track._mute) {
           for (var playlistId in track._playlist) {
             var ptnId     = track._playlist[playlistId]._ptnId;
             var itemStart = track._playlist[playlistId]._start;
