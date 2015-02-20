@@ -20,6 +20,7 @@
       this._patterns = {};
       this._instruments = new Rhombus.Util.IdSlotContainer(16);
       this._effects = {};
+      this._soloList = [];
 
       this._curId = 0;
     };

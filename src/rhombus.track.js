@@ -111,8 +111,38 @@
       },
 
       toggleMute: function() {
-        this._mute = !this._mute;
-        return this._mute;
+        return this.setMute(!this.getMute());
+      },
+
+      getSolo: function() {
+        return this._solo;
+      },
+
+      setSolo: function(solo) {
+        if (typeof solo !== "boolean") {
+          return undefined;
+        }
+
+        var soloList = r._song._soloList;
+
+        // Get the index of the current track in the solo list
+        var index = soloList.indexOf(this._id);
+
+        // The track is solo'd and solo is 'false'
+        if (index > -1 && !solo) {
+          soloList.splice(index, 1);
+        }
+        // The track is not solo'd and solo is 'true'
+        else if (index < 0 && solo) {
+          soloList.push(this._id);
+        }
+
+        this._solo = solo;
+        return solo;
+      },
+
+      toggleSolo: function() {
+        return this.setSolo(!this.getSolo());
       },
 
       // Determine if a playlist item exists that overlaps with the given range
