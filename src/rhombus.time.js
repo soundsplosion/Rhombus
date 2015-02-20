@@ -72,7 +72,7 @@
         }
 
         // Determine how soloing and muting affect this track
-        var inactive = track._mute || (r._song._soloList > 0 && !track._solo);
+        var inactive = track._mute || (r._song._soloList.length > 0 && !track._solo);
 
         if (r.isPlaying() && !inactive) {
           for (var playlistId in track._playlist) {
