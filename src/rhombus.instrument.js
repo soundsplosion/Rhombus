@@ -48,7 +48,7 @@
     r.addInstrument = function(type, options, id, idx) {
       var instr;
       if (type === "samp") {
-        instr = new r._Sampler(options, id);
+        instr = new this._Sampler(options, id);
       } else {
         instr = new Instrument(type, options, id);
       }
@@ -57,7 +57,7 @@
         return;
       }
 
-      r._song._instruments.addObj(instr, idx);
+      this._song._instruments.addObj(instr, idx);
       return instr._id;
     };
 
@@ -296,7 +296,7 @@
     };
 
     r.setParameter = function(paramIdx, value) {
-      var inst = r._song._instruments.getObjById(getInstIdByIndex(r._globalTarget));
+      var inst = this._song._instruments.getObjById(getInstIdByIndex(this._globalTarget));
 
       if (notDefined(inst)) {
         console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
@@ -308,40 +308,41 @@
     };
 
     r.setParameterByName = function(paramName, value) {
-      r._song._instruments.objIds().forEach(function(instId) {
-        r._song._instruments.getObjById(instId).normalizedSetByName(paramName, value);
+      var instrs = this._song._instruments;
+      instrs.objIds().forEach(function(instId) {
+        instrs.getObjById(instId).normalizedSetByName(paramName, value);
       });
     }
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
     r.startPreviewNote = function(pitch) {
-      var keys = r._song._instruments.objIds();
+      var keys = this._song._instruments.objIds();
       if (keys.length === 0) {
         return;
       }
 
       if (notDefined(previewNote)) {
-        var targetId = getInstIdByIndex(r._globalTarget);
-        var inst = r._song._instruments.getObjById(targetId);
+        var targetId = getInstIdByIndex(this._globalTarget);
+        var inst = this._song._instruments.getObjById(targetId);
         if (notDefined(inst)) {
           console.log("[Rhombus] - Trying to trigger note on undefined instrument");
           return;
         }
 
-        previewNote = new r.RtNote(pitch, 0, 0, targetId);
+        previewNote = new this.RtNote(pitch, 0, 0, targetId);
         inst.triggerAttack(previewNote._id, pitch, 0);
       }
     };
 
     r.stopPreviewNote = function() {
-      var keys = r._song._instruments.objIds();
+      var keys = this._song._instruments.objIds();
       if (keys.length === 0) {
         return;
       }
 
       if (isDefined(previewNote)) {
-        var inst = r._song._instruments.getObjById(previewNote._target);
+        var inst = this._song._instruments.getObjById(previewNote._target);
         if (notDefined(inst)) {
           console.log("[Rhombus] - Trying to release note on undefined instrument");
           return;

@@ -16,7 +16,8 @@ gulp.task("make", function() {
     "src/rhombus.track.js",
     "src/rhombus.song.js",
     "src/rhombus.time.js",
-    "src/rhombus.edit.js"
+    "src/rhombus.edit.js",
+    "src/rhombus.undo.js"
     ])
     .pipe(concat("rhombus.js"))
     .pipe(gulp.dest("build"))

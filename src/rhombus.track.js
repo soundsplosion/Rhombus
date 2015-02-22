@@ -52,6 +52,10 @@
 
       getLength: function() {
         return this._length;
+      },
+
+      getPatternId: function() {
+        return this._ptnId;
       }
     };
 
@@ -147,6 +151,10 @@
 
       toggleSolo: function() {
         return this.setSolo(!this.getSolo());
+      },
+
+      getPlaylist: function() {
+        return this._playlist;
       },
 
       // Determine if a playlist item exists that overlaps with the given range

@@ -29,8 +29,9 @@
       },
 
       setLength: function(length) {
-        if (isDefined(length) && length >= 0)
+        if (isDefined(length) && length >= 0) {
           this._length = length;
+        }
       },
 
       getName: function() {
@@ -40,8 +41,7 @@
       setName: function(name) {
         if (notDefined(name)) {
           return undefined;
-        }
-        else {
+        } else {
           this._name = name.toString();
           return this._name;
         }
@@ -49,6 +49,10 @@
 
       addNote: function(note) {
         this._noteMap[note._id] = note;
+      },
+
+      getNoteMap: function() {
+        return this._noteMap;
       },
 
       deleteNote: function(noteId) {
