@@ -49,7 +49,7 @@
         return;
       }
 
-      r._song._effects[effect._id] = effect;
+      this._song._effects[effect._id] = effect;
       return effect._id;
     }
 
@@ -69,7 +69,7 @@
         return;
       }
 
-      delete r._song._effects[id];
+      delete this._song._effects[id];
     }
 
     function toJSON(params) {
