@@ -192,7 +192,7 @@
 
     for (var idx = 0; idx < this._count; idx++) {
       if (this._slots[idx] === id) {
-        this._slots[idx] = undefined;
+        this._slots.splice(idx, 1);
       }
     }
 
