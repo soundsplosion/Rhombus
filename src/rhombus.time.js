@@ -71,7 +71,10 @@
           }
         }
 
-        if (r.isPlaying()) {
+        // Determine how soloing and muting affect this track
+        var inactive = track._mute || (r._song._soloList.length > 0 && !track._solo);
+
+        if (r.isPlaying() && !inactive) {
           for (var playlistId in track._playlist) {
             var ptnId     = track._playlist[playlistId]._ptnId;
             var itemStart = track._playlist[playlistId]._start;
