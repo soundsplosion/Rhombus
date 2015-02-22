@@ -72,16 +72,20 @@
 
       // track metadata
       this._name = "Default Track Name";
+      this._mute = false;
+      this._solo = false;
 
       // track structure data
       this._target = undefined;
       this._playingNotes = {};
-
-      // TODO: define some kind of pattern playlist
       this._playlist = {};
     };
 
     r.Track.prototype = {
+
+      setId: function(id) {
+        this._id = id;
+      },
 
       getName: function() {
         return this._name;
@@ -95,6 +99,54 @@
           this._name = name.toString();
           return this._name;
         }
+      },
+
+      getMute: function() {
+        return this._mute;
+      },
+
+      setMute: function(mute) {
+        if (typeof mute !== "boolean") {
+          return undefined;
+        }
+
+        this._mute = mute;
+        return mute;
+      },
+
+      toggleMute: function() {
+        return this.setMute(!this.getMute());
+      },
+
+      getSolo: function() {
+        return this._solo;
+      },
+
+      setSolo: function(solo) {
+        if (typeof solo !== "boolean") {
+          return undefined;
+        }
+
+        var soloList = r._song._soloList;
+
+        // Get the index of the current track in the solo list
+        var index = soloList.indexOf(this._id);
+
+        // The track is solo'd and solo is 'false'
+        if (index > -1 && !solo) {
+          soloList.splice(index, 1);
+        }
+        // The track is not solo'd and solo is 'true'
+        else if (index < 0 && solo) {
+          soloList.push(this._id);
+        }
+
+        this._solo = solo;
+        return solo;
+      },
+
+      toggleSolo: function() {
+        return this.setSolo(!this.getSolo());
       },
 
       // Determine if a playlist item exists that overlaps with the given range
@@ -121,34 +173,21 @@
       },
 
       addToPlaylist: function(ptnId, start, length) {
-
-        var end = start + length;
+        // All arguments must be defined
+        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
+          return undefined;
+        }
 
         // ptnId myst belong to an existing pattern
         if (notDefined(r._song._patterns[ptnId])) {
           return undefined;
         }
 
-        // All arguments must be defined
-        if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
-          return undefined;
-        }
-
-        // TODO: restore these checks
-
-        /*
-        // Minimum item length is 480 ticks (1 beat)
-        if (length < 480)
-          return undefined;
-
-        // Don't allow overlapping patterns
-        if (this.checkOverlap(start, end))
-          return undefined;
-        */
-
         var newItem = new r.PlaylistItem(ptnId, start, length);
         this._playlist[newItem._id] = newItem;
         return newItem._id;
+
+        // TODO: restore these length and overlap checks
       },
 
       removeFromPlaylist: function(itemId) {
