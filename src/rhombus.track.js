@@ -83,6 +83,10 @@
 
     r.Track.prototype = {
 
+      setId: function(id) {
+        this._id = id;
+      },
+
       getName: function() {
         return this._name;
       },

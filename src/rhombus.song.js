@@ -80,11 +80,6 @@
         var track = new r.Track();
         this._tracks.addObj(track);
 
-        // Create a new Instrument and set it as the new Track's target
-        var instrId = r.addInstrument("mono");
-        r._song._instruments.getObjById(instrId).normalizedObjectSet({ volume: 0.1 });
-        track._target = instrId;
-
         // Return the ID of the new Track
         return track._id;
       },
@@ -181,11 +176,13 @@
       }
 
       for (var trkIdIdx in tracks._slots) {
-        var trkId = tracks._slots[trkIdIdx];
+        var trkId = +tracks._slots[trkIdIdx];
         var track = tracks._map[trkId];
         var playlist = track._playlist;
 
-        var newTrack = new r.Track(track._id);
+        // Create a new track and manually set its ID
+        var newTrack = new r.Track();
+        newTrack._id = trkId;
 
         newTrack._name = track._name;
         newTrack._target = +track._target;
@@ -207,6 +204,7 @@
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
         r.addInstrument(inst._type, inst._params, +instId, instIdIdx);
+        r._song._instruments.getObjById(instId)._id = instId;
         r._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
       }
 

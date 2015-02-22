@@ -59,7 +59,8 @@
 
       Object.defineProperty(t, '_id', {
         value: id,
-        enumerable: true
+        enumerable: true,
+        writable: true
       });
     };
 
