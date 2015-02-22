@@ -55,6 +55,10 @@
         return this._length;
       },
 
+      getPatterns: function() {
+        return this._patterns;
+      },
+
       addPattern: function(pattern) {
         if (notDefined(pattern)) {
           var pattern = new r.Pattern();
@@ -111,6 +115,10 @@
         }
       },
 
+      getTracks: function() {
+        return this._tracks;
+      },
+
       // Song length here is defined as the end of the last
       // playlist item on any track
       findSongLength: function() {
@@ -137,19 +145,19 @@
     r._song = new Song();
 
     r.getSongLengthSeconds = function() {
-      return r.ticks2Seconds(r._song._length);
+      return this.ticks2Seconds(this._song._length);
     };
 
     r.importSong = function(json) {
-      r._song = new Song();
+      this._song = new Song();
       var parsed = JSON.parse(json);
-      r._song.setTitle(parsed._title);
-      r._song.setArtist(parsed._artist);
-      r._song._length = parsed._length || 1920;
-      r._song._bpm = parsed._bpm || 120;
+      this._song.setTitle(parsed._title);
+      this._song.setArtist(parsed._artist);
+      this._song._length = parsed._length || 1920;
+      this._song._bpm = parsed._bpm || 120;
 
-      r._song._loopStart = parsed._loopStart || 0;
-      r._song._loopEnd = parsed._loopEnd || 1920;
+      this._song._loopStart = parsed._loopStart || 0;
+      this._song._loopEnd = parsed._loopEnd || 1920;
 
       var tracks      = parsed._tracks;
       var patterns    = parsed._patterns;
@@ -160,7 +168,7 @@
         var pattern = patterns[ptnId];
         var noteMap = pattern._noteMap;
 
-        var newPattern = new r.Pattern(pattern._id);
+        var newPattern = new this.Pattern(pattern._id);
 
         newPattern._name = pattern._name;
         newPattern._length = pattern._length;
@@ -168,15 +176,15 @@
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
-          var note = new r.Note(noteMap[noteId]._pitch,
-                                noteMap[noteId]._start,
-                                noteMap[noteId]._length,
-                                +noteId);
+          var note = new this.Note(noteMap[noteId]._pitch,
+                                   noteMap[noteId]._start,
+                                   noteMap[noteId]._length,
+                                   +noteId);
 
           newPattern._noteMap[+noteId] = note;
         }
 
-        r._song._patterns[+ptnId] = newPattern;
+        this._song._patterns[+ptnId] = newPattern;
       }
 
       for (var trkIdIdx in tracks._slots) {
@@ -184,34 +192,34 @@
         var track = tracks._map[trkId];
         var playlist = track._playlist;
 
-        var newTrack = new r.Track(track._id);
+        var newTrack = new this.Track(track._id);
 
         newTrack._name = track._name;
         newTrack._target = +track._target;
 
         for (var itemId in playlist) {
           var item = playlist[itemId];
-          var newItem = new r.PlaylistItem(item._ptnId,
-                                           item._start,
-                                           item._length,
-                                           item._id)
+          var newItem = new this.PlaylistItem(item._ptnId,
+                                              item._start,
+                                              item._length,
+                                              item._id);
 
           newTrack._playlist[+itemId] = newItem;
         }
 
-        r._song._tracks.addObj(newTrack, trkIdIdx);
+        this._song._tracks.addObj(newTrack, trkIdIdx);
       }
 
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        r.addInstrument(inst._type, inst._params, +instId, instIdIdx);
-        r._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
+        this.addInstrument(inst._type, inst._params, +instId, instIdIdx);
+        this._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {
         var eff = effects[effId];
-        r.addEffect(eff._type, eff._params, +effId);
+        this.addEffect(eff._type, eff._params, +effId);
       }
 
       // restore curId -- this should be the last step of importing
@@ -220,16 +228,19 @@
         console.log("[Rhombus Import] curId not found -- beware");
       }
       else {
-        r.setCurId(parsed._curId);
+        this.setCurId(parsed._curId);
       }
 
     };
 
     r.exportSong = function() {
-      r._song._curId = r.getCurId();
-      r._song._length = r._song.findSongLength();
-      return JSON.stringify(r._song);
+      this._song._curId = this.getCurId();
+      this._song._length = this._song.findSongLength();
+      return JSON.stringify(this._song);
     };
 
+    r.getSong = function() {
+      return this._song;
+    };
   };
 })(this.Rhombus);

@@ -52,6 +52,10 @@
 
       getLength: function() {
         return this._length;
+      },
+
+      getPatternId: function() {
+        return this._ptnId;
       }
     };
 
@@ -95,6 +99,10 @@
           this._name = name.toString();
           return this._name;
         }
+      },
+
+      getPlaylist: function() {
+        return this._playlist;
       },
 
       // Determine if a playlist item exists that overlaps with the given range
