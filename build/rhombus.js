@@ -1227,8 +1227,9 @@
     };
 
     r.setParameterByName = function(paramName, value) {
-      this._song._instruments.objIds().forEach(function(instId) {
-        this._song._instruments.getObjById(instId).normalizedSetByName(paramName, value);
+      var instrs = this._song._instruments;
+      instrs.objIds().forEach(function(instId) {
+        instrs.getObjById(instId).normalizedSetByName(paramName, value);
       });
     }
 
