@@ -1871,7 +1871,8 @@
         var pattern = patterns[ptnId];
         var noteMap = pattern._noteMap;
 
-        var newPattern = new r.Pattern(pattern._id);
+        var newPattern = new r.Pattern();
+        newPattern._id = pattern._id;
 
         newPattern._name = pattern._name;
         newPattern._length = pattern._length;
