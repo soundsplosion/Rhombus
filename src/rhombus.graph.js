@@ -52,7 +52,7 @@
       return feedbackGain.gain.value;
     };
     r.setFeedbackGain = function(gain) {
-      feedbackGain.gain.linearRampToValueAtTime(gain, r._ctx.currentTime + 0.1);
+      feedbackGain.gain.linearRampToValueAtTime(gain, this._ctx.currentTime + 0.1);
     };
 
     // direct signal control
@@ -84,10 +84,10 @@
     r.setEffectOn = function(enable) {
       if (enable) {
         enabled = true;
-        preGain.gain.linearRampToValueAtTime(1.0, r._ctx.currentTime + 0.1);
+        preGain.gain.linearRampToValueAtTime(1.0, this._ctx.currentTime + 0.1);
       } else {
         enabled = false;
-        preGain.gain.linearRampToValueAtTime(0.0, r._ctx.currentTime + 0.1);
+        preGain.gain.linearRampToValueAtTime(0.0, this._ctx.currentTime + 0.1);
       }
     };
 
