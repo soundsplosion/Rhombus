@@ -14,11 +14,18 @@ var patId = rhomb._song.addPattern();
 function ins(a, b, c) {
   rhomb.Edit.insertNote(new rhomb.Note(a, b, c), patId);
 }
-var trackId = rhomb._song.addTrack();
+
 var instrId = rhomb.addInstrument("mono");
-rhomb._song._instruments.getObjById(instrId).normalizedObjectSet({ volume: 0.1 });
-rhomb._song._tracks.getObjById(trackId)._target = instrId;
-rhomb._song._tracks.getObjById(trackId).addToPlaylist(patId, 0, 3840);
+var instr = rhomb.getSong().getInstruments().getObjById(instrId);
+instr.normalizedSetByName("volume", 0.1);
+//rhomb._song._instruments.getObjById(instrId)._normalizedObjectSet({ volume: 0.1 });
+
+var trackId = rhomb._song.addTrack();
+var track = rhomb.getSong().getTracks().getObjById(trackId);
+track._target = instrId;
+track.addToPlaylist(patId, 0, 3840);
+//rhomb._song._tracks.getObjById(trackId)._target = instrId;
+//rhomb._song._tracks.getObjById(trackId).addToPlaylist(patId, 0, 3840);
 
 ins(60, 0, 240);
 ins(63, 240, 240);

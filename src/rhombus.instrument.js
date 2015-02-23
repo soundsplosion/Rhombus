@@ -37,8 +37,8 @@
 
       Tone.PolySynth.call(this, undefined, ctr);
       var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps[this._type]);
-      this.normalizedObjectSet(def);
-      this.normalizedObjectSet(options);
+      this._normalizedObjectSet(def, true);
+      this._normalizedObjectSet(options, true);
 
       // TODO: don't route everything to master
       this.toMaster();
@@ -200,11 +200,19 @@
       return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
     }
 
-    Instrument.prototype.normalizedObjectSet = function(params) {
-      if (typeof params !== "object") {
+    Instrument.prototype._normalizedObjectSet = function(params, internal) {
+      if (notObject(params)) {
         return;
       }
 
+      if (!internal) {
+        var rthis = this;
+        var oldParams = this._currentParams;
+
+        r.Undo._addUndoAction(function() {
+          rthis._normalizedObjectSet(oldParams, true);
+        });
+      }
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
@@ -261,7 +269,7 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedObjectSet(setObj);
+      this._normalizedObjectSet(setObj);
     };
 
     Instrument.prototype.normalizedSetByName = function(paramName, paramValue) {
@@ -269,20 +277,20 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedObjectSet(setObj);
+      this._normalizedObjectSet(setObj);
     };
 
     // HACK: these are here until proper note routing is implemented
-    var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
-    var sampleCount = Tone.context.sampleRate * 2.0;
-    var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
-    for (var i = 0; i < 2; i++) {
-      var buffering = buffer.getChannelData(i);
-      for (var v = 0; v < sampleCount; v++) {
-        buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
-      }
-    }
-    r.buf = buffer;
+    //var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
+    //var sampleCount = Tone.context.sampleRate * 2.0;
+    //var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
+    //for (var i = 0; i < 2; i++) {
+    //  var buffering = buffer.getChannelData(i);
+    //  for (var v = 0; v < sampleCount; v++) {
+    //    buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
+    //  }
+    //}
+    //r.buf = buffer;
     // HACK: end
 
     getInstIdByIndex = function(instrIdx) {

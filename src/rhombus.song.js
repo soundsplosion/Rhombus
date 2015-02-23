@@ -84,6 +84,11 @@
         var track = new r.Track();
         this._tracks.addObj(track);
 
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._tracks.removeObj(track);
+        });
+
         // Return the ID of the new Track
         return track._id;
       },
@@ -105,14 +110,24 @@
           // TODO: Figure out why this doesn't work
           //r.removeInstrument(track._target);
 
-          this._instruments.removeId(track._target);
-          this._tracks.removeId(trkId);
+          var slot = this._tracks.getSlotById(trkId);
+          var track = this._tracks.removeId(trkId);
+
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._tracks.addObj(track, slot);
+          });
+
           return trkId;
         }
       },
 
       getTracks: function() {
         return this._tracks;
+      },
+
+      getInstruments: function() {
+        return this._instruments;
       },
 
       // Song length here is defined as the end of the last

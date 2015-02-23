@@ -106,6 +106,14 @@
     return typeof obj === "undefined";
   };
 
+  window.isObject = function(obj) {
+    return typeof obj === "object";
+  };
+
+  window.notObject = function(obj) {
+    return typeof obj !== "object";
+  };
+
   window.isInteger = function(obj) {
     return Math.round(obj) === obj;
   };
@@ -155,33 +163,21 @@
     }
   };
 
-  function firstEmptySlot(isc, idx) {
-    if (notNumber(idx)) {
-      idx = 0;
-    }
-
-    for (var i = idx; i < (isc._count + idx); i++) {
-      var realI = i % isc._count;
-      if (notDefined(isc._slots[realI])) {
-        return realI;
-      }
-    }
-
-    return -1;
-  }
-
   IdSlotContainer.prototype.addObj = function(obj, idx) {
     var id = obj._id;
     if (id in this._map) {
       return undefined;
     }
 
-    var idx = firstEmptySlot(this, idx);
-    if (idx < 0) {
+    if (this._slots.length === this._count) {
       return undefined;
     }
 
-    this._slots[idx] = id;
+    if (idx < 0 || idx >= this._count) {
+      return undefined;
+    }
+
+    this._slots.splice(idx, 0, id);
     this._map[id] = obj;
     return obj;
   };
@@ -223,7 +219,21 @@
 
   IdSlotContainer.prototype.getObjById = function(id) {
     return this._map[+id];
-  }
+  };
+
+  IdSlotContainer.prototype.getSlotByObj = function(obj) {
+    return getSlotById(obj._id);
+  };
+
+  IdSlotContainer.prototype.getSlotById = function(id) {
+    for (var i = 0; i < this._slots.length; i++) {
+      if (slots[i] === id) {
+        return i;
+      }
+    }
+
+    return -1;
+  };
 
   IdSlotContainer.prototype.swapSlots = function(idx1, idx2) {
     if (idx1 >= 0 && idx1 < this._count && idx2 >= 0 && idx2 < this._count) {
@@ -234,7 +244,7 @@
   };
 
   IdSlotContainer.prototype.isFull = function() {
-    return firstEmptySlot(this) == -1;
+    return this._slots.length === this._count;
   };
 
   IdSlotContainer.prototype.objIds = function() {
@@ -710,7 +720,7 @@
         }
 
         this.setBuffers(setBufs, setNames);
-        this.normalizedObjectSet(params);
+        this._normalizedObjectSet(params, true);
       }
     }
 
@@ -836,7 +846,19 @@
       return Rhombus._map.unnormalizedParams(params, "samp", unnormalizeMaps);
     }
 
-    Sampler.prototype.normalizedObjectSet = function(params) {
+    Sampler.prototype._normalizedObjectSet = function(params, internal) {
+      if (notObject(params)) {
+        return;
+      }
+
+      if (!internal) {
+        var rthis = this;
+        var oldParams = this._currentParams;
+
+        r.Undo._addUndoAction(function() {
+          rthis._normalizedObjectSet(oldParams, true);
+        });
+      }
       this._trackParams(params);
 
       var samplers = Object.keys(params);
@@ -914,7 +936,7 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedObjectSet(setObj);
+      this._normalizedObjectSet(setObj);
     };
 
     r._Sampler = Sampler;
@@ -960,8 +982,8 @@
 
       Tone.PolySynth.call(this, undefined, ctr);
       var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps[this._type]);
-      this.normalizedObjectSet(def);
-      this.normalizedObjectSet(options);
+      this._normalizedObjectSet(def, true);
+      this._normalizedObjectSet(options, true);
 
       // TODO: don't route everything to master
       this.toMaster();
@@ -1123,11 +1145,19 @@
       return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
     }
 
-    Instrument.prototype.normalizedObjectSet = function(params) {
-      if (typeof params !== "object") {
+    Instrument.prototype._normalizedObjectSet = function(params, internal) {
+      if (notObject(params)) {
         return;
       }
 
+      if (!internal) {
+        var rthis = this;
+        var oldParams = this._currentParams;
+
+        r.Undo._addUndoAction(function() {
+          rthis._normalizedObjectSet(oldParams, true);
+        });
+      }
       this._trackParams(params);
       var unnormalized = unnormalizedParams(params, this._type);
       this.set(unnormalized);
@@ -1184,7 +1214,7 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedObjectSet(setObj);
+      this._normalizedObjectSet(setObj);
     };
 
     Instrument.prototype.normalizedSetByName = function(paramName, paramValue) {
@@ -1192,20 +1222,20 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedObjectSet(setObj);
+      this._normalizedObjectSet(setObj);
     };
 
     // HACK: these are here until proper note routing is implemented
-    var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
-    var sampleCount = Tone.context.sampleRate * 2.0;
-    var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
-    for (var i = 0; i < 2; i++) {
-      var buffering = buffer.getChannelData(i);
-      for (var v = 0; v < sampleCount; v++) {
-        buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
-      }
-    }
-    r.buf = buffer;
+    //var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
+    //var sampleCount = Tone.context.sampleRate * 2.0;
+    //var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
+    //for (var i = 0; i < 2; i++) {
+    //  var buffering = buffer.getChannelData(i);
+    //  for (var v = 0; v < sampleCount; v++) {
+    //    buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
+    //  }
+    //}
+    //r.buf = buffer;
     // HACK: end
 
     getInstIdByIndex = function(instrIdx) {
@@ -1611,7 +1641,13 @@
           return undefined;
         }
         else {
+          var oldValue = this._name;
           this._name = name.toString();
+
+          r.Undo._addUndoAction(function() {
+            this._name = oldValue;
+          });
+
           return this._name;
         }
       },
@@ -1817,6 +1853,11 @@
         var track = new r.Track();
         this._tracks.addObj(track);
 
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._tracks.removeObj(track);
+        });
+
         // Return the ID of the new Track
         return track._id;
       },
@@ -1838,14 +1879,24 @@
           // TODO: Figure out why this doesn't work
           //r.removeInstrument(track._target);
 
-          this._instruments.removeId(track._target);
-          this._tracks.removeId(trkId);
+          var slot = this._tracks.getSlotById(trkId);
+          var track = this._tracks.removeId(trkId);
+
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._tracks.addObj(track, slot);
+          });
+
           return trkId;
         }
       },
 
       getTracks: function() {
         return this._tracks;
+      },
+
+      getInstruments: function() {
+        return this._instruments;
       },
 
       // Song length here is defined as the end of the last

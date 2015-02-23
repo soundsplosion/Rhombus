@@ -100,7 +100,13 @@
           return undefined;
         }
         else {
+          var oldValue = this._name;
           this._name = name.toString();
+
+          r.Undo._addUndoAction(function() {
+            this._name = oldValue;
+          });
+
           return this._name;
         }
       },
