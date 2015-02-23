@@ -30,6 +30,12 @@
           return undefined;
         }
 
+        var oldStart = this._start;
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._start = oldStart;
+        });
+
         return this._start = startVal;
       },
 
@@ -46,6 +52,12 @@
         if (lenVal < 0) {
           return undefined;
         }
+
+        var oldLength = this._length;
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._length = oldLength;
+        });
 
         return this._length = lenVal;
       },
@@ -68,7 +80,7 @@
     };
 
     r.Track = function(id) {
-      if (id) {
+      if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
@@ -100,7 +112,13 @@
           return undefined;
         }
         else {
+          var oldValue = this._name;
           this._name = name.toString();
+
+          r.Undo._addUndoAction(function() {
+            this._name = oldValue;
+          });
+
           return this._name;
         }
       },
@@ -193,16 +211,31 @@
 
         var newItem = new r.PlaylistItem(ptnId, start, length);
         this._playlist[newItem._id] = newItem;
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          delete rthis._playlist[newItem._id];
+        });
+
         return newItem._id;
 
         // TODO: restore these length and overlap checks
       },
 
       removeFromPlaylist: function(itemId) {
-        if (!this._playlist.hasOwnProperty(itemId.toString()))
+        itemId = itemId.toString();
+        if (!(itemId in this._playlist)) {
           return undefined;
-        else
+        } else {
+
+          var obj = this._playlist[itemId];
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._playlist[itemId] = obj;
+          });
+
           delete this._playlist[itemId.toString()];
+        }
 
         return itemId;
       },

@@ -65,6 +65,12 @@
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          delete rthis._patterns[pattern._id];
+        });
+
         return pattern._id;
       },
 
@@ -75,6 +81,11 @@
           return undefined;
         }
 
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._patterns[ptnId] = pattern;
+        });
+
         delete this._patterns[ptnId];
         return ptnId;
       },
@@ -83,6 +94,11 @@
         // Create a new Track object
         var track = new r.Track();
         this._tracks.addObj(track);
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._tracks.removeObj(track);
+        });
 
         // Return the ID of the new Track
         return track._id;
@@ -105,14 +121,24 @@
           // TODO: Figure out why this doesn't work
           //r.removeInstrument(track._target);
 
-          this._instruments.removeId(track._target);
-          this._tracks.removeId(trkId);
+          var slot = this._tracks.getSlotById(trkId);
+          var track = this._tracks.removeId(trkId);
+
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._tracks.addObj(track, slot);
+          });
+
           return trkId;
         }
       },
 
       getTracks: function() {
         return this._tracks;
+      },
+
+      getInstruments: function() {
+        return this._instruments;
       },
 
       // Song length here is defined as the end of the last
@@ -164,8 +190,7 @@
         var pattern = patterns[ptnId];
         var noteMap = pattern._noteMap;
 
-        var newPattern = new this.Pattern();
-        newPattern._id = pattern._id;
+        var newPattern = new this.Pattern(+ptnId);
 
         newPattern._name = pattern._name;
         newPattern._length = pattern._length;
@@ -190,8 +215,7 @@
         var playlist = track._playlist;
 
         // Create a new track and manually set its ID
-        var newTrack = new this.Track();
-        newTrack._id = trkId;
+        var newTrack = new this.Track(trkId);
 
         newTrack._name = track._name;
         newTrack._target = +track._target;
@@ -213,8 +237,7 @@
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
         this.addInstrument(inst._type, inst._params, +instId, instIdIdx);
-        this._song._instruments.getObjById(instId)._id = instId;
-        this._song._instruments.getObjById(instId).normalizedObjectSet({ volume: 0.1 });
+        this._song._instruments.getObjById(instId)._normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {

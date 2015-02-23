@@ -66,7 +66,7 @@
         }
 
         this.setBuffers(setBufs, setNames);
-        this.normalizedObjectSet(params);
+        this._normalizedObjectSet(params, true);
       }
     }
 
@@ -192,7 +192,19 @@
       return Rhombus._map.unnormalizedParams(params, "samp", unnormalizeMaps);
     }
 
-    Sampler.prototype.normalizedObjectSet = function(params) {
+    Sampler.prototype._normalizedObjectSet = function(params, internal) {
+      if (notObject(params)) {
+        return;
+      }
+
+      if (!internal) {
+        var rthis = this;
+        var oldParams = this._currentParams;
+
+        r.Undo._addUndoAction(function() {
+          rthis._normalizedObjectSet(oldParams, true);
+        });
+      }
       this._trackParams(params);
 
       var samplers = Object.keys(params);
@@ -270,7 +282,7 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedObjectSet(setObj);
+      this._normalizedObjectSet(setObj);
     };
 
     r._Sampler = Sampler;

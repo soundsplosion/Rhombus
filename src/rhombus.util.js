@@ -14,6 +14,14 @@
     return typeof obj === "undefined";
   };
 
+  window.isObject = function(obj) {
+    return typeof obj === "object";
+  };
+
+  window.notObject = function(obj) {
+    return typeof obj !== "object";
+  };
+
   window.isInteger = function(obj) {
     return Math.round(obj) === obj;
   };
@@ -63,33 +71,25 @@
     }
   };
 
-  function firstEmptySlot(isc, idx) {
-    if (notNumber(idx)) {
-      idx = 0;
-    }
-
-    for (var i = idx; i < (isc._count + idx); i++) {
-      var realI = i % isc._count;
-      if (notDefined(isc._slots[realI])) {
-        return realI;
-      }
-    }
-
-    return -1;
-  }
-
   IdSlotContainer.prototype.addObj = function(obj, idx) {
     var id = obj._id;
     if (id in this._map) {
       return undefined;
     }
 
-    var idx = firstEmptySlot(this, idx);
-    if (idx < 0) {
+    if (this._slots.length === this._count) {
       return undefined;
     }
 
-    this._slots[idx] = id;
+    if (notNumber(idx)) {
+      idx = this._slots.length;
+    }
+
+    if (idx < 0 || idx >= this._count) {
+      return undefined;
+    }
+
+    this._slots.splice(idx, 0, id);
     this._map[id] = obj;
     return obj;
   };
@@ -131,7 +131,21 @@
 
   IdSlotContainer.prototype.getObjById = function(id) {
     return this._map[+id];
-  }
+  };
+
+  IdSlotContainer.prototype.getSlotByObj = function(obj) {
+    return getSlotById(obj._id);
+  };
+
+  IdSlotContainer.prototype.getSlotById = function(id) {
+    for (var i = 0; i < this._slots.length; i++) {
+      if (this._slots[i] === id) {
+        return i;
+      }
+    }
+
+    return -1;
+  };
 
   IdSlotContainer.prototype.swapSlots = function(idx1, idx2) {
     if (idx1 >= 0 && idx1 < this._count && idx2 >= 0 && idx2 < this._count) {
@@ -142,7 +156,7 @@
   };
 
   IdSlotContainer.prototype.isFull = function() {
-    return firstEmptySlot(this) == -1;
+    return this._slots.length === this._count;
   };
 
   IdSlotContainer.prototype.objIds = function() {

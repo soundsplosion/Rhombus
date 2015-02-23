@@ -42,7 +42,14 @@
         if (notDefined(name)) {
           return undefined;
         } else {
+          var oldName = this._name;
           this._name = name.toString();
+
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._name = oldName;
+          });
+
           return this._name;
         }
       },
@@ -63,13 +70,13 @@
 
         delete this._noteMap[note._id];
 
-        return noteId;
+        return note;
       }
     };
 
-    // TODO: Note should probaly have its own source file
+    // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, id) {
-      if (id) {
+      if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
