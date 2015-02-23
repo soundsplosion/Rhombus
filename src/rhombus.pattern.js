@@ -63,11 +63,11 @@
 
         delete this._noteMap[note._id];
 
-        return noteId;
+        return note;
       }
     };
 
-    // TODO: Note should probaly have its own source file
+    // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, id) {
       if (id) {
         r._setId(this, id);
