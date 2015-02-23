@@ -47,8 +47,15 @@
         return undefined;
       }
 
+      var oldStart = note._start;
+      var oldLength = note._length;
       note._start = start;
       note._length = length;
+
+      r.Undo._addUndoAction(function() {
+        note._start = oldStart;
+        note._length = oldLength;
+      });
 
       return noteId;
     };

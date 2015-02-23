@@ -65,6 +65,12 @@
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          delete rthis._patterns[pattern._id];
+        });
+
         return pattern._id;
       },
 
@@ -74,6 +80,11 @@
         if (notDefined(pattern)) {
           return undefined;
         }
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._patterns[ptnId] = pattern;
+        });
 
         delete this._patterns[ptnId];
         return ptnId;

@@ -42,7 +42,14 @@
         if (notDefined(name)) {
           return undefined;
         } else {
+          var oldName = this._name;
           this._name = name.toString();
+
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._name = oldName;
+          });
+
           return this._name;
         }
       },

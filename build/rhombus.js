@@ -1482,7 +1482,14 @@
         if (notDefined(name)) {
           return undefined;
         } else {
+          var oldName = this._name;
           this._name = name.toString();
+
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._name = oldName;
+          });
+
           return this._name;
         }
       },
@@ -1571,6 +1578,12 @@
           return undefined;
         }
 
+        var oldStart = this._start;
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._start = oldStart;
+        });
+
         return this._start = startVal;
       },
 
@@ -1587,6 +1600,12 @@
         if (lenVal < 0) {
           return undefined;
         }
+
+        var oldLength = this._length;
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._length = oldLength;
+        });
 
         return this._length = lenVal;
       },
@@ -1740,16 +1759,31 @@
 
         var newItem = new r.PlaylistItem(ptnId, start, length);
         this._playlist[newItem._id] = newItem;
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          delete rthis._playlist[newItem._id];
+        });
+
         return newItem._id;
 
         // TODO: restore these length and overlap checks
       },
 
       removeFromPlaylist: function(itemId) {
-        if (!this._playlist.hasOwnProperty(itemId.toString()))
+        itemId = itemId.toString();
+        if (!(itemId in this._playlist)) {
           return undefined;
-        else
+        } else {
+
+          var obj = this._playlist[itemId];
+          var rthis = this;
+          r.Undo._addUndoAction(function() {
+            rthis._playlist[itemId] = obj;
+          });
+
           delete this._playlist[itemId.toString()];
+        }
 
         return itemId;
       },
@@ -1834,6 +1868,12 @@
           var pattern = new r.Pattern();
         }
         this._patterns[pattern._id] = pattern;
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          delete rthis._patterns[pattern._id];
+        });
+
         return pattern._id;
       },
 
@@ -1843,6 +1883,11 @@
         if (notDefined(pattern)) {
           return undefined;
         }
+
+        var rthis = this;
+        r.Undo._addUndoAction(function() {
+          rthis._patterns[ptnId] = pattern;
+        });
 
         delete this._patterns[ptnId];
         return ptnId;
@@ -2414,8 +2459,15 @@
         return undefined;
       }
 
+      var oldStart = note._start;
+      var oldLength = note._length;
       note._start = start;
       note._length = length;
+
+      r.Undo._addUndoAction(function() {
+        note._start = oldStart;
+        note._length = oldLength;
+      });
 
       return noteId;
     };
