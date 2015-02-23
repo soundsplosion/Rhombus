@@ -81,6 +81,10 @@
       return undefined;
     }
 
+    if (notNumber(idx)) {
+      idx = this._slots.length;
+    }
+
     if (idx < 0 || idx >= this._count) {
       return undefined;
     }
