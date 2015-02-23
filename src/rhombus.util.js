@@ -139,7 +139,7 @@
 
   IdSlotContainer.prototype.getSlotById = function(id) {
     for (var i = 0; i < this._slots.length; i++) {
-      if (slots[i] === id) {
+      if (this._slots[i] === id) {
         return i;
       }
     }

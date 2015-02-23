@@ -76,7 +76,7 @@
 
     // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, id) {
-      if (id) {
+      if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);

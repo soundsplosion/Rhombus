@@ -60,7 +60,6 @@
       Object.defineProperty(t, '_id', {
         value: id,
         enumerable: true,
-        writable: true
       });
     };
 

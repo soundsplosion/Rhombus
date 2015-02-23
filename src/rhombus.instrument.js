@@ -25,7 +25,7 @@
         ctr = mono;
       }
 
-      if (isNull(id) || notDefined(id)) {
+      if (notDefined(id)) {
         r._newId(this);
       } else {
         r._setId(this, id);
