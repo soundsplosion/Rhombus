@@ -1773,6 +1773,20 @@
         // TODO: restore these length and overlap checks
       },
 
+      getPlaylistItemByTick: function(tick) {
+        var playlist = this._playlist;
+        for (var itemId in playlist) {
+          var item = playlist[itemId];
+          var itemEnd = item._start + item._length;
+          if (tick >= item._start && tick < itemEnd) {
+            return item;
+          }
+        }
+
+        // no item at this location
+        return undefined;
+      },
+
       removeFromPlaylist: function(itemId) {
         itemId = itemId.toString();
         if (!(itemId in this._playlist)) {
