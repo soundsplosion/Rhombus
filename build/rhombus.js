@@ -1915,6 +1915,7 @@
       },
 
       deleteTrack: function(trkId) {
+        trkId = +trkId;
         var track = this._tracks.getObjById(trkId);
 
         if (notDefined(track)) {
