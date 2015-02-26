@@ -1018,7 +1018,7 @@
       if (typeof instrOrId === "object") {
         id = instrOrId._id;
       } else {
-        id = +id;
+        id = +instrOrId;
       }
       return id;
     }
