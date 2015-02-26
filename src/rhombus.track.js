@@ -177,21 +177,23 @@
 
       // Determine if a playlist item exists that overlaps with the given range
       checkOverlap: function(start, end) {
-        for (var id in this._playlist) {
-          var item = this._playlist[id];
+        for (var itemId in this._playlist) {
+          var item = this._playlist[itemId];
+          var itemStart = item._start;
           var itemEnd = item._start + item._length;
 
-          if (item._start <= start && itemEnd > start)
+          // TODO: verify and simplify this logic
+          if (start < itemStart && end > itemStart) {
             return true;
+          }
 
-          if (itemEnd > start && itemEnd < end)
+          if (start >= itemStart && end < itemEnd) {
             return true;
+          }
 
-          if (item._start <= start && itemEnd >= end)
+          if (start >= itemStart && start < itemEnd) {
             return true;
-
-          if (start <= item._start && end >= itemEnd)
-            return true;
+          }
         }
 
         // No overlapping items found
@@ -201,6 +203,11 @@
       addToPlaylist: function(ptnId, start, length) {
         // All arguments must be defined
         if (notDefined(ptnId) || notDefined(start) || notDefined(length)) {
+          return undefined;
+        }
+
+        // Don't allow overlapping playlist items
+        if (this.checkOverlap(start, start+length)) {
           return undefined;
         }
 
@@ -219,7 +226,7 @@
 
         return newItem._id;
 
-        // TODO: restore these length and overlap checks
+        // TODO: restore length checks
       },
 
       getPlaylistItemByTick: function(tick) {
