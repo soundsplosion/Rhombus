@@ -6,13 +6,14 @@
 
   Rhombus._trackSetup = function(r) {
 
-    r.PlaylistItem = function(ptnId, start, length, id) {
+    r.PlaylistItem = function(trkId, ptnId, start, length, id) {
       if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
       }
 
+      this._trkId = trkId;
       this._ptnId = ptnId;
       this._start = start;
       this._length = length;
@@ -64,6 +65,10 @@
 
       getLength: function() {
         return this._length;
+      },
+
+      getTrackIndex: function() {
+        return r._song._tracks.getSlotById(this._trkId);
       },
 
       getPatternId: function() {
@@ -216,7 +221,7 @@
           return undefined;
         }
 
-        var newItem = new r.PlaylistItem(ptnId, start, length);
+        var newItem = new r.PlaylistItem(this._id, ptnId, start, length);
         this._playlist[newItem._id] = newItem;
 
         var rthis = this;
