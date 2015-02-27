@@ -229,6 +229,10 @@
         // TODO: restore length checks
       },
 
+      getPlaylistItemById: function(id) {
+        return this._playlist[id];
+      }
+
       getPlaylistItemByTick: function(tick) {
         var playlist = this._playlist;
         for (var itemId in playlist) {
