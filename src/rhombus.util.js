@@ -159,6 +159,10 @@
     return this._slots.length === this._count;
   };
 
+  IdSlotContainer.prototype.length = function () {
+    return this._slots.length;
+  };
+
   IdSlotContainer.prototype.objIds = function() {
     return Object.keys(this._map);
   };
