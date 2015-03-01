@@ -229,7 +229,14 @@
 
         for (var itemId in playlist) {
           var item = playlist[itemId];
-          var newItem = new this.PlaylistItem(item._ptnId,
+          var parentId = trkId;
+
+          if (isDefined(item._trkId)) {
+
+          }
+
+          var newItem = new this.PlaylistItem(parentId,
+                                              item._ptnId,
                                               item._start,
                                               item._length,
                                               item._id);
