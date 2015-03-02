@@ -568,6 +568,7 @@
 
   Rhombus.Master = function() {
     Tone.Effect.call(this);
+    this.setDry(1);
     this.toMaster();
     this.isMaster = function() { return true; };
   }
