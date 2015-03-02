@@ -561,6 +561,19 @@
 
 })(this.Rhombus);
 
+//! rhombus.master.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+(function(Rhombus) {
+
+  Rhombus.Master = function() {
+    Tone.Effect.call(this);
+    this.toMaster();
+  }
+  Tone.extend(Master, Tone.Effect);
+
+})(this.Rhombus);
+
 //! rhombus.graph.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
@@ -667,6 +680,24 @@
       ctr.prototype.graphDisconnect = graphDisconnect;
     };
 
+    r._toMaster = function(node) {
+      var effects = r._song._effects;
+      var master;
+      var effectIds = Object.keys(effects);
+      for (var idIdx in effectIds) {
+        var effect = effects[effectIds[idIdx]];
+        if (effect.isMaster()) {
+          master = effect;
+          break;
+        }
+      }
+
+      if (isUndefined(master)) {
+        return;
+      }
+
+      node.graphconnect(master);
+    };
     // Set up the audio graph
     // Hardcoded effect for now
     var graph = {};
@@ -854,8 +885,7 @@
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
 
-        // TODO: proper routing
-        sampler.toMaster();
+        r._toMaster(sampler);
 
         this.samples.push(sampler);
         if (useDefaultNames || notDefined(names[i])) {
@@ -902,6 +932,18 @@
         sampler.triggerRelease();
       });
       this.triggered = {};
+    };
+
+    Sampler.prototype.connect = function(B, outNum, inNum) {
+      this.samples.forEach(function(sampler) {
+        sampler.connect(B, outNum, inNum);
+      });
+    };
+
+    Sampler.prototype.disconnect = function(outNum) {
+      this.samples.forEach(function(sampler) {
+        sampler.disconnect(outNum);
+      });
     };
 
     Sampler.prototype._trackParams = function(params) {
@@ -1092,8 +1134,7 @@
       this._normalizedObjectSet(def, true);
       this._normalizedObjectSet(options, true);
 
-      // TODO: don't route everything to master
-      this.toMaster();
+      r._toMaster(this);
     }
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);
@@ -1423,8 +1464,12 @@
   Rhombus._effectSetup = function(r) {
 
     var dist = Tone.Distortion;
+    var mast = Rhombus.Master;
+
     r._addGraphFunctions(dist);
+    r._addGraphFunctions(mast);
     installFunctions(dist);
+    installFunctions(mast);
 
     var typeMap = {
       // TODO: more effect types
@@ -1478,7 +1523,7 @@
       if (typeof effectOrId === "object") {
         id = effectOrId._id;
       } else {
-        id = +id;
+        id = +effectOrId;
       }
       return id;
     }

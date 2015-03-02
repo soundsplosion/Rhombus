@@ -40,8 +40,7 @@
       this._normalizedObjectSet(def, true);
       this._normalizedObjectSet(options, true);
 
-      // TODO: don't route everything to master
-      this.toMaster();
+      r._toMaster(this);
     }
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);

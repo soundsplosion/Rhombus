@@ -8,6 +8,7 @@ gulp.task("make", function() {
   return gulp.src([
     "src/rhombus.header.js",
     "src/rhombus.util.js",
+    "src/rhombus.master.js",
     "src/rhombus.graph.js",
     "src/rhombus.sampler.js",
     "src/rhombus.instrument.js",
@@ -17,7 +18,7 @@ gulp.task("make", function() {
     "src/rhombus.song.js",
     "src/rhombus.time.js",
     "src/rhombus.edit.js",
-    "src/rhombus.undo.js"
+    "src/rhombus.undo.js",
     ])
     .pipe(concat("rhombus.js"))
     .pipe(gulp.dest("build"))

@@ -5,8 +5,12 @@
   Rhombus._effectSetup = function(r) {
 
     var dist = Tone.Distortion;
+    var mast = Rhombus.Master;
+
     r._addGraphFunctions(dist);
+    r._addGraphFunctions(mast);
     installFunctions(dist);
+    installFunctions(mast);
 
     var typeMap = {
       // TODO: more effect types
@@ -60,7 +64,7 @@
       if (typeof effectOrId === "object") {
         id = effectOrId._id;
       } else {
-        id = +id;
+        id = +effectOrId;
       }
       return id;
     }
