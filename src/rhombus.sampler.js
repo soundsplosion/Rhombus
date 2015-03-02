@@ -69,8 +69,8 @@
         this._normalizedObjectSet(params, true);
       }
     }
-
     Tone.extend(Sampler, Tone.Instrument);
+    r._addGraphFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(buffers, names) {
       if (notDefined(buffers)) {
@@ -93,8 +93,7 @@
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
 
-        // TODO: proper routing
-        sampler.toMaster();
+        r._toMaster(sampler);
 
         this.samples.push(sampler);
         if (useDefaultNames || notDefined(names[i])) {
@@ -141,6 +140,18 @@
         sampler.triggerRelease();
       });
       this.triggered = {};
+    };
+
+    Sampler.prototype.connect = function(B, outNum, inNum) {
+      this.samples.forEach(function(sampler) {
+        sampler.connect(B, outNum, inNum);
+      });
+    };
+
+    Sampler.prototype.disconnect = function(outNum) {
+      this.samples.forEach(function(sampler) {
+        sampler.disconnect(outNum);
+      });
     };
 
     Sampler.prototype._trackParams = function(params) {

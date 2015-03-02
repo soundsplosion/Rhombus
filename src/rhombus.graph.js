@@ -3,7 +3,147 @@
 //! license: MIT
 
 (function(Rhombus) {
+
   Rhombus._graphSetup = function(r) {
+
+    function connectionExists(a, b) {
+      function cycleProof(a, b, seen) {
+        if (a._id === b._id) {
+          return true;
+        }
+
+        var newSeen = seen.slice(0);
+        newSeen.push(a);
+
+        var inAny = false;
+        a.graphChildren().forEach(function(child) {
+          if (newSeen.indexOf(child) !== -1) {
+            return;
+          }
+          inAny = inAny || cycleProof(child, b, newSeen);
+        });
+
+        return inAny;
+      }
+
+      return cycleProof(a, b, []);
+    }
+
+    function graphConnect(B) {
+      if (notDefined(this._graphChildren)) {
+        this._graphChildren = [];
+      }
+      if (notDefined(B._graphParents)) {
+        B._graphParents = [];
+      }
+
+      if (connectionExists(B, this)) {
+        return false;
+      }
+
+      this._graphChildren.push(B._id);
+      B._graphParents.push(this._id);
+
+      this.connect(B);
+      return true;
+    };
+
+    function graphDisconnect(B) {
+      if (notDefined(this._graphChildren)) {
+        this._graphChildren = [];
+        return;
+      }
+
+      var idx = this._graphChildren.indexOf(B._id);
+      if (idx === -1) {
+        return;
+      }
+
+      this._graphChildren.splice(idx, 1);
+
+      var BIdx = B._graphParents.indexOf(this._id);
+      if (BIdx !== -1) {
+        B._graphParents.splice(BIdx, 1);
+      }
+
+      // TODO: this should be replaced in such a way that we
+      // don't break all the outgoing connections every time we
+      // disconnect from one thing. Put gain nodes in the middle
+      // or something.
+      this.disconnect();
+      this._graphChildren.forEach(function(idx) {
+        var child = graphLookup(idx);
+        if (isDefined(child)) {
+          this.connect(child);
+        }
+      });
+    }
+
+    function graphLookup(id) {
+      var instr = r._song._instruments.getObjById(id);
+      if (isDefined(instr)) {
+        return instr;
+      }
+      return r._song._effects[id];
+    }
+
+    function graphChildren() {
+      if (notDefined(this._graphChildren)) {
+        return [];
+      }
+      return this._graphChildren.filter(isDefined).map(graphLookup);
+    }
+
+    function graphParents() {
+      if (notDefined(this._graphParents)) {
+        return [];
+      }
+      return this._graphParents.filter(isDefined).map(graphLookup);
+    }
+
+    r._addGraphFunctions = function(ctr) {
+      ctr.prototype.graphChildren = graphChildren;
+      ctr.prototype.graphParents = graphParents;
+      ctr.prototype.graphConnect = graphConnect;
+      ctr.prototype.graphDisconnect = graphDisconnect;
+    };
+
+    r._toMaster = function(node) {
+      var effects = r._song._effects;
+      var master;
+      var effectIds = Object.keys(effects);
+      for (var idIdx in effectIds) {
+        var effect = effects[effectIds[idIdx]];
+        if (effect.isMaster()) {
+          master = effect;
+          break;
+        }
+      }
+
+      if (notDefined(master)) {
+        return;
+      }
+
+      node.graphConnect(master);
+    };
+
+    r._importFixGraph = function() {
+      var instruments = this._song._instruments;
+      instruments.objIds().forEach(function(id) {
+        var instr = instruments.getObjById(id);
+        instr.graphChildren().forEach(function(child) {
+          instr.connect(child);
+        });
+      });
+      var effects = this._song._effects;
+      for (var effectId in effects) {
+        var effect = effects[effectId];
+        effect.graphChildren().forEach(function(child) {
+          effect.connect(child);
+        });
+      }
+    };
+
     // Set up the audio graph
     // Hardcoded effect for now
     var graph = {};
