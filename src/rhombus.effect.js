@@ -14,7 +14,8 @@
 
     var typeMap = {
       // TODO: more effect types
-      "dist": dist
+      "dist": dist,
+      "mast": mast
     };
 
     function makeEffect(type, options, id) {
@@ -39,6 +40,7 @@
       return eff;
     }
 
+    function isMaster() { return false; }
     function installFunctions(ctr) {
       ctr.prototype.normalizedObjectSet = normalizedObjectSet;
       ctr.prototype.parameterCount = parameterCount;
@@ -46,9 +48,15 @@
       ctr.prototype.normalizedSet = normalizedSet;
       ctr.prototype.toJSON = toJSON;
       ctr.prototype._trackParams = trackParams;
+      ctr.prototype.isMaster = isMaster;
     }
 
+    var masterAdded = false;
     r.addEffect = function(type, options, id) {
+      if (masterAdded && type === "mast") {
+        return;
+      }
+
       var effect = makeEffect(type, options, id);
 
       if (isNull(effect) || notDefined(effect)) {
@@ -58,6 +66,9 @@
       this._song._effects[effect._id] = effect;
       return effect._id;
     }
+
+    // Add the master effect
+    r.addEffect("mast");
 
     function inToId(effectOrId) {
       var id;
@@ -93,6 +104,7 @@
         "dry" : Rhombus._map.mapIdentity,
         "wet" : Rhombus._map.mapIdentity
       },
+      "mast" : {}
       // TODO: more stuff here
     };
 

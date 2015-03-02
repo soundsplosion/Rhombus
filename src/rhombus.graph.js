@@ -120,7 +120,7 @@
         return;
       }
 
-      node.graphconnect(master);
+      node.graphConnect(master);
     };
     // Set up the audio graph
     // Hardcoded effect for now
