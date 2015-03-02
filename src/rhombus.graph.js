@@ -59,9 +59,24 @@
         return;
       }
 
-      delete this._graphChildren[idx];
+      this._graphChildren.splice(idx, 1);
+
       var BIdx = B._graphParents.indexOf(this._id);
-      delete B._graphParents[BIdx];
+      if (BIdx !== -1) {
+        B._graphParents.splice(BIdx, 1);
+      }
+
+      // TODO: this should be replaced in such a way that we
+      // don't break all the outgoing connections every time we
+      // disconnect from one thing. Put gain nodes in the middle
+      // or something.
+      this.disconnect();
+      this._graphChildren.forEach(function(idx) {
+        var child = graphLookup(idx);
+        if (isDefined(child)) {
+          this.connect(child);
+        }
+      });
     }
 
     function graphLookup(id) {

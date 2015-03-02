@@ -148,6 +148,10 @@
         return this._instruments;
       },
 
+      getEffects: function() {
+        return this._effects;
+      },
+
       // Song length here is defined as the end of the last
       // playlist item on any track
       findSongLength: function() {
