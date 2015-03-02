@@ -7,6 +7,6 @@
     Tone.Effect.call(this);
     this.toMaster();
   }
-  Tone.extend(Master, Tone.Effect);
+  Tone.extend(Rhombus.Master, Tone.Effect);
 
 })(this.Rhombus);

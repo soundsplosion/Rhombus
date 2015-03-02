@@ -37,10 +37,10 @@
         outNum = 0;
       }
 
-      if (isUndefined(this._graphChildren)) {
+      if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
       }
-      if (isUndefined(B._graphParents)) {
+      if (notDefined(B._graphParents)) {
         B._graphParents = [];
       }
 
@@ -61,12 +61,12 @@
         outNum = 0;
       }
 
-      if (isUndefined(this._graphChildren)) {
+      if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
       }
 
       var connectedTo = this._graphChildren[outNum];
-      if (isUndefined(connectedTo)) {
+      if (notDefined(connectedTo)) {
         return;
       }
 
@@ -84,14 +84,14 @@
     }
 
     function graphChildren() {
-      if (isUndefined(this._graphChildren)) {
+      if (notDefined(this._graphChildren)) {
         return [];
       }
       return this._graphChildren.filter(notUndefined).map(graphLookup);
     }
 
     function graphParents() {
-      if (isUndefined(this._graphParents)) {
+      if (notDefined(this._graphParents)) {
         return [];
       }
       return this._graphParents.filter(notUndefined).map(graphLookup);
@@ -116,7 +116,7 @@
         }
       }
 
-      if (isUndefined(master)) {
+      if (notDefined(master)) {
         return;
       }
 
