@@ -69,8 +69,8 @@
         this._normalizedObjectSet(params, true);
       }
     }
-
     Tone.extend(Sampler, Tone.Instrument);
+    r._addGraphFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(buffers, names) {
       if (notDefined(buffers)) {

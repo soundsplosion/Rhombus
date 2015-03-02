@@ -5,6 +5,9 @@
   Rhombus._effectSetup = function(r) {
 
     var dist = Tone.Distortion;
+    r._addGraphFunctions(dist);
+    installFunctions(dist);
+
     var typeMap = {
       // TODO: more effect types
       "dist": dist
@@ -25,7 +28,6 @@
         r._setId(eff, id);
       }
 
-      installFunctions(eff);
       eff._type = type;
       eff._currentParams = {};
       eff._trackParams(options);
@@ -33,13 +35,13 @@
       return eff;
     }
 
-    function installFunctions(eff) {
-      eff.normalizedObjectSet = normalizedObjectSet;
-      eff.parameterCount = parameterCount;
-      eff.parameterName = parameterName;
-      eff.normalizedSet = normalizedSet;
-      eff.toJSON = toJSON;
-      eff._trackParams = trackParams;
+    function installFunctions(ctr) {
+      ctr.prototype.normalizedObjectSet = normalizedObjectSet;
+      ctr.prototype.parameterCount = parameterCount;
+      ctr.prototype.parameterName = parameterName;
+      ctr.prototype.normalizedSet = normalizedSet;
+      ctr.prototype.toJSON = toJSON;
+      ctr.prototype._trackParams = trackParams;
     }
 
     r.addEffect = function(type, options, id) {

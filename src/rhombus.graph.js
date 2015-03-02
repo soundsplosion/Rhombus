@@ -3,7 +3,107 @@
 //! license: MIT
 
 (function(Rhombus) {
+
   Rhombus._graphSetup = function(r) {
+
+    function connectionExists(a, b) {
+      function cycleProof(a, b, seen) {
+        if (a._id === b._id) {
+          return true;
+        }
+
+        var newSeen = seen.slice(0);
+        newSeen.push(a);
+
+        var inAny = false;
+        a.graphChildren().forEach(function(child) {
+          if (newSeen.indexOf(child) !== -1) {
+            return;
+          }
+          inAny = inAny || cycleProof(child, b, newSeen);
+        });
+
+        return inAny;
+      }
+
+      return cycleProof(a, b, []);
+    }
+
+    function graphConnect(B, outNum, inNum) {
+      if (notNumber(inNum)) {
+        inNum = 0;
+      }
+      if (notNumber(outNum)) {
+        outNum = 0;
+      }
+
+      if (isUndefined(this._graphChildren)) {
+        this._graphChildren = [];
+      }
+      if (isUndefined(B._graphParents)) {
+        B._graphParents = [];
+      }
+
+      if (connectionExists(B, this)) {
+        return false;
+      }
+
+      this._graphChildren[outNum] = B._id;
+      B._graphParents[inNum] = this._id;
+
+      this.connect(B, outNum, inNum);
+
+      return true;
+    };
+
+    function graphDisconnect(outNum) {
+      if (notNumber(outNum)) {
+        outNum = 0;
+      }
+
+      if (isUndefined(this._graphChildren)) {
+        this._graphChildren = [];
+      }
+
+      var connectedTo = this._graphChildren[outNum];
+      if (isUndefined(connectedTo)) {
+        return;
+      }
+
+      delete this._graphChildren[outNum];
+      var inNum = connectedTo._graphParents.indexOf(this._id);
+      delete connectedTo._graphParents[inNum];
+    }
+
+    function graphLookup(id) {
+      var instr = r._song._instruments.getObjById(id);
+      if (notUndefined(instr)) {
+        return instr;
+      }
+      return r._song._effects[id];
+    }
+
+    function graphChildren() {
+      if (isUndefined(this._graphChildren)) {
+        return [];
+      }
+      return this._graphChildren.filter(notUndefined).map(graphLookup);
+    }
+
+    function graphParents() {
+      if (isUndefined(this._graphParents)) {
+        return [];
+      }
+      return this._graphParents.filter(notUndefined).map(graphLookup);
+    }
+
+    r._addGraphFunctions = function(ctr) {
+      ctr.prototype.graphChildren = graphChildren;
+      ctr.prototype.graphParents = graphParents;
+      ctr.prototype.graphConnect = graphConnect;
+      ctr.prototype.graphDisconnect = graphDisconnect;
+    };
+
     // Set up the audio graph
     // Hardcoded effect for now
     var graph = {};

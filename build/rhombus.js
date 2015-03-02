@@ -566,7 +566,107 @@
 //! license: MIT
 
 (function(Rhombus) {
+
   Rhombus._graphSetup = function(r) {
+
+    function connectionExists(a, b) {
+      function cycleProof(a, b, seen) {
+        if (a._id === b._id) {
+          return true;
+        }
+
+        var newSeen = seen.slice(0);
+        newSeen.push(a);
+
+        var inAny = false;
+        a.graphChildren().forEach(function(child) {
+          if (newSeen.indexOf(child) !== -1) {
+            return;
+          }
+          inAny = inAny || cycleProof(child, b, newSeen);
+        });
+
+        return inAny;
+      }
+
+      return cycleProof(a, b, []);
+    }
+
+    function graphConnect(B, outNum, inNum) {
+      if (notNumber(inNum)) {
+        inNum = 0;
+      }
+      if (notNumber(outNum)) {
+        outNum = 0;
+      }
+
+      if (isUndefined(this._graphChildren)) {
+        this._graphChildren = [];
+      }
+      if (isUndefined(B._graphParents)) {
+        B._graphParents = [];
+      }
+
+      if (connectionExists(B, this)) {
+        return false;
+      }
+
+      this._graphChildren[outNum] = B._id;
+      B._graphParents[inNum] = this._id;
+
+      this.connect(B, outNum, inNum);
+
+      return true;
+    };
+
+    function graphDisconnect(outNum) {
+      if (notNumber(outNum)) {
+        outNum = 0;
+      }
+
+      if (isUndefined(this._graphChildren)) {
+        this._graphChildren = [];
+      }
+
+      var connectedTo = this._graphChildren[outNum];
+      if (isUndefined(connectedTo)) {
+        return;
+      }
+
+      delete this._graphChildren[outNum];
+      var inNum = connectedTo._graphParents.indexOf(this._id);
+      delete connectedTo._graphParents[inNum];
+    }
+
+    function graphLookup(id) {
+      var instr = r._song._instruments.getObjById(id);
+      if (notUndefined(instr)) {
+        return instr;
+      }
+      return r._song._effects[id];
+    }
+
+    function graphChildren() {
+      if (isUndefined(this._graphChildren)) {
+        return [];
+      }
+      return this._graphChildren.filter(notUndefined).map(graphLookup);
+    }
+
+    function graphParents() {
+      if (isUndefined(this._graphParents)) {
+        return [];
+      }
+      return this._graphParents.filter(notUndefined).map(graphLookup);
+    }
+
+    r._addGraphFunctions = function(ctr) {
+      ctr.prototype.graphChildren = graphChildren;
+      ctr.prototype.graphParents = graphParents;
+      ctr.prototype.graphConnect = graphConnect;
+      ctr.prototype.graphDisconnect = graphDisconnect;
+    };
+
     // Set up the audio graph
     // Hardcoded effect for now
     var graph = {};
@@ -730,8 +830,8 @@
         this._normalizedObjectSet(params, true);
       }
     }
-
     Tone.extend(Sampler, Tone.Instrument);
+    r._addGraphFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(buffers, names) {
       if (notDefined(buffers)) {
@@ -996,6 +1096,7 @@
       this.toMaster();
     }
     Tone.extend(Instrument, Tone.PolySynth);
+    r._addGraphFunctions(Instrument);
 
     r.addInstrument = function(type, options, id, idx) {
       var instr;
@@ -1322,6 +1423,9 @@
   Rhombus._effectSetup = function(r) {
 
     var dist = Tone.Distortion;
+    r._addGraphFunctions(dist);
+    installFunctions(dist);
+
     var typeMap = {
       // TODO: more effect types
       "dist": dist
@@ -1342,7 +1446,6 @@
         r._setId(eff, id);
       }
 
-      installFunctions(eff);
       eff._type = type;
       eff._currentParams = {};
       eff._trackParams(options);
@@ -1350,13 +1453,13 @@
       return eff;
     }
 
-    function installFunctions(eff) {
-      eff.normalizedObjectSet = normalizedObjectSet;
-      eff.parameterCount = parameterCount;
-      eff.parameterName = parameterName;
-      eff.normalizedSet = normalizedSet;
-      eff.toJSON = toJSON;
-      eff._trackParams = trackParams;
+    function installFunctions(ctr) {
+      ctr.prototype.normalizedObjectSet = normalizedObjectSet;
+      ctr.prototype.parameterCount = parameterCount;
+      ctr.prototype.parameterName = parameterName;
+      ctr.prototype.normalizedSet = normalizedSet;
+      ctr.prototype.toJSON = toJSON;
+      ctr.prototype._trackParams = trackParams;
     }
 
     r.addEffect = function(type, options, id) {

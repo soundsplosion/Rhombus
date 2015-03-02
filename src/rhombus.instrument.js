@@ -44,6 +44,7 @@
       this.toMaster();
     }
     Tone.extend(Instrument, Tone.PolySynth);
+    r._addGraphFunctions(Instrument);
 
     r.addInstrument = function(type, options, id, idx) {
       var instr;
