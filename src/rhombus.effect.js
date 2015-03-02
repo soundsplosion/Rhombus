@@ -18,7 +18,7 @@
       "mast": mast
     };
 
-    function makeEffect(type, options, id) {
+    function makeEffect(type, options, gc, gp, id) {
       var ctr = typeMap[type];
       if (isNull(ctr) || notDefined(ctr)) {
         type = "dist";
@@ -31,6 +31,19 @@
         r._newId(eff);
       } else {
         r._setId(eff, id);
+      }
+
+      if (isDefined(gc)) {
+        for (var i = 0; i < gc.length; i++) {
+          gc[i] = +(gc[i]);
+        }
+        eff._graphChildren = gc;
+      }
+      if (isDefined(gp)) {
+        for (var i = 0; i < gp.length; i++) {
+          gp[i] = +(gp[i]);
+        }
+        eff._graphParents = gp;
       }
 
       eff._type = type;
@@ -52,12 +65,12 @@
     }
 
     var masterAdded = false;
-    r.addEffect = function(type, options, id) {
+    r.addEffect = function(type, options, gc, gp, id) {
       if (masterAdded && type === "mast") {
         return;
       }
 
-      var effect = makeEffect(type, options, id);
+      var effect = makeEffect(type, options, gc, gp, id);
 
       if (isNull(effect) || notDefined(effect)) {
         return;
@@ -93,7 +106,9 @@
       var jsonVersion = {
         "_id": this._id,
         "_type": this._type,
-        "_params": this._currentParams
+        "_params": this._currentParams,
+        "_graphChildren": this._graphChildren,
+        "_graphParents": this._graphParents
       };
       return jsonVersion;
     }

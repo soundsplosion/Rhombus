@@ -250,13 +250,13 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst._params, +instId, instIdIdx);
+        this.addInstrument(inst._type, inst._params, inst._graphChildren, inst._graphParents, +instId, instIdIdx);
         this._song._instruments.getObjById(instId)._normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {
         var eff = effects[effId];
-        this.addEffect(eff._type, eff._params, +effId);
+        this.addEffect(eff._type, eff._params, eff._graphChildren, eff._graphParents, +effId);
       }
 
       // restore curId -- this should be the last step of importing

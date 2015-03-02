@@ -1127,6 +1127,7 @@
         r._setId(this, id);
       }
 
+
       this._type = type;
       this._currentParams = {};
       this._triggered = {};
@@ -1141,12 +1142,25 @@
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);
 
-    r.addInstrument = function(type, options, id, idx) {
+    r.addInstrument = function(type, options, gc, gp, id, idx) {
       var instr;
       if (type === "samp") {
         instr = new this._Sampler(options, id);
       } else {
         instr = new Instrument(type, options, id);
+      }
+
+      if (isDefined(gc)) {
+        for (var i = 0; i < gc.length; i++) {
+          gc[i] = +(gc[i]);
+        }
+        instr._graphChildren = gc;
+      }
+      if (isDefined(gp)) {
+        for (var i = 0; i < gp.length; i++) {
+          gp[i] = +(gp[i]);
+        }
+        instr._graphParents = gp;
       }
 
       if (isNull(instr) || notDefined(instr)) {
@@ -1220,7 +1234,9 @@
       var jsonVersion = {
         "_id": this._id,
         "_type": this._type,
-        "_params": this._currentParams
+        "_params": this._currentParams,
+        "_graphChildren": this._graphChildren,
+        "_graphParents": this._graphParents
       };
       return jsonVersion;
     };
@@ -1479,7 +1495,7 @@
       "mast": mast
     };
 
-    function makeEffect(type, options, id) {
+    function makeEffect(type, options, gc, gp, id) {
       var ctr = typeMap[type];
       if (isNull(ctr) || notDefined(ctr)) {
         type = "dist";
@@ -1492,6 +1508,19 @@
         r._newId(eff);
       } else {
         r._setId(eff, id);
+      }
+
+      if (isDefined(gc)) {
+        for (var i = 0; i < gc.length; i++) {
+          gc[i] = +(gc[i]);
+        }
+        eff._graphChildren = gc;
+      }
+      if (isDefined(gp)) {
+        for (var i = 0; i < gp.length; i++) {
+          gp[i] = +(gp[i]);
+        }
+        eff._graphParents = gp;
       }
 
       eff._type = type;
@@ -1513,12 +1542,12 @@
     }
 
     var masterAdded = false;
-    r.addEffect = function(type, options, id) {
+    r.addEffect = function(type, options, gc, gp, id) {
       if (masterAdded && type === "mast") {
         return;
       }
 
-      var effect = makeEffect(type, options, id);
+      var effect = makeEffect(type, options, gc, gp, id);
 
       if (isNull(effect) || notDefined(effect)) {
         return;
@@ -1554,7 +1583,9 @@
       var jsonVersion = {
         "_id": this._id,
         "_type": this._type,
-        "_params": this._currentParams
+        "_params": this._currentParams,
+        "_graphChildren": this._graphChildren,
+        "_graphParents": this._graphParents
       };
       return jsonVersion;
     }
@@ -2252,13 +2283,13 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst._params, +instId, instIdIdx);
+        this.addInstrument(inst._type, inst._params, inst._graphChildren, inst._graphParents, +instId, instIdIdx);
         this._song._instruments.getObjById(instId)._normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {
         var eff = effects[effId];
-        this.addEffect(eff._type, eff._params, +effId);
+        this.addEffect(eff._type, eff._params, eff._graphChildren, eff._graphParents, +effId);
       }
 
       // restore curId -- this should be the last step of importing
