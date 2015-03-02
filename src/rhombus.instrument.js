@@ -50,6 +50,9 @@
       var instr;
       if (type === "samp") {
         instr = new this._Sampler(options, id);
+        // HACK: start
+        instr.setBuffers(r.drumBuffers, r.drumBufferNames);
+        // HACK: end
       } else {
         instr = new Instrument(type, options, id);
       }
@@ -295,19 +298,6 @@
       }
       this._normalizedObjectSet(setObj);
     };
-
-    // HACK: these are here until proper note routing is implemented
-    //var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
-    //var sampleCount = Tone.context.sampleRate * 2.0;
-    //var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
-    //for (var i = 0; i < 2; i++) {
-    //  var buffering = buffer.getChannelData(i);
-    //  for (var v = 0; v < sampleCount; v++) {
-    //    buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
-    //  }
-    //}
-    //r.buf = buffer;
-    // HACK: end
 
     getInstIdByIndex = function(instrIdx) {
       var keys = [];
