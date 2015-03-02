@@ -189,6 +189,7 @@
     //var loopStart   = 0;
     //var loopEnd     = 1920;
     var loopEnabled = false;
+    var loopOverride = false;
 
     r.killAllNotes = function() {
       var thisr = this;
@@ -275,6 +276,16 @@
       lastScheduled = ticks;
       var seconds = this.ticks2Seconds(ticks);
       this.moveToPositionSeconds(seconds);
+
+      if ((loopEnabled || loopOverride) && ticks > r.getLoopEnd()) {
+        loopEnabled = false;
+        loopOverride = true;
+      }
+
+      if (ticks < r.getLoopEnd() && loopOverride) {
+        loopEnabled = true;
+        loopOverride = false;
+      }
     };
 
     r.moveToPositionSeconds = function(seconds) {
