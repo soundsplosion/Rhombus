@@ -29,14 +29,7 @@
       return cycleProof(a, b, []);
     }
 
-    function graphConnect(B, outNum, inNum) {
-      if (notNumber(inNum)) {
-        inNum = 0;
-      }
-      if (notNumber(outNum)) {
-        outNum = 0;
-      }
-
+    function graphConnect(B) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
       }
@@ -48,36 +41,32 @@
         return false;
       }
 
-      this._graphChildren[outNum] = B._id;
-      B._graphParents[inNum] = this._id;
+      this._graphChildren.push(B._id);
+      B._graphParents.push(this._id);
 
-      this.connect(B, outNum, inNum);
-
+      this.connect(B);
       return true;
     };
 
-    function graphDisconnect(outNum) {
-      if (notNumber(outNum)) {
-        outNum = 0;
-      }
-
+    function graphDisconnect(B) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
-      }
-
-      var connectedTo = this._graphChildren[outNum];
-      if (notDefined(connectedTo)) {
         return;
       }
 
-      delete this._graphChildren[outNum];
-      var inNum = connectedTo._graphParents.indexOf(this._id);
-      delete connectedTo._graphParents[inNum];
+      var idx = this._graphChildren.indexOf(B._id);
+      if (idx === -1) {
+        return;
+      }
+
+      delete this._graphChildren[idx];
+      var BIdx = B._graphParents.indexOf(this._id);
+      delete B._graphParents[BIdx];
     }
 
     function graphLookup(id) {
       var instr = r._song._instruments.getObjById(id);
-      if (notUndefined(instr)) {
+      if (isDefined(instr)) {
         return instr;
       }
       return r._song._effects[id];
@@ -87,14 +76,14 @@
       if (notDefined(this._graphChildren)) {
         return [];
       }
-      return this._graphChildren.filter(notUndefined).map(graphLookup);
+      return this._graphChildren.filter(isDefined).map(graphLookup);
     }
 
     function graphParents() {
       if (notDefined(this._graphParents)) {
         return [];
       }
-      return this._graphParents.filter(notUndefined).map(graphLookup);
+      return this._graphParents.filter(isDefined).map(graphLookup);
     }
 
     r._addGraphFunctions = function(ctr) {
@@ -122,6 +111,24 @@
 
       node.graphConnect(master);
     };
+
+    r._importFixGraph = function() {
+      var instruments = this._song._instruments;
+      instruments.objIds().forEach(function(id) {
+        var instr = instruments.getObjById(id);
+        instr.graphChildren().forEach(function(child) {
+          instr.connect(child);
+        });
+      });
+      var effects = this._song._effects;
+      for (var effectId in effects) {
+        var effect = effects[effectId];
+        effect.graphChildren().forEach(function(child) {
+          effect.connect(child);
+        });
+      }
+    };
+
     // Set up the audio graph
     // Hardcoded effect for now
     var graph = {};

@@ -259,6 +259,8 @@
         this.addEffect(eff._type, eff._params, eff._graphChildren, eff._graphParents, +effId);
       }
 
+      this._importFixGraph();
+
       // restore curId -- this should be the last step of importing
       var curId;
       if (notDefined(parsed._curId)) {
