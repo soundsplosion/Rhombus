@@ -51,7 +51,7 @@
       if (type === "samp") {
         instr = new this._Sampler(options, id);
         // HACK: start
-        instr.setBuffers(r.drumBuffers, r.drumBufferNames);
+        instr.setBuffers(Rhombus.drumBuffers, Rhombus.drumBufferNames);
         // HACK: end
       } else {
         instr = new Instrument(type, options, id);

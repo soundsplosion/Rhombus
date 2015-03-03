@@ -35,7 +35,7 @@
 
       Tone.Instrument.call(this);
 
-      this.names = [];
+      this._names = [];
       this.samples = [];
       this._triggered = {};
       this._currentParams = {};
@@ -93,8 +93,6 @@
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
 
-        r._toMaster(sampler);
-
         this.samples.push(sampler);
         if (useDefaultNames || notDefined(names[i])) {
           this._names.push("" + i);
@@ -103,10 +101,16 @@
         }
       }
 
+      r._toMaster(this);
+
       // TODO: default params here
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay) {
+      if (this.samples.length === 0) {
+        return;
+      }
+
       if (pitch < 0 || pitch > 127) {
         return;
       }
@@ -123,6 +127,10 @@
     };
 
     Sampler.prototype.triggerRelease = function(id, delay) {
+      if (this.samples.length === 0) {
+        return;
+      }
+
       var idx = this._triggered[id];
       if (notDefined(idx)) {
         return;
