@@ -45,6 +45,7 @@
         var names = options.names;
         var buffs = options.buffs;
 
+        /*
         var setNames = names;
         var setBufs = [];
         for (var i = 0; i < buffs.length; i++) {
@@ -66,6 +67,8 @@
         }
 
         this.setBuffers(setBufs, setNames);
+        */
+
         this._normalizedObjectSet(params, true);
       }
     }
@@ -167,6 +170,7 @@
     };
 
     Sampler.prototype.toJSON = function() {
+      /*
       var buffs = [];
       for (var sampIdx = 0; sampIdx < this.samples.length; sampIdx++) {
         var channels = [];
@@ -181,11 +185,12 @@
         }
         buffs.push(channels);
       }
+      */
 
       var params = {
-        "params": this._currentParams,
-        "names": this._names,
-        "buffs": buffs
+        "params": this._currentParams
+        /*"names": this._names,*/
+       /* "buffs": buffs*/
       };
       var jsonVersion = {
         "_id": this._id,
@@ -198,6 +203,7 @@
     // The map is structured like this for the Rhombus._map.unnormalizedParams call.
     var unnormalizeMaps = {
       "samp" : {
+        "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
         "player" : {
           "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
         },
@@ -226,12 +232,14 @@
       }
       this._trackParams(params);
 
+      /*
       var samplers = Object.keys(params);
       for (var idx in samplers) {
         var samplerIdx = samplers[idx];
         var unnormalized = unnormalizedParams(params[samplerIdx]);
         this.samples[samplerIdx].set(unnormalized);
       }
+      */
     };
 
     Sampler.prototype.parameterCount = function() {
