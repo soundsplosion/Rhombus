@@ -1015,7 +1015,9 @@
       var jsonVersion = {
         "_id": this._id,
         "_type": "samp",
-        "_params": params
+        "_params": params,
+        "_graphChildren": this._graphChildren,
+        "_graphParents": this._graphParents
       };
       return jsonVersion;
     };
