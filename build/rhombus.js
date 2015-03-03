@@ -934,7 +934,7 @@
         return;
       }
 
-      var idx = Math.floor((pitch / 128) * this.samples.length);
+      var idx = pitch % this.samples.length;
       this._triggered[id] = idx;
 
       // TODO: real keyzones, pitch control, etc.
@@ -946,6 +946,9 @@
     };
 
     Sampler.prototype.triggerRelease = function(id, delay) {
+      return;
+      // HACK: maybe leaking
+      /*
       if (this.samples.length === 0) {
         return;
       }
@@ -960,6 +963,7 @@
       } else {
         this.samples[idx].triggerRelease();
       }
+      */
     };
 
     Sampler.prototype.killAllNotes = function() {
