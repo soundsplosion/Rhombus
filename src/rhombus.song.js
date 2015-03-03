@@ -206,6 +206,10 @@
         newPattern._name = pattern._name;
         newPattern._length = pattern._length;
 
+        if (isDefined(pattern._color)) {
+          newPattern.setColor(pattern._color);
+        }
+
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
