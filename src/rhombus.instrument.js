@@ -57,6 +57,7 @@
         instr = new Instrument(type, options, id);
       }
 
+      /*
       if (isDefined(gc)) {
         for (var i = 0; i < gc.length; i++) {
           gc[i] = +(gc[i]);
@@ -69,6 +70,7 @@
         }
         instr._graphParents = gp;
       }
+      */
 
       if (isNull(instr) || notDefined(instr)) {
         return;
