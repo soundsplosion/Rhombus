@@ -40,8 +40,6 @@
       var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps[this._type]);
       this._normalizedObjectSet(def, true);
       this._normalizedObjectSet(options, true);
-
-      r._toMaster(this);
     }
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);
@@ -57,20 +55,21 @@
         instr = new Instrument(type, options, id);
       }
 
-      /*
       if (isDefined(gc)) {
         for (var i = 0; i < gc.length; i++) {
           gc[i] = +(gc[i]);
         }
         instr._graphChildren = gc;
+      } else {
+        r._toMaster(instr);
       }
+
       if (isDefined(gp)) {
         for (var i = 0; i < gp.length; i++) {
           gp[i] = +(gp[i]);
         }
         instr._graphParents = gp;
       }
-      */
 
       if (isNull(instr) || notDefined(instr)) {
         return;
@@ -140,12 +139,25 @@
     };
 
     Instrument.prototype.toJSON = function() {
+      var gc, gp;
+      if (isDefined(this._graphChildren)) {
+        gc = this._graphChildren;
+      } else {
+        gc = [];
+      }
+
+      if (isDefined(this._graphParents)) {
+        gp = this._graphParents;
+      } else {
+        gp = [];
+      }
+
       var jsonVersion = {
         "_id": this._id,
         "_type": this._type,
         "_params": this._currentParams,
-        "_graphChildren": this._graphChildren,
-        "_graphParents": this._graphParents
+        "_graphChildren": gc,
+        "_graphParents": gp
       };
       return jsonVersion;
     };

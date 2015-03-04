@@ -103,9 +103,6 @@
           this._names.push(names[i]);
         }
       }
-
-      r._toMaster(this);
-
       // TODO: default params here
     };
 
@@ -196,12 +193,26 @@
         /*"names": this._names,*/
        /* "buffs": buffs*/
       };
+
+      var gc, gp;
+      if (isDefined(this._graphChildren)) {
+        gc = this._graphChildren;
+      } else {
+        gc = [];
+      }
+
+      if (isDefined(this._graphParents)) {
+        gp = this._graphParents;
+      } else {
+        gp = [];
+      }
+
       var jsonVersion = {
         "_id": this._id,
         "_type": "samp",
         "_params": params,
-        "_graphChildren": this._graphChildren,
-        "_graphParents": this._graphParents
+        "_graphChildren": gc,
+        "_graphParents": gp
       };
       return jsonVersion;
     };
