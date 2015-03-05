@@ -2070,6 +2070,7 @@
       },
 
       removeFromPlaylist: function(itemId) {
+        console.log("[Rhombus] - deleting playlist item " + itemId);
         itemId = itemId.toString();
         if (!(itemId in this._playlist)) {
           return undefined;
@@ -2177,6 +2178,7 @@
       },
 
       deletePattern: function(ptnId) {
+        console.log("[Rhombus] - deleting ptnId " + ptnId);
         var pattern = this._patterns[ptnId];
 
         if (notDefined(pattern)) {
@@ -2186,6 +2188,18 @@
         var rthis = this;
         r.Undo._addUndoAction(function() {
           rthis._patterns[ptnId] = pattern;
+        });
+
+        // TODO: make this action undoable
+        // remove all instances of the deleted pattern from track playlists
+        r._song._tracks.objIds().forEach(function(trkId) {
+          var track = r._song._tracks.getObjById(trkId);
+          for (var itemId in track._playlist) {
+            var item = track._playlist[itemId];
+            if (+item._ptnId == +ptnId) {
+              track.removeFromPlaylist(itemId);
+            }
+          }
         });
 
         delete this._patterns[ptnId];
