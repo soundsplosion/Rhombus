@@ -40,8 +40,6 @@
       var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps[this._type]);
       this._normalizedObjectSet(def, true);
       this._normalizedObjectSet(options, true);
-
-      r._toMaster(this);
     }
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);
@@ -50,6 +48,9 @@
       var instr;
       if (type === "samp") {
         instr = new this._Sampler(options, id);
+        // HACK: start
+        instr.setBuffers(Rhombus.drumBuffers, Rhombus.drumBufferNames);
+        // HACK: end
       } else {
         instr = new Instrument(type, options, id);
       }
@@ -59,7 +60,10 @@
           gc[i] = +(gc[i]);
         }
         instr._graphChildren = gc;
+      } else {
+        r._toMaster(instr);
       }
+
       if (isDefined(gp)) {
         for (var i = 0; i < gp.length; i++) {
           gp[i] = +(gp[i]);
@@ -135,12 +139,25 @@
     };
 
     Instrument.prototype.toJSON = function() {
+      var gc, gp;
+      if (isDefined(this._graphChildren)) {
+        gc = this._graphChildren;
+      } else {
+        gc = [];
+      }
+
+      if (isDefined(this._graphParents)) {
+        gp = this._graphParents;
+      } else {
+        gp = [];
+      }
+
       var jsonVersion = {
         "_id": this._id,
         "_type": this._type,
         "_params": this._currentParams,
-        "_graphChildren": this._graphChildren,
-        "_graphParents": this._graphParents
+        "_graphChildren": gc,
+        "_graphParents": gp
       };
       return jsonVersion;
     };
@@ -295,19 +312,6 @@
       }
       this._normalizedObjectSet(setObj);
     };
-
-    // HACK: these are here until proper note routing is implemented
-    //var samplesPerCycle = Math.floor(Tone.context.sampleRate / 440);
-    //var sampleCount = Tone.context.sampleRate * 2.0;
-    //var buffer = Tone.context.createBuffer(2, sampleCount, Tone.context.sampleRate);
-    //for (var i = 0; i < 2; i++) {
-    //  var buffering = buffer.getChannelData(i);
-    //  for (var v = 0; v < sampleCount; v++) {
-    //    buffering[v] = (v % samplesPerCycle) / samplesPerCycle;
-    //  }
-    //}
-    //r.buf = buffer;
-    // HACK: end
 
     getInstIdByIndex = function(instrIdx) {
       var keys = [];

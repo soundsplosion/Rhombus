@@ -35,7 +35,7 @@
 
       Tone.Instrument.call(this);
 
-      this.names = [];
+      this._names = [];
       this.samples = [];
       this._triggered = {};
       this._currentParams = {};
@@ -45,6 +45,7 @@
         var names = options.names;
         var buffs = options.buffs;
 
+        /*
         var setNames = names;
         var setBufs = [];
         for (var i = 0; i < buffs.length; i++) {
@@ -66,6 +67,8 @@
         }
 
         this.setBuffers(setBufs, setNames);
+        */
+
         this._normalizedObjectSet(params, true);
       }
     }
@@ -93,8 +96,6 @@
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
 
-        r._toMaster(sampler);
-
         this.samples.push(sampler);
         if (useDefaultNames || notDefined(names[i])) {
           this._names.push("" + i);
@@ -102,16 +103,19 @@
           this._names.push(names[i]);
         }
       }
-
       // TODO: default params here
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay) {
+      if (this.samples.length === 0) {
+        return;
+      }
+
       if (pitch < 0 || pitch > 127) {
         return;
       }
 
-      var idx = Math.floor((pitch / 128) * this.samples.length);
+      var idx = pitch % this.samples.length;
       this._triggered[id] = idx;
 
       // TODO: real keyzones, pitch control, etc.
@@ -123,6 +127,13 @@
     };
 
     Sampler.prototype.triggerRelease = function(id, delay) {
+      return;
+      // HACK: maybe leaking
+      /*
+      if (this.samples.length === 0) {
+        return;
+      }
+
       var idx = this._triggered[id];
       if (notDefined(idx)) {
         return;
@@ -133,6 +144,7 @@
       } else {
         this.samples[idx].triggerRelease();
       }
+      */
     };
 
     Sampler.prototype.killAllNotes = function() {
@@ -159,6 +171,7 @@
     };
 
     Sampler.prototype.toJSON = function() {
+      /*
       var buffs = [];
       for (var sampIdx = 0; sampIdx < this.samples.length; sampIdx++) {
         var channels = [];
@@ -173,16 +186,33 @@
         }
         buffs.push(channels);
       }
+      */
 
       var params = {
-        "params": this._currentParams,
-        "names": this._names,
-        "buffs": buffs
+        "params": this._currentParams
+        /*"names": this._names,*/
+       /* "buffs": buffs*/
       };
+
+      var gc, gp;
+      if (isDefined(this._graphChildren)) {
+        gc = this._graphChildren;
+      } else {
+        gc = [];
+      }
+
+      if (isDefined(this._graphParents)) {
+        gp = this._graphParents;
+      } else {
+        gp = [];
+      }
+
       var jsonVersion = {
         "_id": this._id,
         "_type": "samp",
-        "_params": params
+        "_params": params,
+        "_graphChildren": gc,
+        "_graphParents": gp
       };
       return jsonVersion;
     };
@@ -190,6 +220,7 @@
     // The map is structured like this for the Rhombus._map.unnormalizedParams call.
     var unnormalizeMaps = {
       "samp" : {
+        "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
         "player" : {
           "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
         },
@@ -218,12 +249,14 @@
       }
       this._trackParams(params);
 
+      /*
       var samplers = Object.keys(params);
       for (var idx in samplers) {
         var samplerIdx = samplers[idx];
         var unnormalized = unnormalizedParams(params[samplerIdx]);
         this.samples[samplerIdx].set(unnormalized);
       }
+      */
     };
 
     Sampler.prototype.parameterCount = function() {
