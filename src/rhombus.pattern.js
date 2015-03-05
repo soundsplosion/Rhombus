@@ -14,7 +14,7 @@
 
       // pattern metadata
       this._name = "Default Pattern Name";
-      this._color = "#6666AA";
+      this._color = getRandomColor();
 
       // pattern structure data
       this._length = 1920;
