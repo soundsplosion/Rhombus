@@ -106,7 +106,7 @@
       // TODO: default params here
     };
 
-    Sampler.prototype.triggerAttack = function(id, pitch, delay) {
+    Sampler.prototype.triggerAttack = function(id, pitch, delay, velocity) {
       if (this.samples.length === 0) {
         return;
       }
@@ -118,15 +118,18 @@
       var idx = pitch % this.samples.length;
       this._triggered[id] = idx;
 
+      velocity = +velocity || 1;
+
       // TODO: real keyzones, pitch control, etc.
       if (delay > 0) {
-        this.samples[idx].triggerAttack(0, "+" + delay);
+        this.samples[idx].triggerAttack(0, "+" + delay, velocity);
       } else {
-        this.samples[idx].triggerAttack(0);
+        this.samples[idx].triggerAttack(0, "+" + 0, velocity);
       }
     };
 
     Sampler.prototype.triggerRelease = function(id, delay) {
+      delete this._triggered[id];
       return;
       // HACK: maybe leaking
       /*

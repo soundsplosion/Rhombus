@@ -229,8 +229,8 @@
           var note = new this.Note(+noteMap[noteId]._pitch,
                                    +noteMap[noteId]._start,
                                    +noteMap[noteId]._length,
-                                   +noteId,
-                                   +noteMap[noteId]._velocity || 1);
+                                   +noteMap[noteId]._velocity || 1,
+                                   +noteId);
 
           newPattern._noteMap[+noteId] = note;
         }

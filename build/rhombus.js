@@ -932,7 +932,7 @@
       // TODO: default params here
     };
 
-    Sampler.prototype.triggerAttack = function(id, pitch, delay) {
+    Sampler.prototype.triggerAttack = function(id, pitch, delay, velocity) {
       if (this.samples.length === 0) {
         return;
       }
@@ -944,15 +944,18 @@
       var idx = pitch % this.samples.length;
       this._triggered[id] = idx;
 
+      velocity = +velocity || 1;
+
       // TODO: real keyzones, pitch control, etc.
       if (delay > 0) {
-        this.samples[idx].triggerAttack(0, "+" + delay);
+        this.samples[idx].triggerAttack(0, "+" + delay, velocity);
       } else {
-        this.samples[idx].triggerAttack(0);
+        this.samples[idx].triggerAttack(0, "+" + 0, velocity);
       }
     };
 
     Sampler.prototype.triggerRelease = function(id, delay) {
+      delete this._triggered[id];
       return;
       // HACK: maybe leaking
       /*
@@ -2354,8 +2357,8 @@
           var note = new this.Note(+noteMap[noteId]._pitch,
                                    +noteMap[noteId]._start,
                                    +noteMap[noteId]._length,
-                                   +noteId,
-                                   +noteMap[noteId]._velocity || 1);
+                                   +noteMap[noteId]._velocity || 1,
+                                   +noteId);
 
           newPattern._noteMap[+noteId] = note;
         }
