@@ -85,15 +85,20 @@
     };
 
     // TODO: Note should probably have its own source file
-    r.Note = function(pitch, start, length, id) {
+    r.Note = function(pitch, start, length, velocity, id) {
       if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
       }
-      this._pitch = pitch || 60;
-      this._start = start || 0;
-      this._length = length || 0;
+
+
+      this._pitch    = +pitch    || 60;
+      this._start    = +start    || 0;
+      this._length   = +length   || 0;
+      this._velocity = +velocity || 1;
+
+      console.log("[Rhombus] - Creating note with velocity " + velocity);
     };
 
     r.Note.prototype = {
@@ -107,6 +112,10 @@
 
       getLength: function() {
         return this._length;
+      },
+
+      getVelocity: function() {
+        return this._velocity;
       },
 
       getEnd: function() {

@@ -226,10 +226,11 @@
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
-          var note = new this.Note(noteMap[noteId]._pitch,
-                                   noteMap[noteId]._start,
-                                   noteMap[noteId]._length,
-                                   +noteId);
+          var note = new this.Note(+noteMap[noteId]._pitch,
+                                   +noteMap[noteId]._start,
+                                   +noteMap[noteId]._length,
+                                   +noteId,
+                                   +noteMap[noteId]._velocity || 1);
 
           newPattern._noteMap[+noteId] = note;
         }

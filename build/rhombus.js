@@ -1192,7 +1192,6 @@
         r._setId(this, id);
       }
 
-
       this._type = type;
       this._currentParams = {};
       this._triggered = {};
@@ -1202,6 +1201,7 @@
       this._normalizedObjectSet(def, true);
       this._normalizedObjectSet(options, true);
     }
+
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);
 
@@ -1259,7 +1259,7 @@
       r._song._instruments.removeId(id);
     };
 
-    Instrument.prototype.triggerAttack = function(id, pitch, delay) {
+    Instrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
       // Don't play out-of-range notes
       if (pitch < 0 || pitch > 127) {
         return;
@@ -1269,10 +1269,12 @@
       var freq = Rhombus.Util.noteNum2Freq(pitch);
       this._triggered[id] = freq;
 
+      velocity = +velocity || 1;
+
       if (delay > 0) {
-        tA.call(this, freq, "+" + delay);
+        tA.call(this, freq, "+" + delay, velocity);
       } else {
-        tA.call(this, freq);
+        tA.call(this, freq, "+" + 0, velocity);
       }
     };
 
@@ -1795,15 +1797,20 @@
     };
 
     // TODO: Note should probably have its own source file
-    r.Note = function(pitch, start, length, id) {
+    r.Note = function(pitch, start, length, velocity, id) {
       if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
       }
-      this._pitch = pitch || 60;
-      this._start = start || 0;
-      this._length = length || 0;
+
+
+      this._pitch    = +pitch    || 60;
+      this._start    = +start    || 0;
+      this._length   = +length   || 0;
+      this._velocity = +velocity || 1;
+
+      console.log("[Rhombus] - Creating note with velocity " + velocity);
     };
 
     r.Note.prototype = {
@@ -1817,6 +1824,10 @@
 
       getLength: function() {
         return this._length;
+      },
+
+      getVelocity: function() {
+        return this._velocity;
       },
 
       getEnd: function() {
@@ -2340,10 +2351,11 @@
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
-          var note = new this.Note(noteMap[noteId]._pitch,
-                                   noteMap[noteId]._start,
-                                   noteMap[noteId]._length,
-                                   +noteId);
+          var note = new this.Note(+noteMap[noteId]._pitch,
+                                   +noteMap[noteId]._start,
+                                   +noteMap[noteId]._length,
+                                   +noteId,
+                                   +noteMap[noteId]._velocity || 1);
 
           newPattern._noteMap[+noteId] = note;
         }
@@ -2538,7 +2550,8 @@
                 var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
                 playingNotes[rtNote._id] = rtNote;
 
-                r._song._instruments.getObjById(track._target).triggerAttack(rtNote._id, note.getPitch(), delay);
+                var instrument = r._song._instruments.getObjById(track._target);
+                instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
               }
             }
           }
@@ -2873,7 +2886,8 @@
         var srcPtnNote = srcPtn._noteMap[noteId];
         var dstNote = new r.Note(srcNote._pitch,
                                  srcNote._start,
-                                 srcNote._length);
+                                 srcNote._length,
+                                 srcNote._velocity);
 
         dstPtn._noteMap[dstNote._id] = dstNote;
       }
@@ -2923,7 +2937,7 @@
         }
 
         // Create a new note and add it to the appropriate destination pattern
-        var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength);
+        var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
         dstPtn._noteMap[dstNote._id] = dstNote;
       }
 

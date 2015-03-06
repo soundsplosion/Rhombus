@@ -92,7 +92,8 @@
         var srcPtnNote = srcPtn._noteMap[noteId];
         var dstNote = new r.Note(srcNote._pitch,
                                  srcNote._start,
-                                 srcNote._length);
+                                 srcNote._length,
+                                 srcNote._velocity);
 
         dstPtn._noteMap[dstNote._id] = dstNote;
       }
@@ -142,7 +143,7 @@
         }
 
         // Create a new note and add it to the appropriate destination pattern
-        var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength);
+        var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
         dstPtn._noteMap[dstNote._id] = dstNote;
       }
 
