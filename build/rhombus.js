@@ -1284,6 +1284,7 @@
       } else {
         tR.call(this, freq);
       }
+      delete this._triggered[id];
     };
 
     Instrument.prototype.killAllNotes = function() {
