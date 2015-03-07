@@ -14,7 +14,7 @@
 
       // pattern metadata
       this._name = "Default Pattern Name";
-      this._color = "#6666AA";
+      this._color = getRandomColor();
 
       // pattern structure data
       this._length = 1920;
@@ -85,15 +85,17 @@
     };
 
     // TODO: Note should probably have its own source file
-    r.Note = function(pitch, start, length, id) {
+    r.Note = function(pitch, start, length, velocity, id) {
       if (isDefined(id)) {
         r._setId(this, id);
       } else {
         r._newId(this);
       }
-      this._pitch = pitch || 60;
-      this._start = start || 0;
-      this._length = length || 0;
+
+      this._pitch    = +pitch    || 60;
+      this._start    = +start    || 0;
+      this._length   = +length   || 0;
+      this._velocity = +velocity || 1;
     };
 
     r.Note.prototype = {
@@ -109,6 +111,11 @@
         return this._length;
       },
 
+      getVelocity: function() {
+        return this._velocity;
+      },
+
+      // TODO: check for off-by-one issues
       getEnd: function() {
         return this._start + this._length;
       }

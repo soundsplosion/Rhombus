@@ -31,7 +31,6 @@
         r._setId(this, id);
       }
 
-
       this._type = type;
       this._currentParams = {};
       this._triggered = {};
@@ -41,6 +40,7 @@
       this._normalizedObjectSet(def, true);
       this._normalizedObjectSet(options, true);
     }
+
     Tone.extend(Instrument, Tone.PolySynth);
     r._addGraphFunctions(Instrument);
 
@@ -98,7 +98,7 @@
       r._song._instruments.removeId(id);
     };
 
-    Instrument.prototype.triggerAttack = function(id, pitch, delay) {
+    Instrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
       // Don't play out-of-range notes
       if (pitch < 0 || pitch > 127) {
         return;
@@ -108,10 +108,12 @@
       var freq = Rhombus.Util.noteNum2Freq(pitch);
       this._triggered[id] = freq;
 
+      velocity = +velocity || 1;
+
       if (delay > 0) {
-        tA.call(this, freq, "+" + delay);
+        tA.call(this, freq, "+" + delay, velocity);
       } else {
-        tA.call(this, freq);
+        tA.call(this, freq, "+" + 0, velocity);
       }
     };
 
@@ -123,6 +125,7 @@
       } else {
         tR.call(this, freq);
       }
+      delete this._triggered[id];
     };
 
     Instrument.prototype.killAllNotes = function() {

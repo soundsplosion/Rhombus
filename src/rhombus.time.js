@@ -117,7 +117,8 @@
                 var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
                 playingNotes[rtNote._id] = rtNote;
 
-                r._song._instruments.getObjById(track._target).triggerAttack(rtNote._id, note.getPitch(), delay);
+                var instrument = r._song._instruments.getObjById(track._target);
+                instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
               }
             }
           }

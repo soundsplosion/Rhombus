@@ -253,6 +253,7 @@
       },
 
       removeFromPlaylist: function(itemId) {
+        console.log("[Rhombus] - deleting playlist item " + itemId);
         itemId = itemId.toString();
         if (!(itemId in this._playlist)) {
           return undefined;

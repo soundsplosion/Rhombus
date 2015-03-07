@@ -75,6 +75,7 @@
       },
 
       deletePattern: function(ptnId) {
+        console.log("[Rhombus] - deleting ptnId " + ptnId);
         var pattern = this._patterns[ptnId];
 
         if (notDefined(pattern)) {
@@ -84,6 +85,18 @@
         var rthis = this;
         r.Undo._addUndoAction(function() {
           rthis._patterns[ptnId] = pattern;
+        });
+
+        // TODO: make this action undoable
+        // remove all instances of the deleted pattern from track playlists
+        r._song._tracks.objIds().forEach(function(trkId) {
+          var track = r._song._tracks.getObjById(trkId);
+          for (var itemId in track._playlist) {
+            var item = track._playlist[itemId];
+            if (+item._ptnId == +ptnId) {
+              track.removeFromPlaylist(itemId);
+            }
+          }
         });
 
         delete this._patterns[ptnId];
@@ -213,9 +226,10 @@
         // dumbing down Note (e.g., by removing methods from its
         // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
-          var note = new this.Note(noteMap[noteId]._pitch,
-                                   noteMap[noteId]._start,
-                                   noteMap[noteId]._length,
+          var note = new this.Note(+noteMap[noteId]._pitch,
+                                   +noteMap[noteId]._start,
+                                   +noteMap[noteId]._length,
+                                   +noteMap[noteId]._velocity || 1,
                                    +noteId);
 
           newPattern._noteMap[+noteId] = note;
