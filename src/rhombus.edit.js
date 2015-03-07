@@ -173,20 +173,33 @@
       // assign defaults to the optional arguments
       lowNote  = +lowNote  || 0;
       highNote = +highNote || 127;
-      
+
       var noteArray = [];
       for (var noteId in srcPtn._noteMap) {
         var srcNote = srcPtn._noteMap[noteId];
         var srcStart = srcNote.getStart();
         var srcPitch = srcNote.getPitch();
-        if (srcStart >= srcStart && srcStart < end && 
+        if (srcStart >= srcStart && srcStart < end &&
             srcPitch >= lowNote && srcPitch <= highNote) {
           noteArray.push(srcNote);
         }
       }
-      
+
       // TODO: decide if we should return undefined if there are no matching notes
       return noteArray;
+    };
+
+    r.Edit.quantizeNoteStarts = function(notes, quantize) {
+      for (var i = 0; i < notes.length; i++) {
+        var srcNote = notes[i]
+        var srcStart = srcNote.getStart();
+        if ((srcStart % quantize) > (quantize / 2)) {
+          srcNote._start = (Math.floor(srcStart/quantize) * quantize) + quantize;
+        }
+        else {
+          srcNote._start = Math.floor(srcStart/quantize) * quantize
+        }
+      }
     };
   };
 })(this.Rhombus);

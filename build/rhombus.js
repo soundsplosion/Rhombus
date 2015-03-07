@@ -2982,6 +2982,21 @@
       // TODO: decide if we should return undefined if there are no matching notes
       return noteArray;
     };
+
+    r.Edit.quantizeSelection = function(notes, quantize) {
+      for (var i = 0; i < notes.length; i++) {
+        var srcNote = notes[i]
+        var srcStart = srcNote.getStart();
+        var srcEnd = srcNote.getEnd();
+        
+        if ((srcStart % quantize) > (quantize / 2)) {
+          srcNote._start = (Math.floor(srcStart/quantize) * quantize) + quantize;
+        }
+        else {
+          srcNote._start = Math.floor(srcStart/quantize) * quantize
+        }        
+      }
+    };
   };
 })(this.Rhombus);
 
