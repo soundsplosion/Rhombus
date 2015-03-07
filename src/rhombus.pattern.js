@@ -115,6 +115,7 @@
         return this._velocity;
       },
 
+      // TODO: check for off-by-one issues
       getEnd: function() {
         return this._start + this._length;
       }

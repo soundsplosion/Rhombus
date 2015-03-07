@@ -189,15 +189,32 @@
       return noteArray;
     };
 
-    r.Edit.quantizeNoteStarts = function(notes, quantize) {
+    quantizeTick = function(tickVal, quantize) {
+      if ((tickVal % quantize) > (quantize / 2)) {
+        return (Math.floor(tickVal/quantize) * quantize) + quantize;
+      }
+      else {
+        return Math.floor(tickVal/quantize) * quantize;
+      }
+    }
+
+    r.Edit.quantizeNotes = function(notes, quantize, doEnds) {
       for (var i = 0; i < notes.length; i++) {
         var srcNote = notes[i]
         var srcStart = srcNote.getStart();
-        if ((srcStart % quantize) > (quantize / 2)) {
-          srcNote._start = (Math.floor(srcStart/quantize) * quantize) + quantize;
-        }
-        else {
-          srcNote._start = Math.floor(srcStart/quantize) * quantize
+        srcNote._start = quantizeTick(srcStart, quantize);
+
+        // optionally quantize the ends of notes
+        if (doEnds === true) {
+          var srcLength = srcNote.getLength();
+          var srcEnd = srcNote.getEnd();
+
+          if (srcLength < quantize) {
+            srcNote._length = quantize;
+          }
+          else {
+            srcNote._length = quantizeTick(srcEnd, quantize) - srcNote.getStart();
+          }
         }
       }
     };
