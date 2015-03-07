@@ -92,13 +92,10 @@
         r._newId(this);
       }
 
-
       this._pitch    = +pitch    || 60;
       this._start    = +start    || 0;
       this._length   = +length   || 0;
       this._velocity = +velocity || 1;
-
-      console.log("[Rhombus] - Creating note with velocity " + velocity);
     };
 
     r.Note.prototype = {

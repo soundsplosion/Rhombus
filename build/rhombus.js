@@ -1807,13 +1807,10 @@
         r._newId(this);
       }
 
-
       this._pitch    = +pitch    || 60;
       this._start    = +start    || 0;
       this._length   = +length   || 0;
       this._velocity = +velocity || 1;
-
-      console.log("[Rhombus] - Creating note with velocity " + velocity);
     };
 
     r.Note.prototype = {
@@ -2954,6 +2951,36 @@
 
       // return the pair of new IDs
       return [dstL._id, dstR._id];
+    };
+
+    // Returns an array containing all notes within a given horizontal (time) and
+    // and vertical (pitch) range.
+    //
+    // The lowNote and highNote arguments are optional. If they are undefined, all
+    // of the notes within the time range will be returned.
+    r.Edit.getNotesInRange = function(ptnId, start, end, lowNote, highNote) {
+      var srcPtn = r._song._patterns[ptnId];
+      if (notDefined(srcPtn) || !isInteger(start) || !isInteger(end)) {
+        return undefined;
+      }
+
+      // assign defaults to the optional arguments
+      lowNote  = +lowNote  || 0;
+      highNote = +highNote || 127;
+      
+      var noteArray = [];
+      for (var noteId in srcPtn._noteMap) {
+        var srcNote = srcPtn._noteMap[noteId];
+        var srcStart = srcNote.getStart();
+        var srcPitch = srcNote.getPitch();
+        if (srcStart >= srcStart && srcStart < end && 
+            srcPitch >= lowNote && srcPitch <= highNote) {
+          noteArray.push(srcNote);
+        }
+      }
+      
+      // TODO: decide if we should return undefined if there are no matching notes
+      return noteArray;
     };
   };
 })(this.Rhombus);
