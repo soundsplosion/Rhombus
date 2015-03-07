@@ -1138,7 +1138,7 @@
 
     };
 
-    Sampler.prototype.normalizedSet = function(paramsIdx, paramValue) {
+    Sampler.prototype.normalizedSet = function(paramIdx, paramValue) {
       var perSampler = Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
       var realParamIdx = paramIdx % perSampler;
       var sampleIdx = Math.floor(paramIdx / perSampler);
