@@ -50,7 +50,7 @@
       var loopEnd = r.getLoopEnd();
 
       // Determine if playback needs to loop around in this time window
-      var doWrap = (!loopOverride && r.getLoopEnabled()) && 
+      var doWrap = (!loopOverride && r.getLoopEnabled()) &&
         (r.getLoopEnd() - nowTicks < aheadTicks);
 
       var scheduleStart = lastScheduled;
@@ -102,7 +102,7 @@
               var note = noteMap[noteId];
               var start = note.getStart() + itemStart;
 
-              if (r.getLoopEnabled() && start < loopStart) {
+              if (!loopOverride && r.getLoopEnabled() && start < loopStart) {
                 continue;
               }
 
@@ -126,6 +126,10 @@
       });
 
       lastScheduled = scheduleEnd;
+
+      if (nowTicks >= r.getLoopStart() && nowTicks < r.getLoopEnd()) {
+        loopOverride = false;
+      }
 
       if (doWrap) {
         r.loopPlayback(nowTicks);
@@ -218,6 +222,10 @@
       this.moveToPositionSeconds(time);
       startTime = this._ctx.currentTime;
 
+      if (this.seconds2Ticks(r.getPosition()) < this.getLoopStart()) {
+        loopOverride = true;
+      }
+
       // Force the first round of scheduling
       scheduleNotes();
 
@@ -243,11 +251,11 @@
       if (tickDiff > 0) {
         console.log("[Rhombus] - Loopback missed loop start by " + tickDiff + " ticks");
         lastScheduled = this._song._loopStart;
-        this.moveToPositionTicks(this._song._loopStart);
+        this.moveToPositionTicks(this._song._loopStart, false);
       }
 
       lastScheduled = this._song._loopStart + tickDiff;
-      this.moveToPositionTicks(this._song._loopStart + tickDiff);
+      this.moveToPositionTicks(this._song._loopStart + tickDiff, false);
       scheduleNotes();
     };
 
@@ -271,16 +279,18 @@
       return this.seconds2Ticks(this.getElapsedTime());
     };
 
-    r.moveToPositionTicks = function(ticks) {
+    r.moveToPositionTicks = function(ticks, override) {
       lastScheduled = ticks;
       var seconds = this.ticks2Seconds(ticks);
       this.moveToPositionSeconds(seconds);
 
-      if (loopEnabled && ticks > r.getLoopEnd()) {
+      override = (isDefined(override)) ? override : true;
+
+      if (loopEnabled && override && (ticks > r.getLoopEnd() || ticks < r.getLoopStart())) {
         loopOverride = true;
       }
 
-      if (ticks < r.getLoopEnd() && loopOverride) {
+      if (ticks < r.getLoopEnd() && ticks > r.getLoopStart()) {
         loopOverride = false;
       }
     };
@@ -314,6 +324,10 @@
       return this._song._loopStart;
     };
 
+    r.getLoopEnd = function() {
+      return this._song._loopEnd;
+    };
+
     r.setLoopStart = function(start) {
       if (notDefined(start) || isNull(start)) {
         console.log("[Rhombus] - Loop start is undefined");
@@ -324,12 +338,16 @@
         console.log("[Rhombus] - Invalid loop range");
         return undefined;
       }
+
+      var curPos = r.seconds2Ticks(r.getPosition());
+
+      if (curPos < start) {
+        console.log("[Rhombus] - overriding loop enabled");
+        loopOverride = true;
+      }
+
       this._song._loopStart = start;
       return this._song._loopStart;
-    };
-
-    r.getLoopEnd = function() {
-      return this._song._loopEnd;
     };
 
     r.setLoopEnd = function(end) {
@@ -348,7 +366,7 @@
       if (curPos < this._song._loopEnd && curPos > end) {
         r.moveToPositionTicks(end);
       }
-      
+
       this._song._loopEnd = end;
       return this._song._loopEnd;
     };
