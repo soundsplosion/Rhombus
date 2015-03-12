@@ -174,7 +174,7 @@
   };
 
   IdSlotContainer.prototype.objIds = function() {
-    return Object.keys(this._map);
+    return Object.keys(this._map).map(function(x) { return +x; });
   };
 
   Rhombus.Util.IdSlotContainer = IdSlotContainer;
@@ -319,7 +319,7 @@
     for (var keyIdx in keys) {
       var key = keys[keyIdx];
       var value = obj[key];
-      if (!Array.isArray(value)) {
+      if (!isNumber(value)) {
         var value = Rhombus._map.getParameterValue(value, leftToCount);
         if (value < -0.5) {
           leftToCount = (-1)*(value+1);
@@ -335,7 +335,7 @@
     return (-1)*(leftToCount+1);
   };
 
-  Rhombus._map.getParameterValueByName = function(obj, paramName) {
+  Rhombus._map.getParameterValueByName = function(obj, name) {
     var keys = Object.keys(obj);
     for (var keyIdx in keys) {
       var key = keys[keyIdx];
