@@ -174,7 +174,7 @@
       "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
       "oscillator" : {
-        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0.3],
+        "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
       },
       "envelope" : Rhombus._map.envelopeMap,
       "filter" : Rhombus._map.filterMap,
