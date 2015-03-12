@@ -405,6 +405,49 @@
     return unnormalized(params, unnormalizeMaps[type]);
   };
 
+  Rhombus._map.getParameterValue = function(obj, leftToCount) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (!Array.isArray(value)) {
+        var value = Rhombus._map.getParameterValue(value, leftToCount);
+        if (value < -0.5) {
+          leftToCount = (-1)*(value+1);
+        } else {
+          return value;
+        }
+      } else if (leftToCount === 0) {
+        return value;
+      } else {
+        leftToCount -= 1;
+      }
+    }
+    return (-1)*(leftToCount+1);
+  };
+
+  Rhombus._map.getParameterValueByName = function(obj, paramName) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (name.substring(0, key.length) == key) {
+        if (name.length == key.length) {
+          return value;
+        } else if (name[key.length] == ':') {
+          // We matched the first part of the name
+          var newName = name.substring(key.length+1);
+          var generated = Rhombus._map.getParameterValueByName(value, newName);
+          if (isUndefined(generated)) {
+            return;
+          } else {
+            return generated;
+          }
+        }
+      }
+    }
+  };
+
   Rhombus._map.generateSetObject = function(obj, leftToCount, paramValue) {
     var keys = Object.keys(obj);
     for (var keyIdx in keys) {
@@ -1464,6 +1507,14 @@
     };
 
     // Parameter setting stuff
+    Instrument.prototype.normalizedGet = function(paramIdx) {
+      return Rhombus._map.getParameterValue(unnormalizeMaps[this._type], paramIdx);
+    };
+
+    Instrument.prototype.normalizedGetByName = function(paramName) {
+      return Rhombus._map.getParameterValueByName(unnormalizeMaps[this._type], paramName);
+    }
+
     Instrument.prototype.normalizedSet = function(paramIdx, paramValue) {
       var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
       if (typeof setObj !== "object") {
@@ -1490,23 +1541,31 @@
       return instId;
     }
 
-    r.setParameter = function(paramIdx, value) {
-      var inst = this._song._instruments.getObjById(getInstIdByIndex(this._globalTarget));
-
+    function getGlobalTarget() {
+      var inst = r._song._instruments.getObjById(getInstIdByIndex(this._globalTarget));
       if (notDefined(inst)) {
         console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
         return undefined;
       }
+      return inst;
+    }
 
+    r.setParameter = function(paramIdx, value) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
       inst.normalizedSet(paramIdx, value);
       return value;
     };
 
     r.setParameterByName = function(paramName, value) {
-      var instrs = this._song._instruments;
-      instrs.objIds().forEach(function(instId) {
-        instrs.getObjById(instId).normalizedSetByName(paramName, value);
-      });
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      inst.normalizedSetByName(paramName, value);
+      return value;
     }
 
     // only one preview note is allowed at a time

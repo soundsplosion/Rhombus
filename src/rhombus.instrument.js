@@ -300,6 +300,14 @@
     };
 
     // Parameter setting stuff
+    Instrument.prototype.normalizedGet = function(paramIdx) {
+      return Rhombus._map.getParameterValue(unnormalizeMaps[this._type], paramIdx);
+    };
+
+    Instrument.prototype.normalizedGetByName = function(paramName) {
+      return Rhombus._map.getParameterValueByName(unnormalizeMaps[this._type], paramName);
+    }
+
     Instrument.prototype.normalizedSet = function(paramIdx, paramValue) {
       var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
       if (typeof setObj !== "object") {
@@ -326,23 +334,31 @@
       return instId;
     }
 
-    r.setParameter = function(paramIdx, value) {
-      var inst = this._song._instruments.getObjById(getInstIdByIndex(this._globalTarget));
-
+    function getGlobalTarget() {
+      var inst = r._song._instruments.getObjById(getInstIdByIndex(this._globalTarget));
       if (notDefined(inst)) {
         console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
         return undefined;
       }
+      return inst;
+    }
 
+    r.setParameter = function(paramIdx, value) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
       inst.normalizedSet(paramIdx, value);
       return value;
     };
 
     r.setParameterByName = function(paramName, value) {
-      var instrs = this._song._instruments;
-      instrs.objIds().forEach(function(instId) {
-        instrs.getObjById(instId).normalizedSetByName(paramName, value);
-      });
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      inst.normalizedSetByName(paramName, value);
+      return value;
     }
 
     // only one preview note is allowed at a time
