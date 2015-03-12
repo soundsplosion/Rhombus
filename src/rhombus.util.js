@@ -422,7 +422,7 @@
 
   // Frequently used mappings.
   // TODO: fix envelope function mappings
-  Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.001, 60);
+  Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.001, 10);
   Rhombus._map.freqMapFn = Rhombus._map.mapExp(1, 22100);
   Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);
   Rhombus._map.exponentMapFn = Rhombus._map.mapExp(0.1, 10);
@@ -449,17 +449,17 @@
   Rhombus._map.hzDisplay = hzDisplay;
 
   Rhombus._map.envelopeMap = {
-    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.25],
-    "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0],
-    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.65],
-    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.64],
-    "exponent" : [Rhombus._map.exponentMapFn, rawDisplay, 0.5]
+    "attack"   : [Rhombus._map.timeMapFn,     secondsDisplay, 0.0],
+    "decay"    : [Rhombus._map.timeMapFn,     secondsDisplay, 0.25],
+    "sustain"  : [Rhombus._map.mapIdentity,   rawDisplay,     1.0],
+    "release"  : [Rhombus._map.timeMapFn,     secondsDisplay, 0.0],
+    "exponent" : [Rhombus._map.exponentMapFn, rawDisplay,     0.5]
   };
 
   Rhombus._map.filterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
                          "highshelf", "peaking", "notch", "allpass"), rawDisplay, 0],
-    "frequency" : [Rhombus._map.freqMapFn, hzDisplay, 0.5],
+    "frequency" : [Rhombus._map.freqMapFn, hzDisplay, 1.0],
     "rolloff" : [Rhombus._map.mapDiscrete(-12, -24, -48), dbDisplay, 0.5],
     // TODO: verify this is good
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
@@ -468,13 +468,12 @@
   };
 
   Rhombus._map.filterEnvelopeMap = {
-    "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.38],
-    "decay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.49],
-    // TODO: fix this
-    "sustain" : [Rhombus._map.timeMapFn, secondsDisplay, 0.57],
-    "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.7],
-    "min" : [Rhombus._map.freqMapFn, hzDisplay, 0.37],
-    "max" : [Rhombus._map.freqMapFn, hzDisplay, 0.84],
+    "attack"   : [Rhombus._map.timeMapFn,     secondsDisplay, 0.0],
+    "decay"    : [Rhombus._map.timeMapFn,     secondsDisplay, 0.5],
+    "sustain"  : [Rhombus._map.timeMapFn,     rawDisplay,     0.0],
+    "release"  : [Rhombus._map.timeMapFn,     secondsDisplay, 0.25],
+    "min" : [Rhombus._map.freqMapFn, hzDisplay, 0.0],
+    "max" : [Rhombus._map.freqMapFn, hzDisplay, 0.0],
     "exponent" : [Rhombus._map.exponentMapFn, rawDisplay, 0.5]
   };
 
