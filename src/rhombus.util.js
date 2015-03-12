@@ -174,7 +174,7 @@
   };
 
   IdSlotContainer.prototype.objIds = function() {
-    return Object.keys(this._map);
+    return Object.keys(this._map).map(function(x) { return +x; });
   };
 
   Rhombus.Util.IdSlotContainer = IdSlotContainer;
@@ -312,6 +312,49 @@
     }
 
     return unnormalized(params, unnormalizeMaps[type]);
+  };
+
+  Rhombus._map.getParameterValue = function(obj, leftToCount) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (!isNumber(value)) {
+        var value = Rhombus._map.getParameterValue(value, leftToCount);
+        if (value < -0.5) {
+          leftToCount = (-1)*(value+1);
+        } else {
+          return value;
+        }
+      } else if (leftToCount === 0) {
+        return value;
+      } else {
+        leftToCount -= 1;
+      }
+    }
+    return (-1)*(leftToCount+1);
+  };
+
+  Rhombus._map.getParameterValueByName = function(obj, name) {
+    var keys = Object.keys(obj);
+    for (var keyIdx in keys) {
+      var key = keys[keyIdx];
+      var value = obj[key];
+      if (name.substring(0, key.length) == key) {
+        if (name.length == key.length) {
+          return value;
+        } else if (name[key.length] == ':') {
+          // We matched the first part of the name
+          var newName = name.substring(key.length+1);
+          var generated = Rhombus._map.getParameterValueByName(value, newName);
+          if (isUndefined(generated)) {
+            return;
+          } else {
+            return generated;
+          }
+        }
+      }
+    }
   };
 
   Rhombus._map.generateSetObject = function(obj, leftToCount, paramValue) {
