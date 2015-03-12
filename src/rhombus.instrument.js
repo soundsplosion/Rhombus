@@ -316,7 +316,7 @@
       this._normalizedObjectSet(setObj);
     };
 
-    getInstIdByIndex = function(instrIdx) {
+    function getInstIdByIndex(instrIdx) {
       var keys = [];
       r._song._instruments.objIds().forEach(function(k) {
         keys.push(k);
@@ -324,7 +324,7 @@
 
       var instId = keys[instrIdx];
       return instId;
-    };
+    }
 
     r.setParameter = function(paramIdx, value) {
       var inst = this._song._instruments.getObjById(getInstIdByIndex(this._globalTarget));

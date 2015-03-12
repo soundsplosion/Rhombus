@@ -321,7 +321,7 @@
       if (typeof setObj !== "object") {
         return;
       }
-      this.normalizedSetObj({ sampleIdx : setObj });
+      this._normalizedObjectSet({ sampleIdx : setObj });
     };
 
     Sampler.prototype.normalizedSetByName = function(paramName, paramValue) {
