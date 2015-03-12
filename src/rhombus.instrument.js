@@ -108,7 +108,7 @@
       var freq = Rhombus.Util.noteNum2Freq(pitch);
       this._triggered[id] = freq;
 
-      velocity = +velocity || 1;
+      velocity = (+velocity >= 0.0 && +velocity <= 1.0) ? +velocity : 0.5;
 
       if (delay > 0) {
         tA.call(this, freq, "+" + delay, velocity);
@@ -174,7 +174,7 @@
       "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
       "oscillator" : {
-        "type" : [Rhombus._map.mapDiscrete("sine", "square", "triangle", "sawtooth", "pulse", "pwm"), rawDisplay, 0.3],
+        "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
       },
       "envelope" : Rhombus._map.envelopeMap,
       "filter" : Rhombus._map.filterMap,

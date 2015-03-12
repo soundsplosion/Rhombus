@@ -118,7 +118,7 @@
       var idx = pitch % this.samples.length;
       this._triggered[id] = idx;
 
-      velocity = +velocity || 1;
+      velocity = (+velocity >= 0.0 && +velocity <= 1.0) ? +velocity : 0.5;
 
       // TODO: real keyzones, pitch control, etc.
       if (delay > 0) {

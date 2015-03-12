@@ -115,6 +115,13 @@
         return this._velocity;
       },
 
+      setVelocity: function(velocity) {
+        var floatVal = parseFloat(velocity);
+        if (isDefined(floatVal) && floatVal > 0 && floatVal <= 1.0) {
+          this._velocity = floatVal;
+        }
+      },
+
       // TODO: check for off-by-one issues
       getEnd: function() {
         return this._start + this._length;
