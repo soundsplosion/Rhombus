@@ -148,7 +148,7 @@
     var barTicks  = (time["bar"] - 1) * 1920;
     var beatTicks = (time["beat"] - 1) * 480;
     var qtrBeatTicks = (time["qtrBeat"] - 1) * 120;
-    
+
     return (barTicks + beatTicks + qtrBeatTicks + time["ticks"]);
   };
 
@@ -3001,7 +3001,7 @@
       var dstPtn = new r.Pattern();
 
       for (var noteId in srcPtn._noteMap) {
-        var srcPtnNote = srcPtn._noteMap[noteId];
+        var srcNote = srcPtn._noteMap[noteId];
         var dstNote = new r.Note(srcNote._pitch,
                                  srcNote._start,
                                  srcNote._length,
