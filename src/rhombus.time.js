@@ -106,6 +106,7 @@
                 continue;
               }
 
+              // TODO: don't schedule notes that start after the end of the song
               if (start >= scheduleStart &&
                   start < scheduleEnd &&
                   start < itemEnd) {
@@ -133,6 +134,10 @@
 
       if (doWrap) {
         r.loopPlayback(nowTicks);
+      }
+      else if (nowTicks >= r.getSong().getLength()) {
+        // TODO: we SHOULD stop playback, and somehow alert the GUI
+        //r.stopPlayback();
       }
     }
 
