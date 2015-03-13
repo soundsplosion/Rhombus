@@ -257,9 +257,9 @@
         console.log("[Rhombus] - Loopback missed loop start by " + tickDiff + " ticks");
         lastScheduled = this._song._loopStart;
         this.moveToPositionTicks(this._song._loopStart, false);
+        scheduleNotes();
       }
 
-      lastScheduled = this._song._loopStart + tickDiff;
       this.moveToPositionTicks(this._song._loopStart + tickDiff, false);
       scheduleNotes();
     };
