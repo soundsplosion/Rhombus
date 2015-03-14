@@ -9,7 +9,7 @@
       // song metadata
       this._title  = "Default Song Title";
       this._artist = "Default Song Artist";
-      this._length = 1920;
+      this._length = 7680;
       this._bpm    = 120;
 
       this._loopStart = 0;
@@ -203,7 +203,7 @@
       var parsed = JSON.parse(json);
       this._song.setTitle(parsed._title);
       this._song.setArtist(parsed._artist);
-      this._song._length = parsed._length || 1920;
+      this._song._length = parsed._length || 7680;
       this._song._bpm = parsed._bpm || 120;
 
       this._song._loopStart = parsed._loopStart || 0;
@@ -300,7 +300,7 @@
 
     r.exportSong = function() {
       this._song._curId = this.getCurId();
-      this._song._length = this._song.findSongLength();
+      //this._song._length = this._song.findSongLength();
       return JSON.stringify(this._song);
     };
 
