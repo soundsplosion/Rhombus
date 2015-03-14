@@ -76,7 +76,7 @@
   }
 
   var table = [];
-  for (var i = 0; i < 127; i++) {
+  for (var i = 0; i <= 127; i++) {
     table[i] = calculator(i);
   }
 

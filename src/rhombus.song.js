@@ -188,11 +188,15 @@
       }
     };
 
-    r._song = new Song();
-
     r.getSongLengthSeconds = function() {
       return this.ticks2Seconds(this._song._length);
     };
+
+    r.initSong = function() {
+      r._song = new Song();
+    };
+
+    r.initSong();
 
     r.importSong = function(json) {
       this._song = new Song();
