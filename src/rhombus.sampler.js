@@ -127,6 +127,9 @@
         return;
       }
 
+      // TODO: remove this temporary kludge after the beta
+      pitch = (pitch % 12) + 36;
+
       var sampler = this.samples[pitch];
       if (notDefined(sampler)) {
         return;
