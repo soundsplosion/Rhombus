@@ -876,6 +876,7 @@
     function SuperToneSampler() {
       Tone.Sampler.call(this, Array.prototype.slice.call(arguments));
     }
+    Tone.extend(SuperToneSampler, Tone.Sampler);
 
     SuperToneSampler.prototype.triggerAttack = function(note, time, velocity, offset) {
       // Exactly as in Tone.Sampler, except add a parameter to let you control
@@ -892,7 +893,17 @@
       this.filterEnvelope.triggerAttack(time);
     };
 
-    Tone.extend(SuperToneSampler, Tone.Sampler);
+    SuperToneSampler.prototype.set = function(params) {
+      if (notDefined(params)) {
+        return;
+      }
+
+      if (isDefined(params.volume)) {
+        this.player.setVolume(params.volume);
+      }
+
+      Tone.Sampler.prototype.set.call(this, params);
+    }
 
     function Sampler(options, id) {
       if (isNull(id) || notDefined(id)) {
@@ -1120,30 +1131,22 @@
       }
       this._trackParams(params);
 
-      /*
-      var samplers = Object.keys(params);
-      for (var idx in samplers) {
-        var samplerIdx = samplers[idx];
-        var unnormalized = unnormalizedParams(params[samplerIdx]);
-        this.samples[samplerIdx].set(unnormalized);
-      }
-      */
+      var unnormalized = unnormalizedParams(params);
+      this.samples.forEach(function(sampler) {
+        sampler.set(unnormalized);
+      });
     };
 
     Sampler.prototype.parameterCount = function() {
-      return this.samples.length * Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
+      return Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
     };
 
     Sampler.prototype.parameterName = function(paramIdx) {
-      var perSampler = Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
-      var realParamIdx = paramIdx % perSampler;
-      var sampleIdx = Math.floor(paramIdx / perSampler);
-
-      var name = Rhombus._map.getParameterName(unnormalizedMaps["samp"], realParamIdx);
+      var name = Rhombus._map.getParameterName(unnormalizeMaps["samp"], paramIdx);
       if (typeof name !== "string") {
         return;
       }
-      return this._names[sampleIdx] + ":" + name;
+      return name;
     };
 
     // Parameter display stuff
@@ -1177,19 +1180,22 @@
       var displayValue = curValue;
       var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps["samp"], paramName);
       return disp(displayValue);
+    };
 
+    Sampler.prototype.normalizedGet = function(paramIdx) {
+      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
+    };
+
+    Sampler.prototype.normalizedGetByName = function(paramName) {
+      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
     };
 
     Sampler.prototype.normalizedSet = function(paramIdx, paramValue) {
-      var perSampler = Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
-      var realParamIdx = paramIdx % perSampler;
-      var sampleIdx = Math.floor(paramIdx / perSampler);
-
-      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps["samp"], realParamIdx, paramValue);
+      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps["samp"], paramIdx, paramValue);
       if (typeof setObj !== "object") {
         return;
       }
-      this._normalizedObjectSet({ sampleIdx : setObj });
+      this._normalizedObjectSet(setObj);
     };
 
     Sampler.prototype.normalizedSetByName = function(paramName, paramValue) {
@@ -1505,7 +1511,7 @@
       return disp(displayValue);
     };
 
-    // Parameter setting stuff
+    // Parameter getting/setting stuff
     Instrument.prototype.normalizedGet = function(paramIdx) {
       return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
     };
