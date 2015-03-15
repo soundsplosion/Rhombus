@@ -1894,10 +1894,30 @@
         r._newId(this);
       }
 
-      this._pitch    = +pitch    || 60;
+      // validate the pitch
+      if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
+        return undefined;
+      }
+
+      // validate the start
+      if (!isNumber(start) || start < 0) {
+        return undefined;
+      }
+
+      // validate the length
+      if (!isNumber(length) || length < 0) {
+        return undefined;
+      }
+
+      // validate the start
+      if (!isNumber(velocity) || velocity < 0) {
+        return undefined;
+      }
+
+      this._pitch    = +pitch;
       this._start    = +start    || 0;
       this._length   = +length   || 0;
-      this._velocity = +velocity || 1;
+      this._velocity = +velocity || 0.5;
     };
 
     r.Note.prototype = {
