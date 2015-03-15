@@ -48,8 +48,8 @@
 
       Tone.Instrument.call(this);
 
-      this._names = [];
-      this.samples = [];
+      this._names = {};
+      this.samples = {};
       this._triggered = {};
       this._currentParams = {};
 
@@ -92,20 +92,15 @@
     Tone.extend(Sampler, Tone.Instrument);
     r._addGraphFunctions(Sampler);
 
-    Sampler.prototype.setBuffers = function(buffers, names) {
-      if (notDefined(buffers)) {
+    Sampler.prototype.setBuffers = function(buffers, names, notes) {
+      if (notDefined(buffers) || notDefined(names) || notDefined(notes)) {
         return;
-      }
-
-      var useDefaultNames = false;
-      if (notDefined(names)) {
-        useDefaultNames = true;
       }
 
       this.killAllNotes();
 
-      this._names = [];
-      this.samples = [];
+      this._names = {};
+      this.samples = {};
       this._triggered = {};
 
       for (var i = 0; i < buffers.length; ++i) {
@@ -113,18 +108,18 @@
         sampler.player.setBuffer(buffers[i]);
         sampler.connect(this.output);
 
-        this.samples.push(sampler);
-        if (useDefaultNames || notDefined(names[i])) {
-          this._names.push("" + i);
+        this.samples[notes[i]] = sampler;
+        if (notDefined(names[i])) {
+          this._names[notes[i]] = "" + i;
         } else {
-          this._names.push(names[i]);
+          this._names[notes[i]] = names[i];
         }
       }
       this._normalizedObjectSet(this._currentParams, true);
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay, velocity) {
-      if (this.samples.length === 0) {
+      if (Object.keys(this.samples).length === 0) {
         return;
       }
 
@@ -132,16 +127,20 @@
         return;
       }
 
-      var idx = pitch % this.samples.length;
-      this._triggered[id] = idx;
+      var sampler = this.samples[pitch];
+      if (notDefined(sampler)) {
+        return;
+      }
+
+      this._triggered[id] = pitch;
 
       velocity = (+velocity >= 0.0 && +velocity <= 1.0) ? +velocity : 0.5;
 
       // TODO: real keyzones, pitch control, etc.
       if (delay > 0) {
-        this.samples[idx].triggerAttack(0, "+" + delay, velocity);
+        sampler.triggerAttack(0, "+" + delay, velocity);
       } else {
-        this.samples[idx].triggerAttack(0, "+" + 0, velocity);
+        sampler.triggerAttack(0, "+0", velocity);
       }
     };
 
@@ -168,9 +167,11 @@
     };
 
     Sampler.prototype.killAllNotes = function() {
-      this.samples.forEach(function(sampler) {
+      var samplerKeys = Object.keys(this.samples);
+      for (var idx in samplerKeys) {
+        var sampler = this.samples[samplerKeys[idx]];
         sampler.triggerRelease();
-      });
+      }
       this.triggered = {};
     };
 
@@ -262,9 +263,11 @@
       this._trackParams(params);
 
       var unnormalized = unnormalizedParams(params);
-      this.samples.forEach(function(sampler) {
+      var samplerKeys = Object.keys(this.samples);
+      for (var idx in samplerKeys) {
+        var sampler = this.samples[samplerKeys[idx]];
         sampler.set(unnormalized);
-      });
+      }
     };
 
     Sampler.prototype.parameterCount = function() {
