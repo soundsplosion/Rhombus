@@ -49,7 +49,7 @@
       if (type === "samp") {
         instr = new this._Sampler(options, id);
         // HACK: start
-        instr.setBuffers(Rhombus.drumBuffers, Rhombus.drumBufferNames);
+        instr.setBuffers(Rhombus.drumBuffers, Rhombus.drumNames, Rhombus.drumNotes);
         // HACK: end
       } else {
         instr = new Instrument(type, options, id);
@@ -299,7 +299,7 @@
       return disp(displayValue);
     };
 
-    // Parameter setting stuff
+    // Parameter getting/setting stuff
     Instrument.prototype.normalizedGet = function(paramIdx) {
       return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
     };

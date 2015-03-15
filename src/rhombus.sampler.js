@@ -8,6 +8,7 @@
     function SuperToneSampler() {
       Tone.Sampler.call(this, Array.prototype.slice.call(arguments));
     }
+    Tone.extend(SuperToneSampler, Tone.Sampler);
 
     SuperToneSampler.prototype.triggerAttack = function(note, time, velocity, offset) {
       // Exactly as in Tone.Sampler, except add a parameter to let you control
@@ -17,14 +18,26 @@
       }
 
       time = this.toSeconds(time);
-      note = this.defaultArg(note, 0);
-      this.player.setPlaybackRate(this.intervalToFrequencyRatio(note), time);
+      this.player.setPlaybackRate(this._playbackRate, time);
       this.player.start(time, offset);
       this.envelope.triggerAttack(time, velocity);
       this.filterEnvelope.triggerAttack(time);
     };
 
-    Tone.extend(SuperToneSampler, Tone.Sampler);
+    SuperToneSampler.prototype.set = function(params) {
+      if (notDefined(params)) {
+        return;
+      }
+
+      if (isDefined(params.volume)) {
+        this.player.setVolume(params.volume);
+      }
+      if (isDefined(params.playbackRate)) {
+        this._playbackRate = params.playbackRate;
+      }
+
+      Tone.Sampler.prototype.set.call(this, params);
+    };
 
     function Sampler(options, id) {
       if (isNull(id) || notDefined(id)) {
@@ -35,17 +48,17 @@
 
       Tone.Instrument.call(this);
 
-      this._names = [];
-      this.samples = [];
+      this._names = {};
+      this.samples = {};
       this._triggered = {};
       this._currentParams = {};
 
+        /*
       if (isDefined(options)) {
         var params = options.params;
         var names = options.names;
         var buffs = options.buffs;
 
-        /*
         var setNames = names;
         var setBufs = [];
         for (var i = 0; i < buffs.length; i++) {
@@ -67,47 +80,46 @@
         }
 
         this.setBuffers(setBufs, setNames);
-        */
 
         this._normalizedObjectSet(params, true);
       }
+        */
+
+      var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps["samp"]);
+      this._normalizedObjectSet(def, true);
+      this._normalizedObjectSet(options, true);
     }
     Tone.extend(Sampler, Tone.Instrument);
     r._addGraphFunctions(Sampler);
 
-    Sampler.prototype.setBuffers = function(buffers, names) {
-      if (notDefined(buffers)) {
+    Sampler.prototype.setBuffers = function(buffers, names, notes) {
+      if (notDefined(buffers) || notDefined(names) || notDefined(notes)) {
         return;
-      }
-
-      var useDefaultNames = false;
-      if (notDefined(names)) {
-        useDefaultNames = true;
       }
 
       this.killAllNotes();
 
-      this._names = [];
-      this.samples = [];
+      this._names = {};
+      this.samples = {};
       this._triggered = {};
-      this._currentParams = {};
 
       for (var i = 0; i < buffers.length; ++i) {
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
+        sampler.connect(this.output);
 
-        this.samples.push(sampler);
-        if (useDefaultNames || notDefined(names[i])) {
-          this._names.push("" + i);
+        this.samples[notes[i]] = sampler;
+        if (notDefined(names[i])) {
+          this._names[notes[i]] = "" + i;
         } else {
-          this._names.push(names[i]);
+          this._names[notes[i]] = names[i];
         }
       }
-      // TODO: default params here
+      this._normalizedObjectSet(this._currentParams, true);
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay, velocity) {
-      if (this.samples.length === 0) {
+      if (Object.keys(this.samples).length === 0) {
         return;
       }
 
@@ -115,16 +127,20 @@
         return;
       }
 
-      var idx = pitch % this.samples.length;
-      this._triggered[id] = idx;
+      var sampler = this.samples[pitch];
+      if (notDefined(sampler)) {
+        return;
+      }
+
+      this._triggered[id] = pitch;
 
       velocity = (+velocity >= 0.0 && +velocity <= 1.0) ? +velocity : 0.5;
 
       // TODO: real keyzones, pitch control, etc.
       if (delay > 0) {
-        this.samples[idx].triggerAttack(0, "+" + delay, velocity);
+        sampler.triggerAttack(0, "+" + delay, velocity);
       } else {
-        this.samples[idx].triggerAttack(0, "+" + 0, velocity);
+        sampler.triggerAttack(0, "+0", velocity);
       }
     };
 
@@ -151,22 +167,12 @@
     };
 
     Sampler.prototype.killAllNotes = function() {
-      this.samples.forEach(function(sampler) {
+      var samplerKeys = Object.keys(this.samples);
+      for (var idx in samplerKeys) {
+        var sampler = this.samples[samplerKeys[idx]];
         sampler.triggerRelease();
-      });
+      }
       this.triggered = {};
-    };
-
-    Sampler.prototype.connect = function(B, outNum, inNum) {
-      this.samples.forEach(function(sampler) {
-        sampler.connect(B, outNum, inNum);
-      });
-    };
-
-    Sampler.prototype.disconnect = function(outNum) {
-      this.samples.forEach(function(sampler) {
-        sampler.disconnect(outNum);
-      });
     };
 
     Sampler.prototype._trackParams = function(params) {
@@ -191,11 +197,14 @@
       }
       */
 
-      var params = {
+
+      /*var params = {
         "params": this._currentParams
-        /*"names": this._names,*/
-       /* "buffs": buffs*/
+        "names": this._names,
+        "buffs": buffs
       };
+      */
+      var params = this._currentParams;
 
       var gc, gp;
       if (isDefined(this._graphChildren)) {
@@ -224,6 +233,7 @@
     var unnormalizeMaps = {
       "samp" : {
         "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
+        "playbackRate" : [Rhombus._map.mapExp(0.1, 10), Rhombus._map.rawDisplay, 0.5],
         "player" : {
           "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
         },
@@ -252,30 +262,24 @@
       }
       this._trackParams(params);
 
-      /*
-      var samplers = Object.keys(params);
-      for (var idx in samplers) {
-        var samplerIdx = samplers[idx];
-        var unnormalized = unnormalizedParams(params[samplerIdx]);
-        this.samples[samplerIdx].set(unnormalized);
+      var unnormalized = unnormalizedParams(params);
+      var samplerKeys = Object.keys(this.samples);
+      for (var idx in samplerKeys) {
+        var sampler = this.samples[samplerKeys[idx]];
+        sampler.set(unnormalized);
       }
-      */
     };
 
     Sampler.prototype.parameterCount = function() {
-      return this.samples.length * Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
+      return Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
     };
 
     Sampler.prototype.parameterName = function(paramIdx) {
-      var perSampler = Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
-      var realParamIdx = paramIdx % perSampler;
-      var sampleIdx = Math.floor(paramIdx / perSampler);
-
-      var name = Rhombus._map.getParameterName(unnormalizedMaps["samp"], realParamIdx);
+      var name = Rhombus._map.getParameterName(unnormalizeMaps["samp"], paramIdx);
       if (typeof name !== "string") {
         return;
       }
-      return this._names[sampleIdx] + ":" + name;
+      return name;
     };
 
     // Parameter display stuff
@@ -309,19 +313,22 @@
       var displayValue = curValue;
       var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps["samp"], paramName);
       return disp(displayValue);
+    };
 
+    Sampler.prototype.normalizedGet = function(paramIdx) {
+      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
+    };
+
+    Sampler.prototype.normalizedGetByName = function(paramName) {
+      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
     };
 
     Sampler.prototype.normalizedSet = function(paramIdx, paramValue) {
-      var perSampler = Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
-      var realParamIdx = paramIdx % perSampler;
-      var sampleIdx = Math.floor(paramIdx / perSampler);
-
-      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps["samp"], realParamIdx, paramValue);
+      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps["samp"], paramIdx, paramValue);
       if (typeof setObj !== "object") {
         return;
       }
-      this._normalizedObjectSet({ sampleIdx : setObj });
+      this._normalizedObjectSet(setObj);
     };
 
     Sampler.prototype.normalizedSetByName = function(paramName, paramValue) {
