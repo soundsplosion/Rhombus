@@ -18,8 +18,7 @@
       }
 
       time = this.toSeconds(time);
-      note = this.defaultArg(note, 0);
-      this.player.setPlaybackRate(this.intervalToFrequencyRatio(note), time);
+      this.player.setPlaybackRate(this._playbackRate, time);
       this.player.start(time, offset);
       this.envelope.triggerAttack(time, velocity);
       this.filterEnvelope.triggerAttack(time);
@@ -32,6 +31,9 @@
 
       if (isDefined(params.volume)) {
         this.player.setVolume(params.volume);
+      }
+      if (isDefined(params.playbackRate)) {
+        this._playbackRate = params.playbackRate;
       }
 
       Tone.Sampler.prototype.set.call(this, params);
@@ -230,6 +232,7 @@
     var unnormalizeMaps = {
       "samp" : {
         "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
+        "playbackRate" : [Rhombus._map.mapExp(0.1, 10), Rhombus._map.rawDisplay, 0.5],
         "player" : {
           "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
         },
