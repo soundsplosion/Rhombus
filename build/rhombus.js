@@ -1608,10 +1608,14 @@
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
-    r.startPreviewNote = function(pitch) {
+    r.startPreviewNote = function(pitch, velocity) {
       var keys = this._song._instruments.objIds();
       if (keys.length === 0) {
         return;
+      }
+
+      if (!isNumber(velocity) || velocity < 0 || velocity > 1) {
+        velocity = 0.5;
       }
 
       if (notDefined(previewNote)) {
@@ -1623,7 +1627,7 @@
         }
 
         previewNote = new this.RtNote(pitch, 0, 0, targetId);
-        inst.triggerAttack(previewNote._id, pitch, 0);
+        inst.triggerAttack(previewNote._id, pitch, 0, velocity);
       }
     };
 
