@@ -11,9 +11,10 @@ rhomb.setSampleResolver(function(sampleSetName, callback) {
   var infoReq = new XMLHttpRequest();
   var dirPath = "./samples/" + sampleSetName + "/";
   infoReq.open("GET", dirPath + "samples.json", true);
+  infoReq.responseType = "json";
 
   infoReq.onload = function() {
-    var infoMap = JSON.parse(infoReq.responseText);
+    var infoMap = infoReq.response;
     var sampleCount = Object.keys(infoMap).length;
 
     var finalMap = {};
