@@ -379,16 +379,16 @@
         return;
       }
 
-      if (!isNumber(velocity) || velocity < 0 || velocity > 1) {
-        velocity = 0.5;
-      }
-
       if (notDefined(previewNote)) {
         var targetId = getInstIdByIndex(this._globalTarget);
         var inst = this._song._instruments.getObjById(targetId);
         if (notDefined(inst)) {
           console.log("[Rhombus] - Trying to trigger note on undefined instrument");
           return;
+        }
+
+        if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+          velocity = 0.5;
         }
 
         previewNote = new this.RtNote(pitch, 0, 0, targetId);
