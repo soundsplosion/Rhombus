@@ -53,47 +53,36 @@
       this._triggered = {};
       this._currentParams = {};
 
-        /*
-      if (isDefined(options)) {
-        var params = options.params;
-        var names = options.names;
-        var buffs = options.buffs;
-
-        var setNames = names;
-        var setBufs = [];
-        for (var i = 0; i < buffs.length; i++) {
-          var channels = buffs[i];
-          var setBuf = Tone.context.createBuffer(channels.length, channels[0].length, Tone.context.sampleRate);
-
-          for (var chI = 0; chI < channels.length; chI++) {
-            var getChanData = channels[chI];
-            var setChanData = setBuf.getChannelData(chI);
-            for (var sI = 0; sI < getChanData.length; sI++) {
-              var dat = getChanData[sI];
-              if (notDefined(dat)) {
-                dat = 0;
-              }
-              setChanData[sI] = dat;
-            }
-          }
-          setBufs.push(setBuf);
-        }
-
-        this.setBuffers(setBufs, setNames);
-
-        this._normalizedObjectSet(params, true);
+      var sampleSet = "drums1";
+      if (isDefined(options) && isDefined(options.sampleSet)) {
+        sampleSet = options.sampleSet;
       }
-        */
+      this._sampleSet = sampleSet;
 
-      var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps["samp"]);
-      this._normalizedObjectSet(def, true);
-      this._normalizedObjectSet(options, true);
+      var thisSampler = this;
+
+      var finish = function() {
+        var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps["samp"]);
+        thisSampler._normalizedObjectSet(def, true);
+        if (isDefined(options) && isDefined(options.params)) {
+          thisSampler._normalizedObjectSet(options.params, true);
+        }
+      };
+
+      if (isDefined(r._sampleResolver)) {
+        r._sampleResolver(sampleSet, function(bufferMap) {
+          thisSampler.setBuffers(bufferMap);
+          finish();
+        });
+      } else {
+        finish();
+      }
     }
     Tone.extend(Sampler, Tone.Instrument);
     r._addGraphFunctions(Sampler);
 
-    Sampler.prototype.setBuffers = function(buffers, names, notes) {
-      if (notDefined(buffers) || notDefined(names) || notDefined(notes)) {
+    Sampler.prototype.setBuffers = function(bufferMap) {
+      if (notDefined(bufferMap)) {
         return;
       }
 
@@ -103,19 +92,22 @@
       this.samples = {};
       this._triggered = {};
 
-      for (var i = 0; i < buffers.length; ++i) {
+      var pitches = Object.keys(bufferMap);
+      for (var i = 0; i < pitches.length; ++i) {
+        var pitch = pitches[i];
         var sampler = new SuperToneSampler();
-        sampler.player.setBuffer(buffers[i]);
+        var bufferAndName = bufferMap[pitch];
+        sampler.player.setBuffer(bufferAndName[0]);
         sampler.connect(this.output);
 
-        this.samples[notes[i]] = sampler;
-        if (notDefined(names[i])) {
-          this._names[notes[i]] = "" + i;
+        this.samples[pitch] = sampler;
+        var sampleName = bufferAndName[1];
+        if (notDefined(sampleName)) {
+          this._names[pitch] = "" + i;
         } else {
-          this._names[notes[i]] = names[i];
+          this._names[pitch] = sampleName;
         }
       }
-      this._normalizedObjectSet(this._currentParams, true);
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay, velocity) {
@@ -183,31 +175,10 @@
     };
 
     Sampler.prototype.toJSON = function() {
-      /*
-      var buffs = [];
-      for (var sampIdx = 0; sampIdx < this.samples.length; sampIdx++) {
-        var channels = [];
-        var audioBuf = this.samples[sampIdx].player._buffer;
-        for (var chanIdx = 0; chanIdx < audioBuf.numberOfChannels; chanIdx++) {
-          var chan = [];
-          var audioData = audioBuf.getChannelData(chanIdx);
-          for (var sIdx = 0; sIdx < audioData.length; sIdx++) {
-            chan[sIdx] = audioData[sIdx];
-          }
-          channels.push(chan);
-        }
-        buffs.push(channels);
-      }
-      */
-
-
-      /*var params = {
-        "params": this._currentParams
-        "names": this._names,
-        "buffs": buffs
+      var params = { 
+        "params": this._currentParams,
+        "sampleSet": this._sampleSet
       };
-      */
-      var params = this._currentParams;
 
       var gc, gp;
       if (isDefined(this._graphChildren)) {
@@ -291,7 +262,6 @@
     };
 
     Sampler.prototype.parameterDisplayStringByName = function(paramName) {
-      // TODO: fix probable bugs here
       var pieces = paramName.split(":");
 
       var curValue = this._currentParams;
