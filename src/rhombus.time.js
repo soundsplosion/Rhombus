@@ -106,6 +106,7 @@
                 continue;
               }
 
+              // TODO: don't schedule notes that start after the end of the song
               if (start >= scheduleStart &&
                   start < scheduleEnd &&
                   start < itemEnd) {
@@ -133,6 +134,10 @@
 
       if (doWrap) {
         r.loopPlayback(nowTicks);
+      }
+      else if (nowTicks >= r.getSong().getLength()) {
+        // TODO: we SHOULD stop playback, and somehow alert the GUI
+        //r.stopPlayback();
       }
     }
 
@@ -252,9 +257,9 @@
         console.log("[Rhombus] - Loopback missed loop start by " + tickDiff + " ticks");
         lastScheduled = this._song._loopStart;
         this.moveToPositionTicks(this._song._loopStart, false);
+        scheduleNotes();
       }
 
-      lastScheduled = this._song._loopStart + tickDiff;
       this.moveToPositionTicks(this._song._loopStart + tickDiff, false);
       scheduleNotes();
     };

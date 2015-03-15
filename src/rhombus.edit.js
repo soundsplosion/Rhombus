@@ -89,7 +89,7 @@
       var dstPtn = new r.Pattern();
 
       for (var noteId in srcPtn._noteMap) {
-        var srcPtnNote = srcPtn._noteMap[noteId];
+        var srcNote = srcPtn._noteMap[noteId];
         var dstNote = new r.Note(srcNote._pitch,
                                  srcNote._start,
                                  srcNote._length,
