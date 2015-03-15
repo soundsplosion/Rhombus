@@ -35,7 +35,7 @@
       }
 
       Tone.Sampler.prototype.set.call(this, params);
-    }
+    };
 
     function Sampler(options, id) {
       if (isNull(id) || notDefined(id)) {
@@ -51,12 +51,12 @@
       this._triggered = {};
       this._currentParams = {};
 
+        /*
       if (isDefined(options)) {
         var params = options.params;
         var names = options.names;
         var buffs = options.buffs;
 
-        /*
         var setNames = names;
         var setBufs = [];
         for (var i = 0; i < buffs.length; i++) {
@@ -78,10 +78,14 @@
         }
 
         this.setBuffers(setBufs, setNames);
-        */
 
         this._normalizedObjectSet(params, true);
       }
+        */
+
+      var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps["samp"]);
+      this._normalizedObjectSet(def, true);
+      this._normalizedObjectSet(options, true);
     }
     Tone.extend(Sampler, Tone.Instrument);
     r._addGraphFunctions(Sampler);
@@ -101,11 +105,11 @@
       this._names = [];
       this.samples = [];
       this._triggered = {};
-      this._currentParams = {};
 
       for (var i = 0; i < buffers.length; ++i) {
         var sampler = new SuperToneSampler();
         sampler.player.setBuffer(buffers[i]);
+        sampler.connect(this.output);
 
         this.samples.push(sampler);
         if (useDefaultNames || notDefined(names[i])) {
@@ -114,7 +118,7 @@
           this._names.push(names[i]);
         }
       }
-      // TODO: default params here
+      this._normalizedObjectSet(this._currentParams, true);
     };
 
     Sampler.prototype.triggerAttack = function(id, pitch, delay, velocity) {
@@ -168,18 +172,6 @@
       this.triggered = {};
     };
 
-    Sampler.prototype.connect = function(B, outNum, inNum) {
-      this.samples.forEach(function(sampler) {
-        sampler.connect(B, outNum, inNum);
-      });
-    };
-
-    Sampler.prototype.disconnect = function(outNum) {
-      this.samples.forEach(function(sampler) {
-        sampler.disconnect(outNum);
-      });
-    };
-
     Sampler.prototype._trackParams = function(params) {
       Rhombus._map.mergeInObject(this._currentParams, params);
     };
@@ -202,11 +194,14 @@
       }
       */
 
-      var params = {
+
+      /*var params = {
         "params": this._currentParams
-        /*"names": this._names,*/
-       /* "buffs": buffs*/
+        "names": this._names,
+        "buffs": buffs
       };
+      */
+      var params = this._currentParams;
 
       var gc, gp;
       if (isDefined(this._graphChildren)) {
