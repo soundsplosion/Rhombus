@@ -298,6 +298,10 @@
 
     };
 
+    r.setSampleResolver = function(resolver) {
+      r._sampleResolver = resolver;
+    };
+
     r.exportSong = function() {
       this._song._curId = this.getCurId();
       //this._song._length = this._song.findSongLength();
