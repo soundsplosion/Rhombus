@@ -221,15 +221,6 @@
       return noteArray;
     };
 
-    quantizeTick = function(tickVal, quantize) {
-      if ((tickVal % quantize) > (quantize / 2)) {
-        return (Math.floor(tickVal/quantize) * quantize) + quantize;
-      }
-      else {
-        return Math.floor(tickVal/quantize) * quantize;
-      }
-    }
-
     r.Edit.quantizeNotes = function(notes, quantize, doEnds) {
       for (var i = 0; i < notes.length; i++) {
         var srcNote = notes[i]
