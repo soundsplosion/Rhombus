@@ -51,7 +51,7 @@ function ins(a, b, c) {
   rhomb.Edit.insertNote(new rhomb.Note(a, b, c), patId);
 }
 
-var instrId = rhomb.addInstrument("samp");
+var instrId = rhomb.addInstrument("mono");
 var instr = rhomb.getSong().getInstruments().getObjById(instrId);
 instr.normalizedSetByName("volume", 0.6);
 

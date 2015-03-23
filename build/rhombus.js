@@ -79,8 +79,12 @@
     root.Rhombus._patternSetup(this);
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
-    root.Rhombus._samplerSetup(this);
+
+    // Instruments
     root.Rhombus._instrumentSetup(this);
+    root.Rhombus._wrappedInstrumentSetup(this);
+    root.Rhombus._samplerSetup(this);
+
     root.Rhombus._effectSetup(this);
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
@@ -469,7 +473,7 @@
     return count;
   };
 
-  Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
+  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap) {
     if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
@@ -496,7 +500,7 @@
       return returnObj;
     }
 
-    return unnormalized(params, unnormalizeMaps[type]);
+    return unnormalized(params, unnormalizeMap);
   };
 
   Rhombus._map.getParameterValue = function(obj, leftToCount) {
@@ -960,7 +964,240 @@
   };
 })(this.Rhombus);
 
-//! rhombus.sampler.js
+//! rhombus.instrument.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+
+(function(Rhombus) {
+  Rhombus._instrumentSetup = function(r) {
+
+    r._addInstrumentFunctions = function(ctr) {
+      ctr.prototype._trackParams = trackParams;
+      ctr.prototype.parameterCount = parameterCount;
+      ctr.prototype.parameterName = parameterName;
+      ctr.prototype.parameterDisplayString = parameterDisplayString;
+      ctr.prototype.parameterDisplayStringByName = parameterDisplayStringByName;
+      ctr.prototype.normalizedGet = normalizedGet;
+      ctr.prototype.normalizedGetByName = normalizedGetByName;
+      ctr.prototype.normalizedSet = normalizedSet;
+      ctr.prototype.normalizedSetByName = normalizedSetByName;
+    };
+
+    function trackParams(params) {
+      Rhombus._map.mergeInObject(this._currentParams, params);
+    }
+
+    function parameterCount() {
+      return Rhombus._map.subtreeCount(this._unnormalizeMap);
+    }
+
+    function parameterName(paramIdx) {
+      var name = Rhombus._map.getParameterName(this._unnormalizeMap, paramIdx);
+      if (typeof name !== "string") {
+        return;
+      }
+      return name;
+    }
+
+    function parameterDisplayString(paramIdx) {
+      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
+    }
+
+    function parameterDisplayStringByName(paramName) {
+      var pieces = paramName.split(":");
+
+      var curValue = this._currentParams;
+      for (var i = 0; i < pieces.length; i++) {
+        curValue = curValue[pieces[i]];
+      }
+      if (notDefined(curValue)) {
+        return;
+      }
+
+      var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, curValue);
+      var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap);
+
+      curValue = realObj;
+      for (var i = 0; i < pieces.length; i++) {
+        curValue = curValue[pieces[i]];
+      }
+      if (notDefined(curValue)) {
+        return;
+      }
+
+      var displayValue = curValue;
+      var disp = Rhombus._map.getDisplayFunctionByName(this._unnormalizeMap, paramName);
+      return disp(displayValue);
+    }
+
+    function normalizedGet(paramIdx) {
+      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
+    }
+
+    function normalizedGetByName(paramName) {
+      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
+    }
+
+    function normalizedSet(paramIdx, paramValue) {
+      var setObj = Rhombus._map.generateSetObject(this._unnormalizeMap, paramIdx, paramValue);
+      if (typeof setObj !== "object") {
+        return;
+      }
+      this._normalizedObjectSet(setObj);
+    }
+
+    function normalizedSetByName(paramName, paramValue) {
+      var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, paramValue);
+      if (typeof setObj !== "object") {
+        return;
+      }
+      this._normalizedObjectSet(setObj);
+    }
+
+    r.addInstrument = function(type, options, gc, gp, id, idx) {
+      var instr;
+      if (type === "samp") {
+        instr = new this._Sampler(options, id);
+      } else {
+        instr = new this._ToneInstrument(type, options, id);
+      }
+
+      if (isDefined(gc)) {
+        for (var i = 0; i < gc.length; i++) {
+          gc[i] = +(gc[i]);
+        }
+        instr._graphChildren = gc;
+      } else {
+        r._toMaster(instr);
+      }
+
+      if (isDefined(gp)) {
+        for (var i = 0; i < gp.length; i++) {
+          gp[i] = +(gp[i]);
+        }
+        instr._graphParents = gp;
+      }
+
+      if (isNull(instr) || notDefined(instr)) {
+        return;
+      }
+
+      this._song._instruments.addObj(instr, idx);
+      return instr._id;
+    };
+
+    function inToId(instrOrId) {
+      var id;
+      if (typeof instrOrId === "object") {
+        id = instrOrId._id;
+      } else {
+        id = +instrOrId;
+      }
+      return id;
+    }
+
+    r.removeInstrument = function(instrOrId) {
+      var id = inToId(instrOrId);
+      if (id < 0) {
+        return;
+      }
+
+      r._song._instruments.removeId(id);
+    };
+
+    function getInstIdByIndex(instrIdx) {
+      return r._song._instruments.objIds()[instrIdx];
+    }
+
+    function getGlobalTarget() {
+      var inst = r._song._instruments.getObjById(getInstIdByIndex(r._globalTarget));
+      if (notDefined(inst)) {
+        console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
+        return undefined;
+      }
+      return inst;
+    }
+
+    r.getParameter = function(paramIdx) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      return inst.normalizedGet(paramIdx);
+    };
+
+    r.getParameterByName = function(paramName) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      return inst.normalizedGetByName(paramName);
+    }
+
+    r.setParameter = function(paramIdx, value) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      inst.normalizedSet(paramIdx, value);
+      return value;
+    };
+
+    r.setParameterByName = function(paramName, value) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      inst.normalizedSetByName(paramName, value);
+      return value;
+    }
+
+    // only one preview note is allowed at a time
+    var previewNote = undefined;
+    r.startPreviewNote = function(pitch, velocity) {
+      var keys = this._song._instruments.objIds();
+      if (keys.length === 0) {
+        return;
+      }
+
+      if (notDefined(previewNote)) {
+        var targetId = getInstIdByIndex(this._globalTarget);
+        var inst = this._song._instruments.getObjById(targetId);
+        if (notDefined(inst)) {
+          console.log("[Rhombus] - Trying to trigger note on undefined instrument");
+          return;
+        }
+
+        if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+          velocity = 0.5;
+        }
+
+        previewNote = new this.RtNote(pitch, 0, 0, targetId);
+        inst.triggerAttack(previewNote._id, pitch, 0, velocity);
+      }
+    };
+
+    r.stopPreviewNote = function() {
+      var keys = this._song._instruments.objIds();
+      if (keys.length === 0) {
+        return;
+      }
+
+      if (isDefined(previewNote)) {
+        var inst = this._song._instruments.getObjById(previewNote._target);
+        if (notDefined(inst)) {
+          console.log("[Rhombus] - Trying to release note on undefined instrument");
+          return;
+        }
+
+        inst.triggerRelease(previewNote._id, 0);
+        previewNote = undefined;
+      }
+    };
+  };
+})(this.Rhombus);
+
+//! rhombus.instrument.sampler.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
@@ -1010,6 +1247,7 @@
 
       Tone.Instrument.call(this);
 
+      this._unnormalizeMap = samplerUnnormalizeMap;
       this._names = {};
       this.samples = {};
       this._triggered = {};
@@ -1024,7 +1262,7 @@
       var thisSampler = this;
 
       var finish = function() {
-        var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps["samp"]);
+        var def = Rhombus._map.generateDefaultSetObj(samplerUnnormalizeMap);
         thisSampler._normalizedObjectSet(def, true);
         if (isDefined(options) && isDefined(options.params)) {
           thisSampler._normalizedObjectSet(options.params, true);
@@ -1041,6 +1279,7 @@
       }
     }
     Tone.extend(Sampler, Tone.Instrument);
+    r._addInstrumentFunctions(Sampler);
     r._addGraphFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(bufferMap) {
@@ -1165,23 +1404,16 @@
       return jsonVersion;
     };
 
-    // The map is structured like this for the Rhombus._map.unnormalizedParams call.
-    var unnormalizeMaps = {
-      "samp" : {
-        "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
-        "playbackRate" : [Rhombus._map.mapExp(0.1, 10), Rhombus._map.rawDisplay, 0.5],
-        "player" : {
-          "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
-        },
-        "envelope" : Rhombus._map.envelopeMap,
-        "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-        "filter" : Rhombus._map.filterMap
-      }
+    var samplerUnnormalizeMap = {
+      "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
+      "playbackRate" : [Rhombus._map.mapExp(0.1, 10), Rhombus._map.rawDisplay, 0.5],
+      "player" : {
+        "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
+      },
+      "envelope" : Rhombus._map.envelopeMap,
+      "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
+      "filter" : Rhombus._map.filterMap
     };
-
-    function unnormalizedParams(params) {
-      return Rhombus._map.unnormalizedParams(params, "samp", unnormalizeMaps);
-    }
 
     Sampler.prototype._normalizedObjectSet = function(params, internal) {
       if (notObject(params)) {
@@ -1198,7 +1430,7 @@
       }
       this._trackParams(params);
 
-      var unnormalized = unnormalizedParams(params);
+      var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
       var samplerKeys = Object.keys(this.samples);
       for (var idx in samplerKeys) {
         var sampler = this.samples[samplerKeys[idx]];
@@ -1206,84 +1438,19 @@
       }
     };
 
-    Sampler.prototype.parameterCount = function() {
-      return Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
-    };
-
-    Sampler.prototype.parameterName = function(paramIdx) {
-      var name = Rhombus._map.getParameterName(unnormalizeMaps["samp"], paramIdx);
-      if (typeof name !== "string") {
-        return;
-      }
-      return name;
-    };
-
-    // Parameter display stuff
-    Sampler.prototype.parameterDisplayString = function(paramIdx) {
-      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
-    };
-
-    Sampler.prototype.parameterDisplayStringByName = function(paramName) {
-      var pieces = paramName.split(":");
-
-      var curValue = this._currentParams;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps["samp"], paramName, curValue);
-      var realObj = unnormalizedParams(setObj, this._type);
-
-      curValue = realObj;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var displayValue = curValue;
-      var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps["samp"], paramName);
-      return disp(displayValue);
-    };
-
-    Sampler.prototype.normalizedGet = function(paramIdx) {
-      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
-    };
-
-    Sampler.prototype.normalizedGetByName = function(paramName) {
-      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
-    };
-
-    Sampler.prototype.normalizedSet = function(paramIdx, paramValue) {
-      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps["samp"], paramIdx, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    };
-
-    Sampler.prototype.normalizedSetByName = function(paramName, paramValue) {
-      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps["samp"], paramName, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    };
-
     r._Sampler = Sampler;
   };
 })(this.Rhombus);
 
-//! rhombus.instrument.js
+//! rhombus.instrument.tone.js
 //! authors: Spencer Phippen, Tim Grant
+//!
+//! Contains instrument definitions for instruments wrapped from Tone.
+//!
 //! license: MIT
 
 (function(Rhombus) {
-  Rhombus._instrumentSetup = function(r) {
+  Rhombus._wrappedInstrumentSetup = function(r) {
 
     var mono = Tone.MonoSynth;
     var am = Tone.AMSynth;
@@ -1298,7 +1465,7 @@
       "duo"  : duo
     };
 
-    function Instrument(type, options, id) {
+    function ToneInstrument(type, options, id) {
       var ctr = typeMap[type];
       if (isNull(ctr) || notDefined(ctr)) {
         type = "mono";
@@ -1312,6 +1479,7 @@
       }
 
       this._type = type;
+      this._unnormalizeMap = unnormalizeMaps[this._type];
       this._currentParams = {};
       this._triggered = {};
 
@@ -1321,61 +1489,11 @@
       this._normalizedObjectSet(options, true);
     }
 
-    Tone.extend(Instrument, Tone.PolySynth);
-    r._addGraphFunctions(Instrument);
+    Tone.extend(ToneInstrument, Tone.PolySynth);
+    r._addGraphFunctions(ToneInstrument);
+    r._addInstrumentFunctions(ToneInstrument);
 
-    r.addInstrument = function(type, options, gc, gp, id, idx) {
-      var instr;
-      if (type === "samp") {
-        instr = new this._Sampler(options, id);
-      } else {
-        instr = new Instrument(type, options, id);
-      }
-
-      if (isDefined(gc)) {
-        for (var i = 0; i < gc.length; i++) {
-          gc[i] = +(gc[i]);
-        }
-        instr._graphChildren = gc;
-      } else {
-        r._toMaster(instr);
-      }
-
-      if (isDefined(gp)) {
-        for (var i = 0; i < gp.length; i++) {
-          gp[i] = +(gp[i]);
-        }
-        instr._graphParents = gp;
-      }
-
-      if (isNull(instr) || notDefined(instr)) {
-        return;
-      }
-
-      this._song._instruments.addObj(instr, idx);
-      return instr._id;
-    };
-
-    function inToId(instrOrId) {
-      var id;
-      if (typeof instrOrId === "object") {
-        id = instrOrId._id;
-      } else {
-        id = +instrOrId;
-      }
-      return id;
-    }
-
-    r.removeInstrument = function(instrOrId) {
-      var id = inToId(instrOrId);
-      if (id < 0) {
-        return;
-      }
-
-      r._song._instruments.removeId(id);
-    };
-
-    Instrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
+    ToneInstrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
       // Don't play out-of-range notes
       if (pitch < 0 || pitch > 127) {
         return;
@@ -1394,7 +1512,7 @@
       }
     };
 
-    Instrument.prototype.triggerRelease = function(id, delay) {
+    ToneInstrument.prototype.triggerRelease = function(id, delay) {
       var tR = Tone.PolySynth.prototype.triggerRelease;
       var freq = this._triggered[id];
       if (delay > 0) {
@@ -1405,7 +1523,7 @@
       delete this._triggered[id];
     };
 
-    Instrument.prototype.killAllNotes = function() {
+    ToneInstrument.prototype.killAllNotes = function() {
       var freqs = [];
       for (var id in this._triggered) {
         freqs.push(this._triggered[id]);
@@ -1414,11 +1532,7 @@
       this._triggered = {};
     };
 
-    Instrument.prototype._trackParams = function(params) {
-      Rhombus._map.mergeInObject(this._currentParams, params);
-    };
-
-    Instrument.prototype.toJSON = function() {
+    ToneInstrument.prototype.toJSON = function() {
       var gc, gp;
       if (isDefined(this._graphChildren)) {
         gc = this._graphChildren;
@@ -1509,11 +1623,7 @@
       }
     };
 
-    function unnormalizedParams(params, type) {
-      return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
-    }
-
-    Instrument.prototype._normalizedObjectSet = function(params, internal) {
+    ToneInstrument.prototype._normalizedObjectSet = function(params, internal) {
       if (notObject(params)) {
         return;
       }
@@ -1527,169 +1637,11 @@
         });
       }
       this._trackParams(params);
-      var unnormalized = unnormalizedParams(params, this._type);
+      var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
       this.set(unnormalized);
     };
 
-    // Parameter list interface
-    Instrument.prototype.parameterCount = function() {
-      return Rhombus._map.subtreeCount(unnormalizeMaps[this._type]);
-    };
-
-    Instrument.prototype.parameterName = function(paramIdx) {
-      var name = Rhombus._map.getParameterName(unnormalizeMaps[this._type], paramIdx);
-      if (typeof name !== "string") {
-        return;
-      }
-      return name;
-    };
-
-    // Parameter display string stuff
-    Instrument.prototype.parameterDisplayString = function(paramIdx) {
-      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
-    };
-
-    Instrument.prototype.parameterDisplayStringByName = function(paramName) {
-      var pieces = paramName.split(":");
-
-      var curValue = this._currentParams;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps[this._type], paramName, curValue);
-      var realObj = unnormalizedParams(setObj, this._type);
-
-      curValue = realObj;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var displayValue = curValue;
-      var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps[this._type], paramName);
-      return disp(displayValue);
-    };
-
-    // Parameter getting/setting stuff
-    Instrument.prototype.normalizedGet = function(paramIdx) {
-      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
-    };
-
-    Instrument.prototype.normalizedGetByName = function(paramName) {
-      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
-    }
-
-    Instrument.prototype.normalizedSet = function(paramIdx, paramValue) {
-      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    };
-
-    Instrument.prototype.normalizedSetByName = function(paramName, paramValue) {
-      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps[this._type], paramName, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    };
-
-    function getInstIdByIndex(instrIdx) {
-      return r._song._instruments.objIds()[instrIdx];
-    }
-
-    function getGlobalTarget() {
-      var inst = r._song._instruments.getObjById(getInstIdByIndex(r._globalTarget));
-      if (notDefined(inst)) {
-        console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
-        return undefined;
-      }
-      return inst;
-    }
-
-    r.getParameter = function(paramIdx) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      return inst.normalizedGet(paramIdx);
-    };
-
-    r.getParameterByName = function(paramName) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      return inst.normalizedGetByName(paramName);
-    }
-
-    r.setParameter = function(paramIdx, value) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      inst.normalizedSet(paramIdx, value);
-      return value;
-    };
-
-    r.setParameterByName = function(paramName, value) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      inst.normalizedSetByName(paramName, value);
-      return value;
-    }
-
-    // only one preview note is allowed at a time
-    var previewNote = undefined;
-    r.startPreviewNote = function(pitch, velocity) {
-      var keys = this._song._instruments.objIds();
-      if (keys.length === 0) {
-        return;
-      }
-
-      if (notDefined(previewNote)) {
-        var targetId = getInstIdByIndex(this._globalTarget);
-        var inst = this._song._instruments.getObjById(targetId);
-        if (notDefined(inst)) {
-          console.log("[Rhombus] - Trying to trigger note on undefined instrument");
-          return;
-        }
-
-        if (notDefined(velocity) || velocity < 0 || velocity > 1) {
-          velocity = 0.5;
-        }
-
-        previewNote = new this.RtNote(pitch, 0, 0, targetId);
-        inst.triggerAttack(previewNote._id, pitch, 0, velocity);
-      }
-    };
-
-    r.stopPreviewNote = function() {
-      var keys = this._song._instruments.objIds();
-      if (keys.length === 0) {
-        return;
-      }
-
-      if (isDefined(previewNote)) {
-        var inst = this._song._instruments.getObjById(previewNote._target);
-        if (notDefined(inst)) {
-          console.log("[Rhombus] - Trying to release note on undefined instrument");
-          return;
-        }
-
-        inst.triggerRelease(previewNote._id, 0);
-        previewNote = undefined;
-      }
-    };
+    r._ToneInstrument = ToneInstrument;
   };
 })(this.Rhombus);
 
