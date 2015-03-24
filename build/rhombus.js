@@ -1896,13 +1896,7 @@
 
     // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, velocity, id) {
-      if (isDefined(id)) {
-        r._setId(this, id);
-      } else {
-        r._newId(this);
-      }
-
-      // validate the pitch
+       // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
         return undefined;
       }
@@ -1920,6 +1914,12 @@
       // validate the start
       if (!isNumber(velocity) || velocity < 0) {
         return undefined;
+      }
+
+      if (isDefined(id)) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
       }
 
       this._pitch    = +pitch;
@@ -1955,6 +1955,16 @@
       // TODO: check for off-by-one issues
       getEnd: function() {
         return this._start + this._length;
+      },
+
+      toJSON: function() {
+        var jsonObj = {
+          _pitch: this._pitch,
+          _start: this._start,
+          _length: this._length,
+          _velocity: this._velocity
+        };
+        return jsonObj;
       }
     };
   };

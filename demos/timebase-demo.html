@@ -48,7 +48,7 @@ var last = 960 - interval;
 
 var patId = rhomb._song.addPattern();
 function ins(a, b, c) {
-  rhomb.Edit.insertNote(new rhomb.Note(a, b, c), patId);
+  rhomb.Edit.insertNote(new rhomb.Note(a, b, c, 1.0), patId);
 }
 
 var instrId = rhomb.addInstrument("mono");
