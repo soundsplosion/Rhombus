@@ -770,6 +770,27 @@
       return cycleProof(a, b, []);
     }
 
+    function hasChild(B) {
+      for (var i = 0; i < this._graphChildren.length; i++) {
+        if (this._graphChildren[i] === B._id) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function hasParent(A) {
+      return A.hasChild(this);
+    }
+
+    function hasDescendant(B) {
+      return connectionExists(this, B);
+    }
+
+    function hasAncestor(A) {
+      return A.hasDescendant(this);
+    }
+
     function graphConnect(B) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
@@ -778,7 +799,13 @@
         B._graphParents = [];
       }
 
+      // Don't allow cycles
       if (connectionExists(B, this)) {
+        return false;
+      }
+
+      // Don't allow multiple connections to the same object
+      if (this.hasChild(B)) {
         return false;
       }
 
@@ -844,6 +871,10 @@
     }
 
     r._addGraphFunctions = function(ctr) {
+      ctr.prototype.hasChild = hasChild;
+      ctr.prototype.hasParent = hasParent;
+      ctr.prototype.hasAncestor = hasAncestor;
+      ctr.prototype.hasDescendant = hasDescendant;
       ctr.prototype.graphChildren = graphChildren;
       ctr.prototype.graphParents = graphParents;
       ctr.prototype.graphConnect = graphConnect;
