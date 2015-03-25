@@ -19,7 +19,8 @@
 
     r.addEffect = function(type, options, gc, gp, id) {
       var ctrMap = {
-        "dist" : r._Distortion
+        "dist" : r._Distortion,
+        "filt" : r._Filter
         // TODO: add more
       };
 
