@@ -42,6 +42,19 @@
     return obj !== null;
   };
 
+  window.quantizeTick = function(tickVal, quantize) {
+    if ((tickVal % quantize) > (quantize / 2)) {
+      return (Math.floor(tickVal/quantize) * quantize) + quantize;
+    }
+    else {
+      return Math.floor(tickVal/quantize) * quantize;
+    }
+  };
+
+  window.roundTick = function(tickVal, quantize) {
+    return Math.floor(tickVal/quantize) * quantize;
+  };
+
   window.ticksToMusicalTime = function(ticks) {
     if (notDefined(ticks)) {
       return undefined;
