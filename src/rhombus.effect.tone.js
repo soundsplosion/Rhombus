@@ -13,9 +13,10 @@
     r._addEffectFunctions(dist);
     r._Distortion = dist;
 
-    dist._unnormalizeMap = {
+    dist.prototype._unnormalizeMap = {
       "dry" : [Rhombus._map.mapIdentity, rawDisplay, 0],
       "wet" : [Rhombus._map.mapIdentity, rawDisplay, 1]
     };
+
   };
 })(this.Rhombus);

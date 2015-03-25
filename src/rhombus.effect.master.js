@@ -12,5 +12,7 @@
     Tone.extend(Master, Tone.Effect);
     r._addEffectFunctions(Master);
     r._Master = Master;
+
+    Master.prototype._unnormalizeMap = {};
   };
 })(this.Rhombus);

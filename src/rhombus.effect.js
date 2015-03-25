@@ -108,7 +108,7 @@
     }
    
     function installFunctions(ctr) {
-      ctr._normalizedObjectSet = normalizedObjectSet;
+      ctr.prototype._normalizedObjectSet = normalizedObjectSet;
       r._addParamFunctions(ctr);
       r._addGraphFunctions(ctr);
       ctr.prototype.toJSON = toJSON;

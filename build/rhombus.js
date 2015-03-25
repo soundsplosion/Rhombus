@@ -1802,7 +1802,7 @@
     }
    
     function installFunctions(ctr) {
-      ctr._normalizedObjectSet = normalizedObjectSet;
+      ctr.prototype._normalizedObjectSet = normalizedObjectSet;
       r._addParamFunctions(ctr);
       r._addGraphFunctions(ctr);
       ctr.prototype.toJSON = toJSON;
@@ -1871,10 +1871,11 @@
     r._addEffectFunctions(dist);
     r._Distortion = dist;
 
-    dist._unnormalizeMap = {
+    dist.prototype._unnormalizeMap = {
       "dry" : [Rhombus._map.mapIdentity, rawDisplay, 0],
       "wet" : [Rhombus._map.mapIdentity, rawDisplay, 1]
     };
+
   };
 })(this.Rhombus);
 
@@ -1892,6 +1893,8 @@
     Tone.extend(Master, Tone.Effect);
     r._addEffectFunctions(Master);
     r._Master = Master;
+
+    Master.prototype._unnormalizeMap = {};
   };
 })(this.Rhombus);
 
