@@ -80,7 +80,7 @@
       }
     }
     Tone.extend(Sampler, Tone.Instrument);
-    r._addInstrumentFunctions(Sampler);
+    r._addParamFunctions(Sampler);
     r._addGraphFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(bufferMap) {

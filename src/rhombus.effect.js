@@ -4,41 +4,66 @@
 (function (Rhombus) {
   Rhombus._effectSetup = function(r) {
 
-    var dist = Tone.Distortion;
-    var mast = Rhombus.Master;
+    function masterAdded(song) {
+      var effs = song.getEffects();
+      var effIds = Object.keys(song.getEffects());
+      for (var i = 0; i < effIds.length; i++) {
+        var effId = effIds[i];
+        var eff = effs[effId];
+        if (eff.isMaster()) {
+          return true;
+        }
+      }
+      return false;
+    }
 
-    r._addGraphFunctions(dist);
-    r._addGraphFunctions(mast);
-    installFunctions(dist);
-    installFunctions(mast);
+    r.addEffect = function(type, options, gc, gp, id) {
+      var ctrMap = {
+        "dist" : r._Distortion
+        // TODO: add more
+      };
 
-    var typeMap = {
-      // TODO: more effect types
-      "dist": dist,
-      "mast": mast
-    };
-
-    function makeEffect(type, options, gc, gp, id) {
-      var ctr = typeMap[type];
-      if (isNull(ctr) || notDefined(ctr)) {
-        type = "dist";
-        ctr = dist;
+      var ctr;
+      if (type === "mast") {
+        if (masterAdded(r._song)) {
+          return;
+        }
+        ctr = r._Master;
+      } else {
+        ctr = ctrMap[type];
       }
 
-      var unnormalized = unnormalizedParams(options, type);
+      if (notDefined(ctr)) {
+        ctr = ctrMap["dist"];
+      }
+
+      var unnormalizeMap = ctr.prototype._unnormalizeMap;
+      var unnormalized = Rhombus._map.unnormalizedParams(options, unnormalizeMap);
       var eff = new ctr(unnormalized);
+
+      if (isNull(eff) || notDefined(eff)) {
+        return;
+      }
+
       if (isNull(id) || notDefined(id)) {
         r._newId(eff);
       } else {
         r._setId(eff, id);
       }
 
+      eff._type = type;
+      eff._currentParams = {};
+      eff._trackParams(options);
+
       if (isDefined(gc)) {
         for (var i = 0; i < gc.length; i++) {
           gc[i] = +(gc[i]);
         }
         eff._graphChildren = gc;
+      } else {
+        r._toMaster(eff);
       }
+
       if (isDefined(gp)) {
         for (var i = 0; i < gp.length; i++) {
           gp[i] = +(gp[i]);
@@ -46,42 +71,9 @@
         eff._graphParents = gp;
       }
 
-      eff._type = type;
-      eff._currentParams = {};
-      eff._trackParams(options);
-
-      return eff;
+      this._song._effects[eff._id] = eff;
+      return eff._id;
     }
-
-    function isMaster() { return false; }
-    function installFunctions(ctr) {
-      ctr.prototype.normalizedObjectSet = normalizedObjectSet;
-      ctr.prototype.parameterCount = parameterCount;
-      ctr.prototype.parameterName = parameterName;
-      ctr.prototype.normalizedSet = normalizedSet;
-      ctr.prototype.toJSON = toJSON;
-      ctr.prototype._trackParams = trackParams;
-      ctr.prototype.isMaster = isMaster;
-    }
-
-    var masterAdded = false;
-    r.addEffect = function(type, options, gc, gp, id) {
-      if (masterAdded && type === "mast") {
-        return;
-      }
-
-      var effect = makeEffect(type, options, gc, gp, id);
-
-      if (isNull(effect) || notDefined(effect)) {
-        return;
-      }
-
-      this._song._effects[effect._id] = effect;
-      return effect._id;
-    }
-
-    // Add the master effect
-    r.addEffect("mast");
 
     function inToId(effectOrId) {
       var id;
@@ -102,6 +94,8 @@
       delete this._song._effects[id];
     }
 
+    function isMaster() { return false; }
+ 
     function toJSON(params) {
       var jsonVersion = {
         "_id": this._id,
@@ -112,34 +106,41 @@
       };
       return jsonVersion;
     }
-
-    // Parameter stuff
-    var unnormalizeMaps = {
-      "dist" : {
-        "dry" : Rhombus._map.mapIdentity,
-        "wet" : Rhombus._map.mapIdentity
-      },
-      "mast" : {}
-      // TODO: more stuff here
-    };
-
-    function unnormalizedParams(params, type) {
-      return Rhombus._map.unnormalizedParams(params, type, unnormalizeMaps);
+   
+    function installFunctions(ctr) {
+      ctr._normalizedObjectSet = normalizedObjectSet;
+      r._addParamFunctions(ctr);
+      r._addGraphFunctions(ctr);
+      ctr.prototype.toJSON = toJSON;
+      ctr.prototype.isMaster = isMaster;
     }
+    r._addEffectFunctions = installFunctions;
 
-    function normalizedObjectSet(params) {
+    function normalizedObjectSet(params, internal) {
+      if (notObject(params)) {
+        return;
+      }
+
+      if (!internal) {
+        var rthis = this;
+        var oldParams = this._currentParams;
+
+        r.Undo._addUndoAction(function() {
+          rthis._normalizedObjectSet(oldParams, true);
+        });
+      }
       this._trackParams(params);
-      var unnormalized = unnormalizedParams(params, this._type);
+      var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
       this.set(unnormalized);
     }
 
     // Parameter list interface
     function parameterCount() {
-      return Rhombus._map.subtreeCount(unnormalizeMaps[this._type]);
+      return Rhombus._map.subtreeCount(this._unnormalizeMap);
     }
 
     function parameterName(paramIdx) {
-      var name = Rhombus._map.getParameterName(unnormalizeMaps[this._type], paramIdx);
+      var name = Rhombus._map.getParameterName(this._unnormalizeMap, paramIdx);
       if (typeof name !== "string") {
         return;
       }
@@ -147,7 +148,7 @@
     }
 
     function normalizedSet(paramIdx, paramValue) {
-      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps[this._type], paramIdx, paramValue);
+      var setObj = Rhombus._map.generateSetObject(this._unnormalizeMap, paramIdx, paramValue);
       if (typeof setObj !== "object") {
         return;
       }

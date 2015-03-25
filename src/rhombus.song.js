@@ -194,9 +194,9 @@
 
     r.initSong = function() {
       r._song = new Song();
+      // Add the master effect
+      r.addEffect("mast");
     };
-
-    r.initSong();
 
     r.importSong = function(json) {
       this._song = new Song();
