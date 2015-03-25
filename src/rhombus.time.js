@@ -48,6 +48,7 @@
       var aheadTicks = r.seconds2Ticks(scheduleAhead);
       var loopStart = r.getLoopStart();
       var loopEnd = r.getLoopEnd();
+      var songEnd = r.getSong().getLength();
 
       // Determine if playback needs to loop around in this time window
       var doWrap = (!loopOverride && r.getLoopEnabled()) &&
@@ -55,6 +56,8 @@
 
       var scheduleStart = lastScheduled;
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
+      scheduleEnd = (scheduleEnd < songEnd) ? scheduleEnd : songEnd;
+
 
       // TODO: decide to use the elapsed time since playback started,
       //       or the context time
@@ -106,12 +109,12 @@
                 continue;
               }
 
-              // TODO: don't schedule notes that start after the end of the song
               if (start >= scheduleStart &&
                   start < scheduleEnd &&
                   start < itemEnd) {
                 var delay = r.ticks2Seconds(start) - curPos;
 
+                // TODO: disambiguate startTime
                 var startTime = curTime + delay;
                 var endTime = startTime + r.ticks2Seconds(note._length);
 
@@ -137,7 +140,8 @@
       }
       else if (nowTicks >= r.getSong().getLength()) {
         // TODO: we SHOULD stop playback, and somehow alert the GUI
-        //r.stopPlayback();
+        r.stopPlayback();
+        document.dispatchEvent(new CustomEvent("rhombus-stop", {"detail": "stop"}));
       }
     }
 
@@ -245,9 +249,18 @@
 
       playing = false;
       scheduleWorker.postMessage({ playing: false });
+
+      // round the last scheduled tick down to the nearest 16th note
       lastScheduled = this.seconds2Ticks(time);
+      lastScheduled = roundTick(lastScheduled, 120);
+
       this.killAllNotes();
-      time = getPosition(true);
+
+      // round the position down to the nearest 16th note
+      var nowTicks = r.seconds2Ticks(getPosition(true));
+      nowTicks = roundTick(nowTicks, 120);
+
+      time = r.ticks2Seconds(nowTicks);
     };
 
     r.loopPlayback = function(nowTicks) {
