@@ -812,10 +812,11 @@
       // disconnect from one thing. Put gain nodes in the middle
       // or something.
       this.disconnect();
+      var that = this;
       this._graphChildren.forEach(function(idx) {
         var child = graphLookup(idx);
         if (isDefined(child)) {
-          this.connect(child);
+          that.connect(child);
         }
       });
     }
