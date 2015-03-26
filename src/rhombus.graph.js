@@ -114,6 +114,7 @@
       }
       return r._song._effects[id];
     }
+    r.graphLookup = graphLookup;
 
     function graphChildren() {
       if (notDefined(this._graphChildren)) {
@@ -140,17 +141,20 @@
       ctr.prototype.graphDisconnect = graphDisconnect;
     };
 
-    r._toMaster = function(node) {
+    r.getMaster = function() {
       var effects = r._song._effects;
-      var master;
       var effectIds = Object.keys(effects);
       for (var idIdx in effectIds) {
         var effect = effects[effectIds[idIdx]];
         if (effect.isMaster()) {
-          master = effect;
-          break;
+          return effect;
         }
       }
+      return undefined;
+    }
+
+    r._toMaster = function(node) {
+      var master = this.getMaster();
 
       if (notDefined(master)) {
         return;
