@@ -64,15 +64,22 @@
       // TODO: put checks on the input arguments
       var note = r._song._patterns[ptnId]._noteMap[noteId];
 
-      if (notDefined(note) || (pitch === note.getPitch())) {
+      if (notDefined(note)) {
         return undefined;
       }
 
-      r._song._instruments.objIds().forEach(function(instId) {
-        r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+      var oldPitch = note._pitch;
+      r.Undo._addUndoAction(function() {
+        note._pitch = oldPitch;
       });
 
-      note._pitch = pitch;
+      if (pitch !== note.getPitch()) {
+        r._song._instruments.objIds().forEach(function(instId) {
+          r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+        });
+
+        note._pitch = pitch;
+      }
 
       // Could return anything here...
       return noteId;
@@ -131,6 +138,11 @@
       }
 
       dstPtn.setName(srcPtn.getName() + "-copy");
+
+      r.Undo._addUndoAction(function() {
+        delete r._song._patterns[dstPtn._id];
+      });
+
       r._song._patterns[dstPtn._id] = dstPtn;
       return dstPtn._id;
     };
@@ -183,6 +195,13 @@
       dstL.setName(srcPtn.getName() + "-A");
       dstR.setName(srcPtn.getName() + "-B");
 
+      var lId = dstL._id;
+      var rId = dstR._id;
+      r.Undo.addUndoAction(function() {
+        delete r._song._patterns[lId];
+        delete r._song._patterns[rId];
+      });
+
       // Add the two new patterns to the song pattern set
       r._song._patterns[dstL._id] = dstL;
       r._song._patterns[dstR._id] = dstR;
@@ -222,8 +241,25 @@
     };
 
     r.Edit.quantizeNotes = function(notes, quantize, doEnds) {
+      var notes = [];
+      var oldStarts = [];
+      var oldLengths = [];
+
+      r.Undo.addUndoAction(function() {
+        for (var i = 0; i < notes.length; i++) {
+          var note = notes[i];
+          note._start = oldStarts[i];
+          note._length = oldLengths[i];
+        }
+      });
+
       for (var i = 0; i < notes.length; i++) {
-        var srcNote = notes[i]
+        var srcNote = notes[i];
+
+        notes.push(srcNote);
+        oldStarts.push(srcNote._start);
+        oldLengths.push(srcNote._length);
+
         var srcStart = srcNote.getStart();
         srcNote._start = quantizeTick(srcStart, quantize);
 
