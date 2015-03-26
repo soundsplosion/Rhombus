@@ -1,4 +1,4 @@
-//! rhombus.sampler.js
+//! rhombus.instrument.sampler.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
@@ -48,6 +48,7 @@
 
       Tone.Instrument.call(this);
 
+      this._unnormalizeMap = samplerUnnormalizeMap;
       this._names = {};
       this.samples = {};
       this._triggered = {};
@@ -62,7 +63,7 @@
       var thisSampler = this;
 
       var finish = function() {
-        var def = Rhombus._map.generateDefaultSetObj(unnormalizeMaps["samp"]);
+        var def = Rhombus._map.generateDefaultSetObj(samplerUnnormalizeMap);
         thisSampler._normalizedObjectSet(def, true);
         if (isDefined(options) && isDefined(options.params)) {
           thisSampler._normalizedObjectSet(options.params, true);
@@ -79,6 +80,7 @@
       }
     }
     Tone.extend(Sampler, Tone.Instrument);
+    r._addParamFunctions(Sampler);
     r._addGraphFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(bufferMap) {
@@ -203,23 +205,16 @@
       return jsonVersion;
     };
 
-    // The map is structured like this for the Rhombus._map.unnormalizedParams call.
-    var unnormalizeMaps = {
-      "samp" : {
-        "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
-        "playbackRate" : [Rhombus._map.mapExp(0.1, 10), Rhombus._map.rawDisplay, 0.5],
-        "player" : {
-          "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
-        },
-        "envelope" : Rhombus._map.envelopeMap,
-        "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-        "filter" : Rhombus._map.filterMap
-      }
+    var samplerUnnormalizeMap = {
+      "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
+      "playbackRate" : [Rhombus._map.mapExp(0.1, 10), Rhombus._map.rawDisplay, 0.5],
+      "player" : {
+        "loop" : [Rhombus._map.mapDiscrete(false, true), Rhombus._map.rawDisplay, 0]
+      },
+      "envelope" : Rhombus._map.envelopeMap,
+      "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
+      "filter" : Rhombus._map.filterMap
     };
-
-    function unnormalizedParams(params) {
-      return Rhombus._map.unnormalizedParams(params, "samp", unnormalizeMaps);
-    }
 
     Sampler.prototype._normalizedObjectSet = function(params, internal) {
       if (notObject(params)) {
@@ -236,80 +231,12 @@
       }
       this._trackParams(params);
 
-      var unnormalized = unnormalizedParams(params);
+      var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
       var samplerKeys = Object.keys(this.samples);
       for (var idx in samplerKeys) {
         var sampler = this.samples[samplerKeys[idx]];
         sampler.set(unnormalized);
       }
-    };
-
-    Sampler.prototype.parameterCount = function() {
-      return Rhombus._map.subtreeCount(unnormalizeMaps["samp"]);
-    };
-
-    Sampler.prototype.parameterName = function(paramIdx) {
-      var name = Rhombus._map.getParameterName(unnormalizeMaps["samp"], paramIdx);
-      if (typeof name !== "string") {
-        return;
-      }
-      return name;
-    };
-
-    // Parameter display stuff
-    Sampler.prototype.parameterDisplayString = function(paramIdx) {
-      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
-    };
-
-    Sampler.prototype.parameterDisplayStringByName = function(paramName) {
-      var pieces = paramName.split(":");
-
-      var curValue = this._currentParams;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps["samp"], paramName, curValue);
-      var realObj = unnormalizedParams(setObj, this._type);
-
-      curValue = realObj;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var displayValue = curValue;
-      var disp = Rhombus._map.getDisplayFunctionByName(unnormalizeMaps["samp"], paramName);
-      return disp(displayValue);
-    };
-
-    Sampler.prototype.normalizedGet = function(paramIdx) {
-      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
-    };
-
-    Sampler.prototype.normalizedGetByName = function(paramName) {
-      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
-    };
-
-    Sampler.prototype.normalizedSet = function(paramIdx, paramValue) {
-      var setObj = Rhombus._map.generateSetObject(unnormalizeMaps["samp"], paramIdx, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    };
-
-    Sampler.prototype.normalizedSetByName = function(paramName, paramValue) {
-      var setObj = Rhombus._map.generateSetObjectByName(unnormalizeMaps["samp"], paramName, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
     };
 
     r._Sampler = Sampler;
