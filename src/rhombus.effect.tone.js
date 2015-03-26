@@ -39,7 +39,8 @@
     r._Distortion = dist;
 
     dist.prototype._unnormalizeMap = makeEffectMap({
-      // TODO: more here
+      "distortion" : [Rhombus._map.mapIdentity, rawDisplay, 0.4],
+      "oversample" : [Rhombus._map.mapDiscrete("none", "2x", "4x"), rawDisplay, 0.0]
     });
 
     // BitCrusher
