@@ -21,7 +21,8 @@
       var ctrMap = {
         "dist" : r._Distortion,
         "filt" : r._Filter,
-        "eq"   : r._EQ
+        "eq"   : r._EQ,
+        "dely" : r._Delay
         // TODO: add more
       };
 

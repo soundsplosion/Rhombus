@@ -1715,7 +1715,8 @@
       var ctrMap = {
         "dist" : r._Distortion,
         "filt" : r._Filter,
-        "eq"   : r._EQ
+        "eq"   : r._EQ,
+        "dely" : r._Delay
         // TODO: add more
       };
 
@@ -1939,6 +1940,27 @@
       "lowFrequency" : [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.2],
       "highFrequency": [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.8]
     });
+
+    function delay() {
+      Tone.Effect.call(this);
+      this._delay = r._ctx.createDelay(10.5);
+      this.connectEffect(this._delay);
+    }
+    Tone.extend(delay, Tone.Effect);
+    r._addEffectFunctions(delay);
+    r._Delay = delay;
+
+    delay.prototype.set = function(options) {
+      Tone.Effect.prototype.set.apply(this, arguments);
+      if (isDefined(options) && isDefined(options.delay)) {
+        this._delay.delayTime.value = options.delay;
+      }
+    };
+
+    delay.prototype._unnormalizeMap = makeEffectMap({
+      "delay" : [Rhombus._map.timeMapFn, Rhombus._map.secondsDisplay, 0.2]
+    });
+
   };
 })(this.Rhombus);
 
