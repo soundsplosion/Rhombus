@@ -79,6 +79,11 @@
         eff._graphParents = gp;
       }
 
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        delete that._song._effects[eff._id];
+      });
+
       this._song._effects[eff._id] = eff;
       return eff._id;
     }
@@ -99,8 +104,15 @@
         return;
       }
 
+      var that = this;
+      var oldEffect = this._song._effects[id];
+      r.Undo._addUndoAction(function() {
+        // TODO: restore connections that came into/went out of this node
+        this._song._effects[id] = oldEffect;
+      });
+      // TODO: break connections coming into/going out of this node
       delete this._song._effects[id];
-    }
+    };
 
     function isMaster() { return false; }
  
@@ -130,11 +142,10 @@
       }
 
       if (!internal) {
-        var rthis = this;
+        var that = this;
         var oldParams = this._currentParams;
-
         r.Undo._addUndoAction(function() {
-          rthis._normalizedObjectSet(oldParams, true);
+          that._normalizedObjectSet(oldParams, true);
         });
       }
       this._trackParams(params);

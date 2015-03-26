@@ -68,6 +68,11 @@
         return false;
       }
 
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.graphDisconnect(B);
+      });
+
       this._graphChildren.push(B._id);
       B._graphParents.push(this._id);
 
@@ -93,6 +98,11 @@
         B._graphParents.splice(BIdx, 1);
       }
 
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.graphConnect(B);
+      });
+
       // TODO: this should be replaced in such a way that we
       // don't break all the outgoing connections every time we
       // disconnect from one thing. Put gain nodes in the middle
@@ -114,6 +124,7 @@
       }
       return r._song._effects[id];
     }
+    r.graphLookup = graphLookup;
 
     function graphChildren() {
       if (notDefined(this._graphChildren)) {
@@ -140,17 +151,20 @@
       ctr.prototype.graphDisconnect = graphDisconnect;
     };
 
-    r._toMaster = function(node) {
+    r.getMaster = function() {
       var effects = r._song._effects;
-      var master;
       var effectIds = Object.keys(effects);
       for (var idIdx in effectIds) {
         var effect = effects[effectIds[idIdx]];
         if (effect.isMaster()) {
-          master = effect;
-          break;
+          return effect;
         }
       }
+      return undefined;
+    }
+
+    r._toMaster = function(node) {
+      var master = this.getMaster();
 
       if (notDefined(master)) {
         return;

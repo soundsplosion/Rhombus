@@ -32,9 +32,9 @@
         }
 
         var oldStart = this._start;
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          rthis._start = oldStart;
+          that._start = oldStart;
         });
 
         return this._start = startVal;
@@ -55,9 +55,9 @@
         }
 
         var oldLength = this._length;
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          rthis._length = oldLength;
+          that._length = oldLength;
         });
 
         return this._length = lenVal;
@@ -120,8 +120,9 @@
           var oldValue = this._name;
           this._name = name.toString();
 
+          var that = this;
           r.Undo._addUndoAction(function() {
-            this._name = oldValue;
+            that._name = oldValue;
           });
 
           return this._name;
@@ -136,6 +137,12 @@
         if (typeof mute !== "boolean") {
           return undefined;
         }
+
+        var oldMute = this._mute;
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._mute = oldMute;
+        });
 
         this._mute = mute;
         return mute;
@@ -155,6 +162,14 @@
         }
 
         var soloList = r._song._soloList;
+
+        var oldSolo = this._solo;
+        var oldSoloList = soloList.slice(0);
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._solo = oldSolo;
+          r._song._soloList = oldSoloList;
+        });
 
         // Get the index of the current track in the solo list
         var index = soloList.indexOf(this._id);
@@ -224,9 +239,9 @@
         var newItem = new r.PlaylistItem(this._id, ptnId, start, length);
         this._playlist[newItem._id] = newItem;
 
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          delete rthis._playlist[newItem._id];
+          delete that._playlist[newItem._id];
         });
 
         return newItem._id;
@@ -260,9 +275,9 @@
         } else {
 
           var obj = this._playlist[itemId];
-          var rthis = this;
+          var that = this;
           r.Undo._addUndoAction(function() {
-            rthis._playlist[itemId] = obj;
+            that._playlist[itemId] = obj;
           });
 
           delete this._playlist[itemId.toString()];
