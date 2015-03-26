@@ -33,6 +33,10 @@
         instr._graphParents = gp;
       }
 
+      var idToRemove = instr._id;
+      r.Undo._addUndoAction(function() {
+        r.removeInstrument(idToRemove);
+      });
       this._song._instruments.addObj(instr, idx);
       return instr._id;
     };
@@ -52,6 +56,12 @@
       if (id < 0) {
         return;
       }
+
+      var oldSlot = r._song._instruments.getSlotById(id);
+      var oldInstr = r._song._instruments.getObjById(id);
+      r.Undo._addUndoAction(function() {
+        r._song._instruments.addObj(oldInstr, oldSlot);
+      });
 
       r._song._instruments.removeId(id);
     };

@@ -319,11 +319,10 @@
       }
 
       if (!internal) {
-        var rthis = this;
+        var that = this;
         var oldParams = this._currentParams;
-
         r.Undo._addUndoAction(function() {
-          rthis._normalizedObjectSet(oldParams, true);
+          that._normalizedObjectSet(oldParams, true);
         });
       }
       this._trackParams(params);

@@ -177,6 +177,12 @@
         return undefined;
       }
 
+      var oldBpm = this._song._bpm;
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.setBpm(oldBpm);
+      });
+
       // Rescale the end time of notes that are currently playing
       var timeScale = this._song._bpm / +bpm;
       var curTime = r.getElapsedTime();
