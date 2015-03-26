@@ -38,10 +38,41 @@
     r._addEffectFunctions(dist);
     r._Distortion = dist;
 
-    var distParams = {
+    dist.prototype._unnormalizeMap = makeEffectMap({
       // TODO: more here
+    });
+
+    // BitCrusher
+    function bitcrusher() {
+      Tone.Effect.apply(this, arguments);
+    }
+    Tone.extend(bitcrusher, Tone.Effect);
+    r._addEffectFunctions(bitcrusher);
+    r._BitCrusher = bitcrusher;
+
+    bitcrusher.prototype.set = function(options) {
+      Tone.Effect.prototype.set.apply(this, arguments);
+
+      if (isDefined(options) && isDefined(options.bits)) {
+        if (isDefined(this._bitCrusher)) {
+          this.effectSend.disconnect();
+          this._bitCrusher.disconnect();
+          this._bitCrusher = undefined;
+        }
+        this._bitCrusher = new Tone.BitCrusher({ bits: options.bits });
+        this.connectEffect(this._bitCrusher);
+      }
     };
-    dist.prototype._unnormalizeMap = makeEffectMap(distParams);
+
+    var bitValues = [];
+    (function() {
+      for (var i = 1; i <= 16; i++) {
+        bitValues.push(i);
+      }
+    })();
+    bitcrusher.prototype._unnormalizeMap = makeEffectMap({
+      "bits" : [Rhombus._map.mapDiscrete.apply(this, bitValues), rawDisplay, 0.49]
+    });
 
     // Filter
     function filter() {

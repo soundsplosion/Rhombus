@@ -24,7 +24,8 @@
         "eq"   : r._EQ,
         "dely" : r._Delay,
         "comp" : r._Compressor,
-        "gain" : r._Gainer
+        "gain" : r._Gainer,
+        "bitc" : r._BitCrusher
         // TODO: add more
       };
 
