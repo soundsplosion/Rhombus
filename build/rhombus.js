@@ -1717,7 +1717,8 @@
         "filt" : r._Filter,
         "eq"   : r._EQ,
         "dely" : r._Delay,
-        "comp" : r._Compressor
+        "comp" : r._Compressor,
+        "gain" : r._Gainer
         // TODO: add more
       };
 
@@ -1991,6 +1992,27 @@
       "knee" : [Rhombus._map.mapLinear(0, 40), dbDisplay, 0.75],
       "ratio" : [Rhombus._map.mapLinear(1, 20), dbDisplay, 11.0/19.0]
     });
+
+    // Gain
+    function gain() {
+      Tone.Effect.call(this);
+      this.effectSend.connect(this.effectReturn);
+    }
+    Tone.extend(gain, Tone.Effect);
+    r._addEffectFunctions(gain);
+    r._Gainer = gain;
+
+    gain.prototype.set = function(options) {
+      Tone.Effect.prototype.set.apply(this, arguments);
+      if (isDefined(options) && isDefined(options.gain)) {
+        this.input.gain.value = options.gain;
+      }
+    };
+
+    gain.prototype._unnormalizeMap = makeEffectMap({
+      "gain" : [Rhombus._map.mapLinear(0, 3), rawDisplay, 1.0/3.0]
+    });
+
   };
 })(this.Rhombus);
 

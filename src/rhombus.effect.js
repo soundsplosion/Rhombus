@@ -23,7 +23,8 @@
         "filt" : r._Filter,
         "eq"   : r._EQ,
         "dely" : r._Delay,
-        "comp" : r._Compressor
+        "comp" : r._Compressor,
+        "gain" : r._Gainer
         // TODO: add more
       };
 
