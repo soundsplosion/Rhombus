@@ -801,6 +801,11 @@
         return false;
       }
 
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.graphDisconnect(B);
+      });
+
       this._graphChildren.push(B._id);
       B._graphParents.push(this._id);
 
@@ -825,6 +830,11 @@
       if (BIdx !== -1) {
         B._graphParents.splice(BIdx, 1);
       }
+
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.graphConnect(B);
+      });
 
       // TODO: this should be replaced in such a way that we
       // don't break all the outgoing connections every time we
@@ -1133,6 +1143,10 @@
         instr._graphParents = gp;
       }
 
+      var idToRemove = instr._id;
+      r.Undo._addUndoAction(function() {
+        r.removeInstrument(idToRemove);
+      });
       this._song._instruments.addObj(instr, idx);
       return instr._id;
     };
@@ -1152,6 +1166,12 @@
       if (id < 0) {
         return;
       }
+
+      var oldSlot = r._song._instruments.getSlotById(id);
+      var oldInstr = r._song._instruments.getObjById(id);
+      r.Undo._addUndoAction(function() {
+        r._song._instruments.addObj(oldInstr, oldSlot);
+      });
 
       r._song._instruments.removeId(id);
     };
@@ -1472,11 +1492,10 @@
       }
 
       if (!internal) {
-        var rthis = this;
+        var that = this;
         var oldParams = this._currentParams;
-
         r.Undo._addUndoAction(function() {
-          rthis._normalizedObjectSet(oldParams, true);
+          that._normalizedObjectSet(oldParams, true);
         });
       }
       this._trackParams(params);
@@ -1680,11 +1699,10 @@
       }
 
       if (!internal) {
-        var rthis = this;
+        var that = this;
         var oldParams = this._currentParams;
-
         r.Undo._addUndoAction(function() {
-          rthis._normalizedObjectSet(oldParams, true);
+          that._normalizedObjectSet(oldParams, true);
         });
       }
       this._trackParams(params);
@@ -1777,6 +1795,11 @@
         eff._graphParents = gp;
       }
 
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        delete that._song._effects[eff._id];
+      });
+
       this._song._effects[eff._id] = eff;
       return eff._id;
     }
@@ -1797,8 +1820,15 @@
         return;
       }
 
+      var that = this;
+      var oldEffect = this._song._effects[id];
+      r.Undo._addUndoAction(function() {
+        // TODO: restore connections that came into/went out of this node
+        this._song._effects[id] = oldEffect;
+      });
+      // TODO: break connections coming into/going out of this node
       delete this._song._effects[id];
-    }
+    };
 
     function isMaster() { return false; }
  
@@ -1828,11 +1858,10 @@
       }
 
       if (!internal) {
-        var rthis = this;
+        var that = this;
         var oldParams = this._currentParams;
-
         r.Undo._addUndoAction(function() {
-          rthis._normalizedObjectSet(oldParams, true);
+          that._normalizedObjectSet(oldParams, true);
         });
       }
       this._trackParams(params);
@@ -2105,6 +2134,11 @@
 
       setLength: function(length) {
         if (isDefined(length) && length >= 0) {
+          var oldLength = this._length;
+          var that = this;
+          r.Undo._addUndoAction(function() {
+            that._length = oldLength;
+          });
           this._length = length;
         }
       },
@@ -2120,9 +2154,9 @@
           var oldName = this._name;
           this._name = name.toString();
 
-          var rthis = this;
+          var that = this;
           r.Undo._addUndoAction(function() {
-            rthis._name = oldName;
+            that._name = oldName;
           });
 
           return this._name;
@@ -2135,6 +2169,11 @@
       },
 
       setColor: function(color) {
+        var oldColor = this._color;
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._color = oldColor;
+        });
         this._color = color;
       },
 
@@ -2149,8 +2188,9 @@
       deleteNote: function(noteId) {
         var note = this._noteMap[noteId];
 
-        if (notDefined(note))
+        if (notDefined(note)) {
           return undefined;
+        }
 
         delete this._noteMap[note._id];
 
@@ -2268,9 +2308,9 @@
         }
 
         var oldStart = this._start;
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          rthis._start = oldStart;
+          that._start = oldStart;
         });
 
         return this._start = startVal;
@@ -2291,9 +2331,9 @@
         }
 
         var oldLength = this._length;
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          rthis._length = oldLength;
+          that._length = oldLength;
         });
 
         return this._length = lenVal;
@@ -2356,8 +2396,9 @@
           var oldValue = this._name;
           this._name = name.toString();
 
+          var that = this;
           r.Undo._addUndoAction(function() {
-            this._name = oldValue;
+            that._name = oldValue;
           });
 
           return this._name;
@@ -2372,6 +2413,12 @@
         if (typeof mute !== "boolean") {
           return undefined;
         }
+
+        var oldMute = this._mute;
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._mute = oldMute;
+        });
 
         this._mute = mute;
         return mute;
@@ -2391,6 +2438,14 @@
         }
 
         var soloList = r._song._soloList;
+
+        var oldSolo = this._solo;
+        var oldSoloList = soloList.slice(0);
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._solo = oldSolo;
+          r._song._soloList = oldSoloList;
+        });
 
         // Get the index of the current track in the solo list
         var index = soloList.indexOf(this._id);
@@ -2460,9 +2515,9 @@
         var newItem = new r.PlaylistItem(this._id, ptnId, start, length);
         this._playlist[newItem._id] = newItem;
 
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          delete rthis._playlist[newItem._id];
+          delete that._playlist[newItem._id];
         });
 
         return newItem._id;
@@ -2496,9 +2551,9 @@
         } else {
 
           var obj = this._playlist[itemId];
-          var rthis = this;
+          var that = this;
           r.Undo._addUndoAction(function() {
-            rthis._playlist[itemId] = obj;
+            that._playlist[itemId] = obj;
           });
 
           delete this._playlist[itemId.toString()];
@@ -2588,9 +2643,9 @@
         }
         this._patterns[pattern._id] = pattern;
 
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          delete rthis._patterns[pattern._id];
+          delete that._patterns[pattern._id];
         });
 
         return pattern._id;
@@ -2604,9 +2659,9 @@
           return undefined;
         }
 
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          rthis._patterns[ptnId] = pattern;
+          that._patterns[ptnId] = pattern;
         });
 
         // TODO: make this action undoable
@@ -2630,9 +2685,9 @@
         var track = new r.Track();
         this._tracks.addObj(track);
 
-        var rthis = this;
+        var that = this;
         r.Undo._addUndoAction(function() {
-          rthis._tracks.removeObj(track);
+          that._tracks.removeObj(track);
         });
 
         // Return the ID of the new Track
@@ -2666,9 +2721,9 @@
           var slot = this._tracks.getSlotById(trkId);
           var track = this._tracks.removeId(trkId);
 
-          var rthis = this;
+          var that = this;
           r.Undo._addUndoAction(function() {
-            rthis._tracks.addObj(track, slot);
+            that._tracks.addObj(track, slot);
           });
 
           return trkId;
@@ -2818,6 +2873,9 @@
         this.setCurId(parsed._curId);
       }
 
+      // Undo actions generated by the import or from
+      // before the song import should not be used.
+      r._Undo._clearUndoStack();
     };
 
     r.setSampleResolver = function(resolver) {
@@ -3014,6 +3072,12 @@
         console.log("[Rhombus] - Invalid tempo");
         return undefined;
       }
+
+      var oldBpm = this._song._bpm;
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.setBpm(oldBpm);
+      });
 
       // Rescale the end time of notes that are currently playing
       var timeScale = this._song._bpm / +bpm;
@@ -3522,7 +3586,7 @@
 (function(Rhombus) {
   Rhombus._undoSetup = function(r) {
 
-    var stackSize = 5;
+    var stackSize = 10;
     var undoStack = [];
 
     r.Undo = {};
@@ -3535,6 +3599,10 @@
         insertIndex -= 1;
       }
       undoStack[insertIndex] = f;
+    };
+
+    r.Undo._clearUndoStack = function() {
+      undoStack = [];
     };
 
     r.Undo.canUndo = function() {

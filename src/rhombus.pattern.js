@@ -31,6 +31,11 @@
 
       setLength: function(length) {
         if (isDefined(length) && length >= 0) {
+          var oldLength = this._length;
+          var that = this;
+          r.Undo._addUndoAction(function() {
+            that._length = oldLength;
+          });
           this._length = length;
         }
       },
@@ -46,9 +51,9 @@
           var oldName = this._name;
           this._name = name.toString();
 
-          var rthis = this;
+          var that = this;
           r.Undo._addUndoAction(function() {
-            rthis._name = oldName;
+            that._name = oldName;
           });
 
           return this._name;
@@ -61,6 +66,11 @@
       },
 
       setColor: function(color) {
+        var oldColor = this._color;
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._color = oldColor;
+        });
         this._color = color;
       },
 
@@ -75,8 +85,9 @@
       deleteNote: function(noteId) {
         var note = this._noteMap[noteId];
 
-        if (notDefined(note))
+        if (notDefined(note)) {
           return undefined;
+        }
 
         delete this._noteMap[note._id];
 

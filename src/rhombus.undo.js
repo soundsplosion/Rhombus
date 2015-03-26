@@ -5,7 +5,7 @@
 (function(Rhombus) {
   Rhombus._undoSetup = function(r) {
 
-    var stackSize = 5;
+    var stackSize = 10;
     var undoStack = [];
 
     r.Undo = {};
@@ -18,6 +18,10 @@
         insertIndex -= 1;
       }
       undoStack[insertIndex] = f;
+    };
+
+    r.Undo._clearUndoStack = function() {
+      undoStack = [];
     };
 
     r.Undo.canUndo = function() {

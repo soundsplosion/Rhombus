@@ -68,6 +68,11 @@
         return false;
       }
 
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.graphDisconnect(B);
+      });
+
       this._graphChildren.push(B._id);
       B._graphParents.push(this._id);
 
@@ -92,6 +97,11 @@
       if (BIdx !== -1) {
         B._graphParents.splice(BIdx, 1);
       }
+
+      var that = this;
+      r.Undo._addUndoAction(function() {
+        that.graphConnect(B);
+      });
 
       // TODO: this should be replaced in such a way that we
       // don't break all the outgoing connections every time we
