@@ -142,7 +142,7 @@
       ["Osc Detune",      10, true,  false, true,  0.0]   // 20
     ];
 
-    ToneInstrument.prototype.getParamMap = function() {
+    ToneInstrument.prototype.getToneParamMap = function() {
       var map = {};
       for (var i = 0; i < paramMap.length; i++) {
         var param = {
@@ -160,7 +160,7 @@
       return map;
     };
 
-    ToneInstrument.prototype.getControls = function (controlHandler) {
+    ToneInstrument.prototype.getToneControls = function (controlHandler) {
       var controls = new Array();
       for (var i = 0; i < paramMap.length; i++) {
         controls.push( { id       : paramMap[i][0],
@@ -175,7 +175,7 @@
       return controls;
     };
 
-    ToneInstrument.prototype.getInterface = function() {
+    ToneInstrument.prototype.getToneInterface = function() {
 
       // create a container for the controls
       var div = document.createElement("div");
