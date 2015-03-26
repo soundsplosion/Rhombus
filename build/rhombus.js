@@ -1714,7 +1714,8 @@
     r.addEffect = function(type, options, gc, gp, id) {
       var ctrMap = {
         "dist" : r._Distortion,
-        "filt" : r._Filter
+        "filt" : r._Filter,
+        "eq"   : r._EQ
         // TODO: add more
       };
 
@@ -1732,9 +1733,7 @@
         ctr = ctrMap["dist"];
       }
 
-      var unnormalizeMap = ctr.prototype._unnormalizeMap;
-      var unnormalized = Rhombus._map.unnormalizedParams(options, unnormalizeMap);
-      var eff = new ctr(unnormalized);
+      var eff = new ctr();
 
       if (isNull(eff) || notDefined(eff)) {
         return;
@@ -1749,6 +1748,10 @@
       eff._type = type;
       eff._currentParams = {};
       eff._trackParams(options);
+
+      var def = Rhombus._map.generateDefaultSetObj(eff._unnormalizeMap);
+      eff._normalizedObjectSet(def, true);
+      eff._normalizedObjectSet(options, true);
 
       if (isDefined(gc)) {
         for (var i = 0; i < gc.length; i++) {
@@ -1914,6 +1917,28 @@
 
     filter.prototype._unnormalizeMap = makeEffectMap(Rhombus._map.filterMap);
 
+    function eq() {
+      Tone.Effect.call(this);
+      this._eq = construct(Tone.EQ, arguments);
+      this.connectEffect(this._eq);
+    }
+    Tone.extend(eq, Tone.Effect);
+    r._addEffectFunctions(eq);
+    r._EQ = eq;
+
+    eq.prototype.set = function() {
+      Tone.Effect.prototype.set.apply(this, arguments);
+      this._eq.set.apply(this._eq, arguments);
+    };
+
+    var volumeMap = [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 1.0];
+    eq.prototype._unnormalizeMap = makeEffectMap({
+      "low" : volumeMap,
+      "mid" : volumeMap,
+      "high" : volumeMap,
+      "lowFrequency" : [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.2],
+      "highFrequency": [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.8]
+    });
   };
 })(this.Rhombus);
 

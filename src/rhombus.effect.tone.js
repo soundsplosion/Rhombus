@@ -55,5 +55,27 @@
 
     filter.prototype._unnormalizeMap = makeEffectMap(Rhombus._map.filterMap);
 
+    function eq() {
+      Tone.Effect.call(this);
+      this._eq = construct(Tone.EQ, arguments);
+      this.connectEffect(this._eq);
+    }
+    Tone.extend(eq, Tone.Effect);
+    r._addEffectFunctions(eq);
+    r._EQ = eq;
+
+    eq.prototype.set = function() {
+      Tone.Effect.prototype.set.apply(this, arguments);
+      this._eq.set.apply(this._eq, arguments);
+    };
+
+    var volumeMap = [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 1.0];
+    eq.prototype._unnormalizeMap = makeEffectMap({
+      "low" : volumeMap,
+      "mid" : volumeMap,
+      "high" : volumeMap,
+      "lowFrequency" : [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.2],
+      "highFrequency": [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.8]
+    });
   };
 })(this.Rhombus);

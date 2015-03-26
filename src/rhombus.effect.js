@@ -20,7 +20,8 @@
     r.addEffect = function(type, options, gc, gp, id) {
       var ctrMap = {
         "dist" : r._Distortion,
-        "filt" : r._Filter
+        "filt" : r._Filter,
+        "eq"   : r._EQ
         // TODO: add more
       };
 
@@ -38,9 +39,7 @@
         ctr = ctrMap["dist"];
       }
 
-      var unnormalizeMap = ctr.prototype._unnormalizeMap;
-      var unnormalized = Rhombus._map.unnormalizedParams(options, unnormalizeMap);
-      var eff = new ctr(unnormalized);
+      var eff = new ctr();
 
       if (isNull(eff) || notDefined(eff)) {
         return;
@@ -55,6 +54,10 @@
       eff._type = type;
       eff._currentParams = {};
       eff._trackParams(options);
+
+      var def = Rhombus._map.generateDefaultSetObj(eff._unnormalizeMap);
+      eff._normalizedObjectSet(def, true);
+      eff._normalizedObjectSet(options, true);
 
       if (isDefined(gc)) {
         for (var i = 0; i < gc.length; i++) {
