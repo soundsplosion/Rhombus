@@ -1603,6 +1603,140 @@
       return jsonVersion;
     };
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // BEGIN ULTRAHAX
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // ["Display Name", scale, isVisible, isDiscrete, isBipolar, offset]
+
+    var paramMap = [
+      ["Portamento",       1, false, false, false, 0.0],  // 00
+      ["Volume",           4, true,  false, false, 0.0],  // 01
+      ["Osc Type",         5, true,  true,  false, 0.0],  // 02
+      ["Amp Attack",       1, true,  false, false, 0.0],  // 03
+      ["Amp Decay",        1, true,  false, false, 0.0],  // 04
+      ["Amp Sustain",      1, true,  false, false, 0.0],  // 05
+      ["Amp Release",      1, true,  false, false, 0.0],  // 06
+      ["Amp Exp",          1, false, false, false, 0.0],  // 07
+      ["Filter Type",      1, false, false, false, 0.0],  // 08
+      ["Filter Cutoff",    1, true,  false, false, 0.0],  // 09
+      ["Filter Rolloff",   1, false, false, false, 0.0],  // 10
+      ["Filter Resonance", 1, true,  false, false, 0.0],  // 11
+      ["Filter Gain",      1, false, false, false, 0.0],  // 12
+      ["Filter Attack",    1, true,  false, false, 0.0],  // 13
+      ["Filter Decay",     1, true,  false, false, 0.0],  // 14
+      ["Filter Sustain",   1, true,  false, false, 0.0],  // 15
+      ["Filter Release",   1, true,  false, false, 0.0],  // 16
+      ["Filter Min",       1, false, false, false, 0.0],  // 17
+      ["Filter Mod",       2, true,  false, false, 0.5],  // 18
+      ["Filter Exp",       1, false, false, false, 0.0],  // 19
+      ["Osc Detune",      10, true,  false, true,  0.0]   // 20
+    ];
+
+    ToneInstrument.prototype.getParamMap = function() {
+      var map = {};
+      for (var i = 0; i < paramMap.length; i++) {
+        var param = {
+          "name"     : paramMap[i][0],
+          "index"    : i,
+          "scale"    : paramMap[i][1],
+          "visible"  : paramMap[i][2],
+          "discrete" : paramMap[i][3],
+          "bipolar"  : paramMap[i][4],
+          "offset"   : paramMap[i][5]
+        };
+        map[paramMap[i][0]] = param;
+      }
+
+      return map;
+    };
+
+    ToneInstrument.prototype.getControls = function (controlHandler) {
+      var controls = new Array();
+      for (var i = 0; i < paramMap.length; i++) {
+        controls.push( { id       : paramMap[i][0],
+                         target   : this._id,
+                         on       : "input",
+                         callback : controlHandler,
+                         scale    : paramMap[i][1],
+                         discrete : paramMap[i][3],
+                         bipolar  : paramMap[i][4] } );
+      }
+
+      return controls;
+    };
+
+    ToneInstrument.prototype.getInterface = function() {
+
+      // create a container for the controls
+      var div = document.createElement("div");
+
+      // create controls for each of the parameters in the map
+      for (var i = 0; i < paramMap.length; i++) {
+        var param = paramMap[i];
+
+        // don't draw invisible controls
+        if (!param[2]) {
+          continue;
+        }
+
+        // paramter range and value stuff
+        var value = this.normalizedGet(i) * param[1];
+        var min = 0;
+        var max = 1;
+        var step = 0.01;
+
+        // bi-polar controls
+        if (param[4]) {
+          min = -1;
+          max = 1;
+          step = (max - min) / 100;
+          value = (this.normalizedGet(i) - 0.5) * param[1];
+        }
+
+        // discrete controls
+        if (param[3]) {
+          min = 0;
+          max = param[1];
+          step = 1;
+        }
+
+        //var form = document.createElement("form");
+        //form.setAttribute("oninput", param[0] +"Val.value=" + param[0] + ".value");
+
+        // control label
+        div.appendChild(document.createTextNode(param[0]));
+
+        var ctrl = document.createElement("input");
+        ctrl.setAttribute("id",     param[0]);
+        ctrl.setAttribute("name",   param[0]);
+        ctrl.setAttribute("class",  "newSlider");
+        ctrl.setAttribute("type",   "range");
+        ctrl.setAttribute("min",    min);
+        ctrl.setAttribute("max",    max);
+        ctrl.setAttribute("step",   step);
+        ctrl.setAttribute("value",  value);
+
+        //var output = document.createElement("output");
+        //output.setAttribute("id",    param[0] + "Val");
+        //output.setAttribute("name",  param[0] + "Val");
+        //output.setAttribute("value", value);
+
+        //form.appendChild(output);
+        //form.appendChild(ctrl);
+        //div.appendChild(form);
+
+        div.appendChild(ctrl);
+        div.appendChild(document.createElement("br"));
+      }
+
+      return div;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // END ULTRAHAX
+    ////////////////////////////////////////////////////////////////////////////////
+
     var secondsDisplay = Rhombus._map.secondsDisplay;
     var dbDisplay = Rhombus._map.dbDisplay;
     var rawDisplay = Rhombus._map.rawDisplay;
