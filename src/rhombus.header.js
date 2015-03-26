@@ -79,12 +79,23 @@
     root.Rhombus._patternSetup(this);
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
-    root.Rhombus._samplerSetup(this);
+    root.Rhombus._paramSetup(this);
+
+    // Instruments
     root.Rhombus._instrumentSetup(this);
+    root.Rhombus._wrappedInstrumentSetup(this);
+    root.Rhombus._samplerSetup(this);
+
+    // Effects
     root.Rhombus._effectSetup(this);
+    root.Rhombus._masterSetup(this);
+    root.Rhombus._wrappedEffectSetup(this);
+
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
     root.Rhombus._undoSetup(this);
+
+    this.initSong();
   };
 
 })(this);

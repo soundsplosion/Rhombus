@@ -391,7 +391,7 @@
     return count;
   };
 
-  Rhombus._map.unnormalizedParams = function(params, type, unnormalizeMaps) {
+  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap) {
     if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
@@ -418,7 +418,7 @@
       return returnObj;
     }
 
-    return unnormalized(params, unnormalizeMaps[type]);
+    return unnormalized(params, unnormalizeMap);
   };
 
   Rhombus._map.getParameterValue = function(obj, leftToCount) {
