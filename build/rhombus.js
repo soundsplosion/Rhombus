@@ -1716,7 +1716,8 @@
         "dist" : r._Distortion,
         "filt" : r._Filter,
         "eq"   : r._EQ,
-        "dely" : r._Delay
+        "dely" : r._Delay,
+        "comp" : r._Compressor
         // TODO: add more
       };
 
@@ -1875,9 +1876,12 @@
     return new F();
   }
 
+  var rawDisplay = Rhombus._map.rawDisplay;
+  var secondsDisplay = Rhombus._map.secondsDisplay;
+  var dbDisplay = Rhombus._map.dbDisplay;
+
   Rhombus._wrappedEffectSetup = function(r) {
 
-    var rawDisplay = Rhombus._map.rawDisplay;
     function makeEffectMap(obj) {
       var newObj = {};
       for (var prop in obj) {
@@ -1890,6 +1894,7 @@
       return newObj;
     }
 
+    // Distortion
     function dist() {
       Tone.Distortion.apply(this, arguments);
     }
@@ -1902,6 +1907,7 @@
     };
     dist.prototype._unnormalizeMap = makeEffectMap(distParams);
 
+    // Filter
     function filter() {
       Tone.Effect.call(this);
       this._filter = construct(Tone.Filter, arguments);
@@ -1918,6 +1924,7 @@
 
     filter.prototype._unnormalizeMap = makeEffectMap(Rhombus._map.filterMap);
 
+    // EQ
     function eq() {
       Tone.Effect.call(this);
       this._eq = construct(Tone.EQ, arguments);
@@ -1932,7 +1939,7 @@
       this._eq.set.apply(this._eq, arguments);
     };
 
-    var volumeMap = [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 1.0];
+    var volumeMap = [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 1.0];
     eq.prototype._unnormalizeMap = makeEffectMap({
       "low" : volumeMap,
       "mid" : volumeMap,
@@ -1941,6 +1948,7 @@
       "highFrequency": [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.8]
     });
 
+    // Delay
     function delay() {
       Tone.Effect.call(this);
       this._delay = r._ctx.createDelay(10.5);
@@ -1958,9 +1966,31 @@
     };
 
     delay.prototype._unnormalizeMap = makeEffectMap({
-      "delay" : [Rhombus._map.timeMapFn, Rhombus._map.secondsDisplay, 0.2]
+      "delay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.2]
     });
 
+    // Compressor
+    function comp() {
+      Tone.Effect.call(this);
+      this._comp = construct(Tone.Compressor, arguments);
+      this.connectEffect(this._comp);
+    }
+    Tone.extend(comp, Tone.Effect);
+    r._addEffectFunctions(comp);
+    r._Compressor = comp;
+
+    comp.prototype.set = function() {
+      Tone.Effect.prototype.set.apply(this, arguments);
+      this._comp.set.apply(this._comp, arguments);
+    };
+
+    comp.prototype._unnormalizeMap = makeEffectMap({
+      "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.0],
+      "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.0],
+      "threshold" : [Rhombus._map.mapLog(-100, 0), dbDisplay, 0.3],
+      "knee" : [Rhombus._map.mapLinear(0, 40), dbDisplay, 0.75],
+      "ratio" : [Rhombus._map.mapLinear(1, 20), dbDisplay, 11.0/19.0]
+    });
   };
 })(this.Rhombus);
 

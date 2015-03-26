@@ -22,7 +22,8 @@
         "dist" : r._Distortion,
         "filt" : r._Filter,
         "eq"   : r._EQ,
-        "dely" : r._Delay
+        "dely" : r._Delay,
+        "comp" : r._Compressor
         // TODO: add more
       };
 
