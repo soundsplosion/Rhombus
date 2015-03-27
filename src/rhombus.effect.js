@@ -17,6 +17,14 @@
       return false;
     }
 
+    r.effectTypes = function() {
+      return ["dist", "filt", "eq", "dely", "comp", "gain", "bitc"];
+    };
+
+    r.effectDisplayNames = function() {
+      return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher"];
+    };
+
     r.addEffect = function(type, options, gc, gp, id) {
       var ctrMap = {
         "dist" : r._Distortion,

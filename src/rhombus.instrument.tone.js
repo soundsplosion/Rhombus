@@ -14,18 +14,20 @@
     var noise = Tone.NoiseSynth;
     var duo = Tone.DuoSynth;
     var typeMap = {
-      "mono" : mono,
-      "am"   : am,
-      "fm"   : fm,
-      "noise": noise,
-      "duo"  : duo
+      "mono" : [mono, "Monophonic Synth"],
+      "am"   : [am, "AM Synth"],
+      "fm"   : [fm, "FM Synth"],
+      "noise": [noise, "Noise Synth"],
+      "duo"  : [duo, "DuoSynth"]
     };
 
     function ToneInstrument(type, options, id) {
-      var ctr = typeMap[type];
+      var ctr = typeMap[type][0];
+      var displayName = typeMap[type][1];
       if (isNull(ctr) || notDefined(ctr)) {
         type = "mono";
         ctr = mono;
+        displayName = "Monophonic Synth";
       }
 
       if (notDefined(id)) {
@@ -35,6 +37,7 @@
       }
 
       this._type = type;
+      this._displayName = displayName;
       this._unnormalizeMap = unnormalizeMaps[this._type];
       this._currentParams = {};
       this._triggered = {};
@@ -328,6 +331,10 @@
       this._trackParams(params);
       var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
       this.set(unnormalized);
+    };
+
+    ToneInstrument.prototype.displayName = function() {
+      return this._displayName;
     };
 
     r._ToneInstrument = ToneInstrument;

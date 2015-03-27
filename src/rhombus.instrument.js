@@ -5,6 +5,14 @@
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
 
+    r.instrumentTypes = function() {
+      return ["samp", "mono", "am", "fm", "noise", "duo"];
+    };
+
+    r.instrumentDisplayNames = function() {
+      return ["Sampler", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
+    };
+
     r.addInstrument = function(type, options, gc, gp, id, idx) {
       var instr;
       if (type === "samp") {

@@ -14,5 +14,9 @@
     r._Master = Master;
 
     Master.prototype._unnormalizeMap = {};
+    Master.prototype.displayName = function() {
+      return "Master";
+    };
+
   };
 })(this.Rhombus);

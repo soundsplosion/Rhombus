@@ -238,6 +238,10 @@
       }
     };
 
+    Sampler.prototype.displayName = function() {
+      return "Sampler";
+    };
+
     r._Sampler = Sampler;
   };
 })(this.Rhombus);

@@ -43,6 +43,10 @@
       "oversample" : [Rhombus._map.mapDiscrete("none", "2x", "4x"), rawDisplay, 0.0]
     });
 
+    dist.prototype.displayName = function() {
+      return "Distortion";
+    };
+
     // BitCrusher
     function bitcrusher() {
       Tone.Effect.apply(this, arguments);
@@ -75,6 +79,10 @@
       "bits" : [Rhombus._map.mapDiscrete.apply(this, bitValues), rawDisplay, 0.49]
     });
 
+    bitcrusher.prototype.displayName = function() {
+      return "Bitcrusher";
+    };
+
     // Filter
     function filter() {
       Tone.Effect.call(this);
@@ -91,6 +99,10 @@
     };
 
     filter.prototype._unnormalizeMap = makeEffectMap(Rhombus._map.filterMap);
+
+    filter.prototype.displayName = function() {
+      return "Filter";
+    };
 
     // EQ
     function eq() {
@@ -116,6 +128,10 @@
       "highFrequency": [Rhombus._map.freqMapFn, Rhombus._map.hzDisplay, 0.8]
     });
 
+    eq.prototype.displayName = function() {
+      return "EQ";
+    };
+
     // Delay
     function delay() {
       Tone.Effect.call(this);
@@ -136,6 +152,10 @@
     delay.prototype._unnormalizeMap = makeEffectMap({
       "delay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.2]
     });
+
+    delay.prototype.displayName = function() {
+      return "Delay";
+    };
 
     // Compressor
     function comp() {
@@ -160,6 +180,10 @@
       "ratio" : [Rhombus._map.mapLinear(1, 20), dbDisplay, 11.0/19.0]
     });
 
+    comp.prototype.displayName = function() {
+      return "Compressor";
+    };
+
     // Gain
     function gain() {
       Tone.Effect.call(this);
@@ -179,6 +203,10 @@
     gain.prototype._unnormalizeMap = makeEffectMap({
       "gain" : [Rhombus._map.mapLinear(0, 3), rawDisplay, 1.0/3.0]
     });
+
+    gain.prototype.displayName = function() {
+      return "Gain";
+    };
 
   };
 })(this.Rhombus);
