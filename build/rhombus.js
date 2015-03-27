@@ -1090,6 +1090,7 @@
     }
 
     function normalizedSet(paramIdx, paramValue) {
+      paramValue = +paramValue;
       var setObj = Rhombus._map.generateSetObject(this._unnormalizeMap, paramIdx, paramValue);
       if (typeof setObj !== "object") {
         return;
@@ -1098,6 +1099,7 @@
     }
 
     function normalizedSetByName(paramName, paramValue) {
+      paramValue = +paramValue;
       var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, paramValue);
       if (typeof setObj !== "object") {
         return;
