@@ -15,6 +15,7 @@
       // pattern metadata
       this._name = "Default Pattern Name";
       this._color = getRandomColor();
+      this._selected = false;
 
       // pattern structure data
       this._length = 1920;
@@ -92,6 +93,45 @@
         delete this._noteMap[note._id];
 
         return note;
+      },
+
+      getSelectedNotes: function() {
+        var selected = new Array();
+        for (var noteId in this._noteMap) {
+          var note = this._noteMap[noteId];
+          if (note.getSelected()) {
+            selected.push(note);
+          }
+        }
+
+        return selected;
+      },
+
+      deleteNotes: function(notes) {
+        // undo stuff
+        var oldNotes = notes.slice(0);
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          for (var i = 0; i < oldNotes.length; i++) {
+            var note = oldNotes[i];
+            that._noteMap[note._id] = note;
+          }
+        });
+
+        for (var i = 0; i < notes.length; i++) {
+          var note = notes[i];
+          delete this._noteMap[note._id];
+        }
+      },
+
+      toJSON: function() {
+        var jsonObj = {
+          _name    : this._name,
+          _color   : this._color,
+          _length  : this._length,
+          _noteMap : this._noteMap
+        };
+        return jsonObj;
       }
     };
 
@@ -127,6 +167,7 @@
       this._start    = +start    || 0;
       this._length   = +length   || 0;
       this._velocity = +velocity || 0.5;
+      this._selected = false;
     };
 
     r.Note.prototype = {
@@ -158,12 +199,28 @@
         return this._start + this._length;
       },
 
+      select: function() {
+        return (this._selected = true);
+      },
+
+      deselect: function() {
+        return (this._selected = false);
+      },
+
+      getSelected: function() {
+        return this._selected;
+      },
+
+      setSelected: function(select) {
+        return (this._selected = select);
+      },
+
       toJSON: function() {
         var jsonObj = {
-          _pitch: this._pitch,
-          _start: this._start,
-          _length: this._length,
-          _velocity: this._velocity
+          _pitch    : this._pitch,
+          _start    : this._start,
+          _length   : this._length,
+          _velocity : this._velocity
         };
         return jsonObj;
       }

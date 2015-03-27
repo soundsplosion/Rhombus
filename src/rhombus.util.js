@@ -149,6 +149,14 @@
     return ticks;
   };
 
+  window.intToHexByte = function(val) {
+    if (!isInteger(+val) || +val < 0 || +val > 255) {
+      return undefined;
+    }
+
+    return ("00" + val.toString(16)).substr(-2);
+  }
+
   // src: http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
   window.getRandomColor = function() {
     var letters = '0123456789ABCDEF'.split('');
