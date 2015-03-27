@@ -38,6 +38,10 @@
         r.removeInstrument(idToRemove);
       });
       this._song._instruments.addObj(instr, idx);
+
+      instr.isInstrument = function() { return true; };
+      instr.isEffect = function() { return false; };
+
       return instr._id;
     };
 
