@@ -2998,7 +2998,6 @@
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
         this.addInstrument(inst._type, inst._params, inst._graphChildren, inst._graphParents, +instId, instIdIdx);
-        this._song._instruments.getObjById(instId)._normalizedObjectSet({ volume: 0.1 });
       }
 
       for (var effId in effects) {
