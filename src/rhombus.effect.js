@@ -85,6 +85,10 @@
       });
 
       this._song._effects[eff._id] = eff;
+
+      eff.isInstrument = function() { return false; };
+      eff.isEffect = function() { return true; };
+
       return eff._id;
     }
 
