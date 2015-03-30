@@ -1303,6 +1303,12 @@
       return value;
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Preview Note Stuff
+    ////////////////////////////////////////////////////////////////////////////
+
+    // TODO: find a more suitable place for this stuff
+
     // maintain an array of the currently sounding preview notes
     var previewNotes = new Array();
     r.startPreviewNote = function(pitch, velocity) {
@@ -1314,7 +1320,6 @@
       var targetId = getInstIdByIndex(this._globalTarget);
       var inst = this._song._instruments.getObjById(targetId);
       if (notDefined(inst)) {
-        console.log("[Rhombus] - Trying to trigger note on undefined instrument");
         return;
       }
 
@@ -1354,6 +1359,22 @@
                       r.getCurrentPosTicks());
         }
       }
+    };
+
+    r.killAllPreviewNotes = function() {
+      while (previewNotes.length > 0) {
+        var rtNote = previewNotes.pop();
+        var inst = this._song._instruments.getObjById(rtNote._target);
+
+        if (notDefined(inst)) {
+          console.log("[Rhombus] - Trying to release note on undefined instrument");
+          return;
+        }
+
+        inst.triggerRelease(rtNote._id, 0);
+      }
+
+      console.log("[Rhombus] - killed all preview notes");
     };
   };
 })(this.Rhombus);
