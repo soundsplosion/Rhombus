@@ -1303,46 +1303,56 @@
       return value;
     }
 
-    // only one preview note is allowed at a time
-    var previewNote = undefined;
+    // maintain an array of the currently sounding preview notes
+    var previewNotes = new Array();
     r.startPreviewNote = function(pitch, velocity) {
       var keys = this._song._instruments.objIds();
       if (keys.length === 0) {
         return;
       }
 
-      if (notDefined(previewNote)) {
-        var targetId = getInstIdByIndex(this._globalTarget);
-        var inst = this._song._instruments.getObjById(targetId);
-        if (notDefined(inst)) {
-          console.log("[Rhombus] - Trying to trigger note on undefined instrument");
-          return;
-        }
-
-        if (notDefined(velocity) || velocity < 0 || velocity > 1) {
-          velocity = 0.5;
-        }
-
-        previewNote = new this.RtNote(pitch, 0, 0, targetId);
-        inst.triggerAttack(previewNote._id, pitch, 0, velocity);
+      var targetId = getInstIdByIndex(this._globalTarget);
+      var inst = this._song._instruments.getObjById(targetId);
+      if (notDefined(inst)) {
+        console.log("[Rhombus] - Trying to trigger note on undefined instrument");
+        return;
       }
+
+      if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+        velocity = 0.5;
+      }
+
+      console.log("[Rhombus] - starting preview note at tick " +
+                  r.getCurrentPosTicks());
+
+      var rtNote = new this.RtNote(pitch, 0, 0, targetId);
+
+      previewNotes.push(rtNote);
+      inst.triggerAttack(rtNote._id, pitch, 0, velocity);
     };
 
-    r.stopPreviewNote = function() {
+    r.stopPreviewNote = function(pitch) {
       var keys = this._song._instruments.objIds();
       if (keys.length === 0) {
         return;
       }
 
-      if (isDefined(previewNote)) {
-        var inst = this._song._instruments.getObjById(previewNote._target);
-        if (notDefined(inst)) {
-          console.log("[Rhombus] - Trying to release note on undefined instrument");
-          return;
-        }
+      for (var i = previewNotes.length - 1; i >=0; i--) {
+        var rtNote = previewNotes[i];
+        if (rtNote._pitch === pitch) {
+          var inst = this._song._instruments.getObjById(rtNote._target);
 
-        inst.triggerRelease(previewNote._id, 0);
-        previewNote = undefined;
+          if (notDefined(inst)) {
+            console.log("[Rhombus] - Trying to release note on undefined instrument");
+            return;
+          }
+
+          inst.triggerRelease(rtNote._id, 0);
+          previewNotes.splice(i, 1);
+
+          console.log("[Rhombus] - stopping preview note at tick " +
+                      r.getCurrentPosTicks());
+        }
       }
     };
   };
@@ -3511,6 +3521,14 @@
         return time;
       }
     }
+
+    r.getCurrentPosTicks = function() {
+      var ticks = r.seconds2Ticks(r.getPosition());
+      if (r.getLoopEnabled() && ticks < 0) {
+        ticks = r.getLoopEnd() + ticks;
+      }
+      return ticks;
+    };
 
     r.getPosition = function() {
       return getPosition(playing);

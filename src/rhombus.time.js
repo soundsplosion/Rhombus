@@ -291,6 +291,14 @@
       }
     }
 
+    r.getCurrentPosTicks = function() {
+      var ticks = r.seconds2Ticks(r.getPosition());
+      if (r.getLoopEnabled() && ticks < 0) {
+        ticks = r.getLoopEnd() + ticks;
+      }
+      return ticks;
+    };
+
     r.getPosition = function() {
       return getPosition(playing);
     };
