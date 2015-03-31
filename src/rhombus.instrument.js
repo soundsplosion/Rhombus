@@ -77,12 +77,16 @@
         return;
       }
 
-      var oldSlot = r._song._instruments.getSlotById(id);
-      var oldInstr = r._song._instruments.getObjById(id);
-      r.Undo._addUndoAction(function() {
-        r._song._instruments.addObj(oldInstr, oldSlot);
-      });
+      var instr = r._song._instruments.getObjById(id);
+      var slot = r._song._instruments.getSlotById(id);
+      var gc = instr.graphChildren();
+      var gp = instr.graphParents();
 
+      r.Undo._addUndoAction(function() {
+        r._song._instruments.addObj(instr, slot);
+        instr.restoreConnections(gc, gp);
+      });
+      instr._removeConnections();
       r._song._instruments.removeId(id);
     };
 

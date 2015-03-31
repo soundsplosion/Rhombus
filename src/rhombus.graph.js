@@ -170,6 +170,26 @@
       }
     }
 
+    function removeConnections() {
+      var gc = this.graphChildren();
+      var gp = this.graphParents();
+      for (var i = 0; i < gc.length; i++) {
+        instr.graphDisconnect(gc[i], true);
+      }
+      for (var i = 0; i < gp.length; i++) {
+        gp[i].graphDisconnect(instr, true);
+      }
+    }
+
+    function restoreConnections(gc, gp) {
+      for (var i = 0; i < gp.length; i++) {
+        gp[i].graphConnect(instr, true);
+      }
+      for (var i = 0; i < gc.length; i++) {
+        instr.graphConnect(gc[i], true);
+      }
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype.hasChild = hasChild;
       ctr.prototype.hasParent = hasParent;
@@ -179,6 +199,8 @@
       ctr.prototype.graphParents = graphParents;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype._removeConnections = removeConnections;
+      ctr.prototype._restoreConnections = restoreConnections;
       ctr.prototype.graphX = graphX;
       ctr.prototype.setGraphX = setGraphX;
       ctr.prototype.graphY = graphY;
@@ -204,7 +226,7 @@
         return;
       }
 
-      node.graphConnect(master);
+      node.graphConnect(master, true);
     };
 
     r._importFixGraph = function() {

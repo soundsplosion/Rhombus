@@ -383,6 +383,13 @@
     }
   };
 
+  IdSlotContainer.prototype.moveSlot = function(oldIdx, newIdx) {
+    if (oldIdx >= 0 && oldIdx < this._count && newIdx >= 0 && newIdx < this._count && oldIdx !== newIdx) {
+      var obj = this._slots.splice(oldIdx, 1)[0];
+      this._slots[newIdx].splice(newIdx, 0, obj);
+    }
+  };
+
   IdSlotContainer.prototype.isFull = function() {
     return this._slots.length === this._count;
   };
@@ -912,6 +919,26 @@
       }
     }
 
+    function removeConnections() {
+      var gc = this.graphChildren();
+      var gp = this.graphParents();
+      for (var i = 0; i < gc.length; i++) {
+        instr.graphDisconnect(gc[i], true);
+      }
+      for (var i = 0; i < gp.length; i++) {
+        gp[i].graphDisconnect(instr, true);
+      }
+    }
+
+    function restoreConnections(gc, gp) {
+      for (var i = 0; i < gp.length; i++) {
+        gp[i].graphConnect(instr, true);
+      }
+      for (var i = 0; i < gc.length; i++) {
+        instr.graphConnect(gc[i], true);
+      }
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype.hasChild = hasChild;
       ctr.prototype.hasParent = hasParent;
@@ -921,6 +948,8 @@
       ctr.prototype.graphParents = graphParents;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype._removeConnections = removeConnections;
+      ctr.prototype._restoreConnections = restoreConnections;
       ctr.prototype.graphX = graphX;
       ctr.prototype.setGraphX = setGraphX;
       ctr.prototype.graphY = graphY;
@@ -946,7 +975,7 @@
         return;
       }
 
-      node.graphConnect(master);
+      node.graphConnect(master, true);
     };
 
     r._importFixGraph = function() {
@@ -1290,12 +1319,16 @@
         return;
       }
 
-      var oldSlot = r._song._instruments.getSlotById(id);
-      var oldInstr = r._song._instruments.getObjById(id);
-      r.Undo._addUndoAction(function() {
-        r._song._instruments.addObj(oldInstr, oldSlot);
-      });
+      var instr = r._song._instruments.getObjById(id);
+      var slot = r._song._instruments.getSlotById(id);
+      var gc = instr.graphChildren();
+      var gp = instr.graphParents();
 
+      r.Undo._addUndoAction(function() {
+        r._song._instruments.addObj(instr, slot);
+        instr.restoreConnections(gc, gp);
+      });
+      instr._removeConnections();
       r._song._instruments.removeId(id);
     };
 
@@ -2118,8 +2151,6 @@
           gc[i] = +(gc[i]);
         }
         eff._graphChildren = gc;
-      } else {
-        r._toMaster(eff);
       }
 
       if (isDefined(gp)) {
@@ -2159,12 +2190,14 @@
       }
 
       var that = this;
-      var oldEffect = this._song._effects[id];
+      var effect = this._song._effects[id];
+      var gc = effect.graphChildren();
+      var gp = effect.graphParents();
       r.Undo._addUndoAction(function() {
-        // TODO: restore connections that came into/went out of this node
-        this._song._effects[id] = oldEffect;
+        this._song._effects[id] = effect;
+        effect._restoreConnections(gc, gp);
       });
-      // TODO: break connections coming into/going out of this node
+      effect._removeConnections();
       delete this._song._effects[id];
     };
 

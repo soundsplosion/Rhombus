@@ -84,8 +84,6 @@
           gc[i] = +(gc[i]);
         }
         eff._graphChildren = gc;
-      } else {
-        r._toMaster(eff);
       }
 
       if (isDefined(gp)) {
@@ -125,12 +123,14 @@
       }
 
       var that = this;
-      var oldEffect = this._song._effects[id];
+      var effect = this._song._effects[id];
+      var gc = effect.graphChildren();
+      var gp = effect.graphParents();
       r.Undo._addUndoAction(function() {
-        // TODO: restore connections that came into/went out of this node
-        this._song._effects[id] = oldEffect;
+        this._song._effects[id] = effect;
+        effect._restoreConnections(gc, gp);
       });
-      // TODO: break connections coming into/going out of this node
+      effect._removeConnections();
       delete this._song._effects[id];
     };
 

@@ -280,6 +280,13 @@
     }
   };
 
+  IdSlotContainer.prototype.moveSlot = function(oldIdx, newIdx) {
+    if (oldIdx >= 0 && oldIdx < this._count && newIdx >= 0 && newIdx < this._count && oldIdx !== newIdx) {
+      var obj = this._slots.splice(oldIdx, 1)[0];
+      this._slots[newIdx].splice(newIdx, 0, obj);
+    }
+  };
+
   IdSlotContainer.prototype.isFull = function() {
     return this._slots.length === this._count;
   };
