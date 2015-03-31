@@ -150,9 +150,14 @@
       }
 
       console.log("[Rhombus] - starting preview note at tick " +
-                  r.getCurrentPosTicks());
+                  this.getCurrentPosTicks());
 
-      var rtNote = new this.RtNote(pitch, 0, 0, targetId);
+      var rtNote = new this.RtNote(pitch, 
+                                   velocity, 
+                                   this.getElapsedTime(), 
+                                   0, 
+                                   targetId, 
+                                   this.getElapsedTime());
 
       previewNotes.push(rtNote);
       inst.triggerAttack(rtNote._id, pitch, 0, velocity);
@@ -164,21 +169,32 @@
         return;
       }
 
+      var curTime  = this.getElapsedTime();
+      var curTicks = this.getCurrentPosTicks();
+
       for (var i = previewNotes.length - 1; i >=0; i--) {
         var rtNote = previewNotes[i];
         if (rtNote._pitch === pitch) {
           var inst = this._song._instruments.getObjById(rtNote._target);
 
           if (notDefined(inst)) {
-            console.log("[Rhombus] - Trying to release note on undefined instrument");
             return;
           }
 
           inst.triggerRelease(rtNote._id, 0);
           previewNotes.splice(i, 1);
 
-          console.log("[Rhombus] - stopping preview note at tick " +
-                      r.getCurrentPosTicks());
+          var length = this.seconds2Ticks(curTime - rtNote._startTime);
+          console.log("[Rhombus] - stopping preview note at tick " + curTicks +
+                      ", length = " + length + " ticks");
+
+          // TODO: buffer stopped preview notes for recording purposes
+          if (this.isPlaying() && this.getRecordEnabled()) {
+            this.Record.addToBuffer(rtNote._pitch,
+                                    rtNote._velocity,
+                                    rtNote._start,
+                                    curTime);
+          }
         }
       }
     };
@@ -189,7 +205,6 @@
         var inst = this._song._instruments.getObjById(rtNote._target);
 
         if (notDefined(inst)) {
-          console.log("[Rhombus] - Trying to release note on undefined instrument");
           return;
         }
 

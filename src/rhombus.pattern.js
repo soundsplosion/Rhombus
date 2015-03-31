@@ -139,21 +139,25 @@
     r.Note = function(pitch, start, length, velocity, id) {
        // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
+        console.log("pitch invalid:" + pitch);
         return undefined;
       }
 
       // validate the start
       if (!isNumber(start) || start < 0) {
+        console.log("start invalid");
         return undefined;
       }
 
       // validate the length
       if (!isNumber(length) || length < 0) {
+        console.log("length invalid");
         return undefined;
       }
 
-      // validate the start
+      // validate the velocity
       if (!isNumber(velocity) || velocity < 0) {
+        console.log("velocity invalid");
         return undefined;
       }
 
@@ -168,6 +172,8 @@
       this._length   = +length   || 0;
       this._velocity = +velocity || 0.5;
       this._selected = false;
+
+      return this;
     };
 
     r.Note.prototype = {

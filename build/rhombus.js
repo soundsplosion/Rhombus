@@ -81,6 +81,7 @@
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._paramSetup(this);
+    root.Rhombus._recordSetup(this);
 
     // Instruments
     root.Rhombus._instrumentSetup(this);
@@ -1328,9 +1329,14 @@
       }
 
       console.log("[Rhombus] - starting preview note at tick " +
-                  r.getCurrentPosTicks());
+                  this.getCurrentPosTicks());
 
-      var rtNote = new this.RtNote(pitch, 0, 0, targetId);
+      var rtNote = new this.RtNote(pitch, 
+                                   velocity, 
+                                   this.getElapsedTime(), 
+                                   0, 
+                                   targetId, 
+                                   this.getElapsedTime());
 
       previewNotes.push(rtNote);
       inst.triggerAttack(rtNote._id, pitch, 0, velocity);
@@ -1342,21 +1348,32 @@
         return;
       }
 
+      var curTime  = this.getElapsedTime();
+      var curTicks = this.getCurrentPosTicks();
+
       for (var i = previewNotes.length - 1; i >=0; i--) {
         var rtNote = previewNotes[i];
         if (rtNote._pitch === pitch) {
           var inst = this._song._instruments.getObjById(rtNote._target);
 
           if (notDefined(inst)) {
-            console.log("[Rhombus] - Trying to release note on undefined instrument");
             return;
           }
 
           inst.triggerRelease(rtNote._id, 0);
           previewNotes.splice(i, 1);
 
-          console.log("[Rhombus] - stopping preview note at tick " +
-                      r.getCurrentPosTicks());
+          var length = this.seconds2Ticks(curTime - rtNote._startTime);
+          console.log("[Rhombus] - stopping preview note at tick " + curTicks +
+                      ", length = " + length + " ticks");
+
+          // TODO: buffer stopped preview notes for recording purposes
+          if (this.isPlaying() && this.getRecordEnabled()) {
+            this.Record.addToBuffer(rtNote._pitch,
+                                    rtNote._velocity,
+                                    rtNote._start,
+                                    curTime);
+          }
         }
       }
     };
@@ -1367,7 +1384,6 @@
         var inst = this._song._instruments.getObjById(rtNote._target);
 
         if (notDefined(inst)) {
-          console.log("[Rhombus] - Trying to release note on undefined instrument");
           return;
         }
 
@@ -2542,21 +2558,25 @@
     r.Note = function(pitch, start, length, velocity, id) {
        // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
+        console.log("pitch invalid:" + pitch);
         return undefined;
       }
 
       // validate the start
       if (!isNumber(start) || start < 0) {
+        console.log("start invalid");
         return undefined;
       }
 
       // validate the length
       if (!isNumber(length) || length < 0) {
+        console.log("length invalid");
         return undefined;
       }
 
-      // validate the start
+      // validate the velocity
       if (!isNumber(velocity) || velocity < 0) {
+        console.log("velocity invalid");
         return undefined;
       }
 
@@ -2571,6 +2591,8 @@
       this._length   = +length   || 0;
       this._velocity = +velocity || 0.5;
       this._selected = false;
+
+      return this;
     };
 
     r.Note.prototype = {
@@ -2709,12 +2731,16 @@
       }
     };
 
-    r.RtNote = function(pitch, start, end, target) {
+    r.RtNote = function(pitch, velocity, start, end, target, startTime) {
       r._newRtId(this);
       this._pitch = pitch || 60;
+      this._velocity = +velocity || 0.5;
       this._start = start || 0;
       this._end = end || 0;
       this._target = target;
+      this._startTime = startTime;
+      
+      return this;
     };
 
     r.Track = function(id) {
@@ -3370,7 +3396,12 @@
                 var startTime = curTime + delay;
                 var endTime = startTime + r.ticks2Seconds(note._length);
 
-                var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
+                var rtNote = new r.RtNote(note._pitch, 
+                                          note.getVelocity(),
+                                          startTime, 
+                                          endTime, 
+                                          track._target);
+
                 playingNotes[rtNote._id] = rtNote;
 
                 var instrument = r._song._instruments.getObjById(track._target);
@@ -3688,6 +3719,23 @@
       });
     };
 
+    // Inserts an array of notes into an existing pattern, with the start
+    // times offset by the given amount
+    //
+    // The anticipated use case is inserting recorded notes, in which case
+    // the offset would typically be a negative value (since all patterns start
+    // at tick 0 internally)
+    r.Edit.insertNotes = function(notes, ptnId, offset) {
+      var ptn = r._song._patterns[ptnId];
+      for (var i = 0; i < notes.length; i++) {
+        var note = notes[i];
+        if (isDefined(note)) {
+          note._start = note._start + offset;
+          ptn.addNote(note);
+        }
+      }
+    };
+
     r.Edit.deleteNote = function(noteId, ptnId) {
       // TODO: put checks on the input arguments
       var note = r._song._patterns[ptnId].deleteNote(noteId);
@@ -3980,5 +4028,72 @@
       }
     };
 
+  };
+})(this.Rhombus);
+
+//! rhombus.record.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+(function(Rhombus) {
+  Rhombus._recordSetup = function(r) {
+    r.Record = {};
+
+    r._recordEnabled = false;
+
+    r.getRecordEnabled = function() {
+      return this._recordEnabled;
+    };
+
+    r.setRecordEnabled = function(enabled) {
+      return this._recordEnabled = enabled;
+    };
+
+    // Temporary buffer for RtNotes which have been recorded
+    var recordBuffer = new Array();
+
+    // Adds an RtNote with the given parameters to the record buffer
+    r.Record.addToBuffer = function(pitch, velocity, start, end) {
+      // TODO: 'length' would probably be better than 'end'
+      var rtNote = new r.RtNote(pitch, velocity, start, end);
+
+      if (isDefined(rtNote)) {
+        recordBuffer.push(rtNote);
+      }
+      else {
+        console.log("[Rhombus.Edit] - rtNote is undefined");
+      }
+    };
+
+    // Dumps the buffer of recorded RtNotes as a Note array, most probably
+    // to be inserted into a new or existing pattern
+    r.Record.dumpBuffer = function() {
+      if (recordBuffer.length < 1) {
+        return undefined;
+      }
+
+      var notes = new Array();
+      for (var i = 0; i < recordBuffer.length; i++) {
+        var rtNote = recordBuffer[i];
+        var note = new r.Note(+rtNote._pitch,
+                              Math.round(r.seconds2Ticks(rtNote._start)),
+                              Math.round(r.seconds2Ticks(rtNote._end - rtNote._start)),
+                              rtNote._velocity);
+
+        // TODO: Decide if this define guard is redundant
+        if (isDefined(note)) {
+          notes.push(note);
+        }
+        else {
+          console.log("[Rhombus.Edit] - note is undefined");
+        }
+      }
+
+      // TODO: might want to clear the buffer before returning
+      return notes;
+    }
+
+    r.Record.clearBuffer = function() {
+      recordBuffer.splice(0, recordBuffer.length);
+    };
   };
 })(this.Rhombus);
