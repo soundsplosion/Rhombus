@@ -1331,11 +1331,11 @@
       console.log("[Rhombus] - starting preview note at tick " +
                   this.getCurrentPosTicks());
 
-      var rtNote = new this.RtNote(pitch, 
-                                   velocity, 
-                                   this.getElapsedTime(), 
-                                   0, 
-                                   targetId, 
+      var rtNote = new this.RtNote(pitch,
+                                   velocity,
+                                   this.getElapsedTime(),
+                                   0,
+                                   targetId,
                                    this.getElapsedTime());
 
       previewNotes.push(rtNote);
@@ -1574,7 +1574,7 @@
     };
 
     Sampler.prototype.toJSON = function() {
-      var params = { 
+      var params = {
         "params": this._currentParams,
         "sampleSet": this._sampleSet
       };
@@ -1986,7 +1986,7 @@
   };
 })(this.Rhombus);
 
-//! rhombus.effect.js
+x//! rhombus.effect.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 (function (Rhombus) {
@@ -2115,7 +2115,7 @@
     };
 
     function isMaster() { return false; }
- 
+
     function toJSON(params) {
       var jsonVersion = {
         "_id": this._id,
@@ -2126,7 +2126,7 @@
       };
       return jsonVersion;
     }
-   
+
     function installFunctions(ctr) {
       ctr.prototype._normalizedObjectSet = normalizedObjectSet;
       r._addParamFunctions(ctr);
@@ -2739,7 +2739,7 @@
       this._end = end || 0;
       this._target = target;
       this._startTime = startTime;
-      
+
       return this;
     };
 
@@ -3396,10 +3396,10 @@
                 var startTime = curTime + delay;
                 var endTime = startTime + r.ticks2Seconds(note._length);
 
-                var rtNote = new r.RtNote(note._pitch, 
+                var rtNote = new r.RtNote(note._pitch,
                                           note.getVelocity(),
-                                          startTime, 
-                                          endTime, 
+                                          startTime,
+                                          endTime,
                                           track._target);
 
                 playingNotes[rtNote._id] = rtNote;

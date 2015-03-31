@@ -84,7 +84,7 @@
       this._end = end || 0;
       this._target = target;
       this._startTime = startTime;
-      
+
       return this;
     };
 

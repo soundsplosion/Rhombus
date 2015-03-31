@@ -152,11 +152,11 @@
       console.log("[Rhombus] - starting preview note at tick " +
                   this.getCurrentPosTicks());
 
-      var rtNote = new this.RtNote(pitch, 
-                                   velocity, 
-                                   this.getElapsedTime(), 
-                                   0, 
-                                   targetId, 
+      var rtNote = new this.RtNote(pitch,
+                                   velocity,
+                                   this.getElapsedTime(),
+                                   0,
+                                   targetId,
                                    this.getElapsedTime());
 
       previewNotes.push(rtNote);
