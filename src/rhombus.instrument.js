@@ -4,191 +4,166 @@
 
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
-    // A simple instrument to test basic note playback
-    // Voice Structure: osc. --> gain --> filter --> gain --> output
-    function Trigger(id, pitch) {
-      this._pitch = pitch;
-      this._id = id;
 
-      // Instantiate the modules for this note trigger
-      this._osc = r._ctx.createOscillator();
-      this._oscGain = r._ctx.createGain();
-      this._filter = r._ctx.createBiquadFilter();
-      this._filterGain = r._ctx.createGain();
+    r.instrumentTypes = function() {
+      return ["samp", "mono", "am", "fm", "noise", "duo"];
+    };
 
-      // Initialize the synth voice
-      this._osc.type = "square";
-      this._oscGain.gain.value = 0.0;
-      this._filter.type = "lowpass";
-      this._filter.frequency.value = 0;
+    r.instrumentDisplayNames = function() {
+      return ["Sampler", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
+    };
 
-      // Make the audio graph connections
-      this._osc.connect(this._oscGain);
-      this._oscGain.connect(this._filter);
-      this._filter.connect(this._filterGain);
-      this._filterGain.connect(r._graph.mainout);
+    r.addInstrument = function(type, options, gc, gp, id, idx) {
+      var instr;
+      if (type === "samp") {
+        instr = new this._Sampler(options, id);
+      } else {
+        instr = new this._ToneInstrument(type, options, id);
+      }
 
-      // Attenuate the output from the filter
-      this._filterGain.gain.value = 0.5;
+      if (isNull(instr) || notDefined(instr)) {
+        return;
+      }
+
+      if (isDefined(gc)) {
+        for (var i = 0; i < gc.length; i++) {
+          gc[i] = +(gc[i]);
+        }
+        instr._graphChildren = gc;
+      } else {
+        r._toMaster(instr);
+      }
+
+      if (isDefined(gp)) {
+        for (var i = 0; i < gp.length; i++) {
+          gp[i] = +(gp[i]);
+        }
+        instr._graphParents = gp;
+      }
+
+      var idToRemove = instr._id;
+      r.Undo._addUndoAction(function() {
+        r.removeInstrument(idToRemove);
+      });
+      this._song._instruments.addObj(instr, idx);
+
+      instr.isInstrument = function() { return true; };
+      instr.isEffect = function() { return false; };
+
+      return instr._id;
+    };
+
+    function inToId(instrOrId) {
+      var id;
+      if (typeof instrOrId === "object") {
+        id = instrOrId._id;
+      } else {
+        id = +instrOrId;
+      }
+      return id;
     }
 
-    // default envelope parameters for synth voice
-    var peakLevel    = 0.4;
-    var sustainLevel = 0.200;
-    var releaseTime  = 0.250;
-    var filterCutoff = 24.0;
-    var filterRes    = 6;
-    var envDepth     = 3.0;
-    var attackTime   = 0.025;
-    var decayTime    = 0.250;
-
-    r.setReleaseTime = function(time) {
-      if (time >= 0.0)
-        releaseTime = time;
-    };
-
-    r.getReleaseTime = function() {
-      return releaseTime;
-    };
-
-    r.setFilterCutoff = function(cutoff) {
-      if (cutoff >= 0 && cutoff <= 127)
-        filterCutoff = cutoff;
-    };
-
-    r.getFilterCutoff = function() {
-      return filterCutoff;
-    };
-
-    r.setFilterRes = function(resonance) {
-      if (resonance >= 0 && resonance <= 24)
-        filterRes = resonance;
-    };
-
-    r.getFilterRes = function() {
-      return filterRes;
-    };
-
-    r.setEnvDepth = function(depth) {
-      if (depth >= 0.0 && depth <= 19)
-        envDepth = depth + 1;
-    };
-
-    r.getEnvDepth = function() {
-      return envDepth;
-    };
-
-    r.setAttackTime = function(attack) {
-      if (attack >= 0.0)
-        attackTime = attack;
-    };
-
-    r.getAttackTime = function() {
-      return attackTime;
-    };
-
-    r.setDecayTime = function(decay) {
-      if (decay >= 0.0)
-        decayTime = decay;
-    };
-
-    r.getDecayTime = function() {
-      return decayTime;
-    };
-
-    Trigger.prototype = {
-      noteOn: function(delay) {
-        var start = r._ctx.currentTime + delay;
-        var noteFreq = Rhombus.Util.noteNum2Freq(+this._pitch);
-        var filterFreq = Rhombus.Util.noteNum2Freq(+this._pitch + filterCutoff);
-
-        // Immediately set the frequency of the oscillator based on the note
-        this._osc.frequency.setValueAtTime(noteFreq, r._ctx.currentTime);
-        this._osc.start(start);
-
-        // Reduce resonance for higher notes to reduce clipping
-        this._filter.Q.value = (1 - this._pitch / 127) * filterRes;
-
-        // Produce a smoothly-decaying volume envelope
-        this._oscGain.gain.setValueAtTime(0.0, start);
-        this._oscGain.gain.linearRampToValueAtTime(peakLevel, start + 0.005);
-        this._oscGain.gain.linearRampToValueAtTime(sustainLevel, start + 0.050);
-
-        // Sweep the cutoff frequency for spaced-out envelope effects!
-        this._filter.frequency.setValueAtTime(filterFreq, start);
-        this._filter.frequency.exponentialRampToValueAtTime(filterFreq * envDepth, start + attackTime + 0.005);
-        this._filter.frequency.exponentialRampToValueAtTime(filterFreq, start + decayTime + attackTime);
-      },
-
-      noteOff: function(delay, id) {
-        if (id && id !== this._id) {
-          return false;
-        }
-
-        var stop = r._ctx.currentTime + delay;
-
-        this._oscGain.gain.cancelScheduledValues(stop);
-        this._oscGain.gain.setValueAtTime(sustainLevel, stop);
-        this._oscGain.gain.linearRampToValueAtTime(0.0, stop + releaseTime);
-        this._osc.stop(stop + releaseTime + 0.125);
-
-        return true;
+    r.removeInstrument = function(instrOrId) {
+      var id = inToId(instrOrId);
+      if (id < 0) {
+        return;
       }
+
+      var oldSlot = r._song._instruments.getSlotById(id);
+      var oldInstr = r._song._instruments.getObjById(id);
+      r.Undo._addUndoAction(function() {
+        r._song._instruments.addObj(oldInstr, oldSlot);
+      });
+
+      r._song._instruments.removeId(id);
     };
 
-    function Instrument() {
-      this._triggers = new Array();
+    function getInstIdByIndex(instrIdx) {
+      return r._song._instruments.objIds()[instrIdx];
     }
 
-    Instrument.prototype = {
-      // Play back a simple synth voice at the pitch specified by the input note
-      noteOn: function(id, pitch, delay) {
-
-        // Don't play out-of-range notes
-        if (pitch < 0 || pitch > 127) {
-          return;
-        }
-
-        var trigger = new Trigger(id, pitch);
-        trigger.noteOn(delay);
-        this._triggers.push(trigger);
-      },
-
-      // Stop the playback of the currently-sounding note
-      noteOff: function(id, delay) {
-        var newTriggers = [];
-        for (var i = 0; i < this._triggers.length; i++) {
-          if (!this._triggers[i].noteOff(delay, id)) {
-            newTriggers.push(this._triggers[i]);
-          }
-        }
-        this._triggers = newTriggers;
-      },
-
-      killAllNotes: function() {
-        for (var i = 0; i < this._triggers.length; i++) {
-          this._triggers[i].noteOff(0);
-        }
-        this._triggers = [];
+    function getGlobalTarget() {
+      var inst = r._song._instruments.getObjById(getInstIdByIndex(r._globalTarget));
+      if (notDefined(inst)) {
+        console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
+        return undefined;
       }
+      return inst;
+    }
+
+    r.getParameter = function(paramIdx) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      return inst.normalizedGet(paramIdx);
     };
 
-    var inst1 = new Instrument();
-    r.Instrument = inst1;
+    r.getParameterByName = function(paramName) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      return inst.normalizedGetByName(paramName);
+    }
+
+    r.setParameter = function(paramIdx, value) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      inst.normalizedSet(paramIdx, value);
+      return value;
+    };
+
+    r.setParameterByName = function(paramName, value) {
+      var inst = getGlobalTarget();
+      if (notDefined(inst)) {
+        return undefined;
+      }
+      inst.normalizedSetByName(paramName, value);
+      return value;
+    }
 
     // only one preview note is allowed at a time
     var previewNote = undefined;
+    r.startPreviewNote = function(pitch, velocity) {
+      var keys = this._song._instruments.objIds();
+      if (keys.length === 0) {
+        return;
+      }
 
-    r.startPreviewNote = function(pitch) {
-      if (previewNote === undefined) {
-        previewNote = new Note(pitch, 0);
-        r.Instrument.noteOn(previewNote.id, pitch, 0);
+      if (notDefined(previewNote)) {
+        var targetId = getInstIdByIndex(this._globalTarget);
+        var inst = this._song._instruments.getObjById(targetId);
+        if (notDefined(inst)) {
+          console.log("[Rhombus] - Trying to trigger note on undefined instrument");
+          return;
+        }
+
+        if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+          velocity = 0.5;
+        }
+
+        previewNote = new this.RtNote(pitch, 0, 0, targetId);
+        inst.triggerAttack(previewNote._id, pitch, 0, velocity);
       }
     };
 
     r.stopPreviewNote = function() {
-      if (previewNote !== undefined) {
-        r.Instrument.noteOff(previewNote.id, 0);
+      var keys = this._song._instruments.objIds();
+      if (keys.length === 0) {
+        return;
+      }
+
+      if (isDefined(previewNote)) {
+        var inst = this._song._instruments.getObjById(previewNote._target);
+        if (notDefined(inst)) {
+          console.log("[Rhombus] - Trying to release note on undefined instrument");
+          return;
+        }
+
+        inst.triggerRelease(previewNote._id, 0);
         previewNote = undefined;
       }
     };

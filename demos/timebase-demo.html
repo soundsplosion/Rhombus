@@ -3,58 +3,93 @@
 <html>
 <head>
 <meta charset="UTF-8" />
+<script src="Tone.js"></script>
 <script src="../build/rhombus.js"></script>
 <script>
 var rhomb = new Rhombus();
+rhomb.setSampleResolver(function(sampleSetName, callback) {
+  var infoReq = new XMLHttpRequest();
+  var dirPath = "./samples/" + sampleSetName + "/";
+  infoReq.open("GET", dirPath + "samples.json", true);
+  infoReq.responseType = "json";
+
+  infoReq.onload = function() {
+    var infoMap = infoReq.response;
+    var sampleCount = Object.keys(infoMap).length;
+
+    var finalMap = {};
+    for (var pitch in infoMap) {
+      function getSample(pitch, file) {
+        var sampleReq = new XMLHttpRequest();
+        sampleReq.open("GET", dirPath + file, true);
+        sampleReq.responseType = "arraybuffer";
+
+        sampleReq.onload = function() {
+          rhomb._ctx.decodeAudioData(sampleReq.response, function(buff) {
+            finalMap[+pitch] = [buff, file];
+            if (Object.keys(finalMap).length == sampleCount) {
+              callback(finalMap);
+            }
+          });
+        };
+
+        sampleReq.send();
+      }
+
+      getSample(pitch, infoMap[pitch]);
+    }
+  };
+
+  infoReq.send();
+});
+
 var interval = 240;
 var last = 960 - interval;
 
-function appendArp(p1, p2, p3) {
-  var startTime = last + interval;
-  last += interval*4;
-
-  rhomb.Edit.insertNote(new rhomb.Note(p1, startTime, interval*2));
-  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval, interval*2));
-  rhomb.Edit.insertNote(new rhomb.Note(p3, startTime + interval*2, interval*2));
-  rhomb.Edit.insertNote(new rhomb.Note(p2, startTime + interval*3, interval*2));
+var patId = rhomb._song.addPattern();
+function ins(a, b, c) {
+  rhomb.Edit.insertNote(new rhomb.Note(a, b, c, 1.0), patId);
 }
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 0, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 240, 240));
-rhomb.Edit.insertNote(new rhomb.Note(67, 480, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 720, 240));
+var instrId = rhomb.addInstrument("mono");
+var instr = rhomb.getSong().getInstruments().getObjById(instrId);
+instr.normalizedSetByName("volume", 0.6);
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 960, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 1200, 240));
-rhomb.Edit.insertNote(new rhomb.Note(67, 1440, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 1680, 240));
+var trackId = rhomb._song.addTrack();
+var track = rhomb.getSong().getTracks().getObjById(trackId);
+track._target = instrId;
+track.addToPlaylist(patId, 0, 3840);
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 1920, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 2160, 240));
-rhomb.Edit.insertNote(new rhomb.Note(68, 2400, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 2640, 240));
+ins(60, 0, 240);
+ins(63, 240, 240);
+ins(67, 480, 240);
+ins(63, 720, 240);
 
-rhomb.Edit.insertNote(new rhomb.Note(60, 2880, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 3120, 240));
-rhomb.Edit.insertNote(new rhomb.Note(68, 3360, 240));
-rhomb.Edit.insertNote(new rhomb.Note(63, 3600, 240));
+ins(60, 960, 240);
+ins(63, 1200, 240);
+ins(67, 1440, 240);
+ins(63, 1680, 240);
 
-//appendArp(60, 63, 67);
-//appendArp(60, 63, 67);
-//appendArp(60, 63, 68);
-//appendArp(60, 63, 68);
-//appendArp(60, 63, 67);
-//appendArp(60, 63, 67);
-//appendArp(59, 62, 67);
-//appendArp(59, 62, 67);
+ins(60, 1920, 240);
+ins(63, 2160, 240);
+ins(68, 2400, 240);
+ins(63, 2640, 240);
+
+ins(60, 2880, 240);
+ins(63, 3120, 240);
+ins(68, 3360, 240);
+ins(63, 3600, 240);
+
 </script>
 </head>
 <body>
 
 <p id="timeDisplay"></p>
+<p id="elapsedDisplay"></p>
+<p id="driftDisplay"></p>
 <p id="loopEnabled"></p>
-<button onclick="rhomb.startPlayback()">Start</button>
-<button onclick="rhomb.stopPlayback()">Stop</button>
+<button onclick="if (rhomb.isPlaying()) rhomb.stopPlayback(); else rhomb.startPlayback();">Start</button>
+<button onclick="rhomb.stopPlayback(); rhomb.moveToPositionTicks(rhomb.getLoopStart());">Stop</button>
 <button onclick="toggleLoop()">Toggle Loop</button>
 
 <br />
@@ -71,15 +106,25 @@ rhomb.Edit.insertNote(new rhomb.Note(63, 3600, 240));
 
 <script>
 var timeDisplay = document.getElementById("timeDisplay");
+var elapsedDisplay = document.getElementById("elapsedDisplay");
+var driftDisplay = document.getElementById("driftDisplay");
 var loopEnabled = document.getElementById("loopEnabled");
 var wetGain = document.getElementById("wetGain");
 var feedbackGain = document.getElementById("feedbackGain");
 function updateTime() {
   var seconds = rhomb.getPosition();
   var ticks = rhomb.seconds2Ticks(seconds);
+
+  var elapsedSeconds = rhomb.getElapsedTime();
+  var elapsedTicks = rhomb.seconds2Ticks(elapsedSeconds);
+
+  var drift = (rhomb.isPlaying() && rhomb.getLoopEnabled()) ? (elapsedTicks % 1920) - ticks : 0;
+
   rhomb.setWetGain(wetGain.value/100);
   rhomb.setFeedbackGain(feedbackGain.value/100);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
+  elapsedDisplay.innerHTML = "Elapsed time: (" + elapsedTicks.toFixed(0) + " ticks, " + elapsedSeconds.toFixed(3) + " seconds)";
+  driftDisplay.innerHTML = "Drift: (" + drift.toFixed(0) + " ticks)";
   loopEnabled.innerHTML = "Loop Enabled: " + rhomb.getLoopEnabled();
   requestAnimationFrame(updateTime);
 }
