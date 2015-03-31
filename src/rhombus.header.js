@@ -81,6 +81,7 @@
     root.Rhombus._trackSetup(this);
     root.Rhombus._songSetup(this);
     root.Rhombus._paramSetup(this);
+    root.Rhombus._recordSetup(this);
 
     // Instruments
     root.Rhombus._instrumentSetup(this);

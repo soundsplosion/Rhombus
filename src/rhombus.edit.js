@@ -25,6 +25,29 @@
       });
     };
 
+    // Inserts an array of notes into an existing pattern, with the start
+    // times offset by the given amount
+    //
+    // The anticipated use case is inserting recorded notes, in which case
+    // the offset would typically be a negative value (since all patterns start
+    // at tick 0 internally)
+    r.Edit.insertNotes = function(notes, ptnId, offset) {
+      var ptn = r._song._patterns[ptnId];
+
+      var notesCopy = notes.slice(0);
+      r.Undo._addUndoAction(function() {
+        ptn.deleteNotes(notesCopy);
+      });
+
+      for (var i = 0; i < notes.length; i++) {
+        var note = notes[i];
+        if (isDefined(note)) {
+          note._start = note._start + offset;
+          ptn.addNote(note);
+        }
+      }
+    };
+
     r.Edit.deleteNote = function(noteId, ptnId) {
       // TODO: put checks on the input arguments
       var note = r._song._patterns[ptnId].deleteNote(noteId);

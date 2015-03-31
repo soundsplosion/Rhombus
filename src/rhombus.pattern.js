@@ -108,16 +108,6 @@
       },
 
       deleteNotes: function(notes) {
-        // undo stuff
-        var oldNotes = notes.slice(0);
-        var that = this;
-        r.Undo._addUndoAction(function() {
-          for (var i = 0; i < oldNotes.length; i++) {
-            var note = oldNotes[i];
-            that._noteMap[note._id] = note;
-          }
-        });
-
         for (var i = 0; i < notes.length; i++) {
           var note = notes[i];
           delete this._noteMap[note._id];
@@ -139,21 +129,25 @@
     r.Note = function(pitch, start, length, velocity, id) {
        // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
+        console.log("pitch invalid:" + pitch);
         return undefined;
       }
 
       // validate the start
       if (!isNumber(start) || start < 0) {
+        console.log("start invalid");
         return undefined;
       }
 
       // validate the length
       if (!isNumber(length) || length < 0) {
+        console.log("length invalid");
         return undefined;
       }
 
-      // validate the start
+      // validate the velocity
       if (!isNumber(velocity) || velocity < 0) {
+        console.log("velocity invalid");
         return undefined;
       }
 
@@ -168,6 +162,8 @@
       this._length   = +length   || 0;
       this._velocity = +velocity || 0.5;
       this._selected = false;
+
+      return this;
     };
 
     r.Note.prototype = {
