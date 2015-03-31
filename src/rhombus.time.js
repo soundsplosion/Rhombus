@@ -118,7 +118,12 @@
                 var startTime = curTime + delay;
                 var endTime = startTime + r.ticks2Seconds(note._length);
 
-                var rtNote = new r.RtNote(note._pitch, startTime, endTime, track._target);
+                var rtNote = new r.RtNote(note._pitch,
+                                          note.getVelocity(),
+                                          startTime,
+                                          endTime,
+                                          track._target);
+
                 playingNotes[rtNote._id] = rtNote;
 
                 var instrument = r._song._instruments.getObjById(track._target);
@@ -290,6 +295,14 @@
         return time;
       }
     }
+
+    r.getCurrentPosTicks = function() {
+      var ticks = r.seconds2Ticks(r.getPosition());
+      if (r.getLoopEnabled() && ticks < 0) {
+        ticks = r.getLoopEnd() + ticks;
+      }
+      return ticks;
+    };
 
     r.getPosition = function() {
       return getPosition(playing);

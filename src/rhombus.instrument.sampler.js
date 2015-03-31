@@ -177,7 +177,7 @@
     };
 
     Sampler.prototype.toJSON = function() {
-      var params = { 
+      var params = {
         "params": this._currentParams,
         "sampleSet": this._sampleSet
       };

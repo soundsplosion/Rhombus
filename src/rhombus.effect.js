@@ -135,7 +135,7 @@
     };
 
     function isMaster() { return false; }
- 
+
     function toJSON(params) {
       var jsonVersion = {
         "_id": this._id,
@@ -148,7 +148,7 @@
       };
       return jsonVersion;
     }
-   
+
     function installFunctions(ctr) {
       ctr.prototype._normalizedObjectSet = normalizedObjectSet;
       r._addParamFunctions(ctr);
