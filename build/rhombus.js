@@ -946,7 +946,7 @@
         return;
       }
 
-      node.graphConnect(master);
+      node.graphConnect(master, true);
     };
 
     r._importFixGraph = function() {
