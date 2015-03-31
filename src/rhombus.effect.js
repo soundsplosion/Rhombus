@@ -1,4 +1,4 @@
-x//! rhombus.effect.js
+//! rhombus.effect.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 (function (Rhombus) {
