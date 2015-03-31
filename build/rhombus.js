@@ -792,7 +792,7 @@
       return A.hasDescendant(this);
     }
 
-    function graphConnect(B) {
+    function graphConnect(B, internal) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
       }
@@ -810,10 +810,12 @@
         return false;
       }
 
-      var that = this;
-      r.Undo._addUndoAction(function() {
-        that.graphDisconnect(B);
-      });
+      if (!internal) {
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that.graphDisconnect(B, true);
+        });
+      }
 
       this._graphChildren.push(B._id);
       B._graphParents.push(this._id);
@@ -822,7 +824,7 @@
       return true;
     };
 
-    function graphDisconnect(B) {
+    function graphDisconnect(B, internal) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
         return;
@@ -840,10 +842,12 @@
         B._graphParents.splice(BIdx, 1);
       }
 
-      var that = this;
-      r.Undo._addUndoAction(function() {
-        that.graphConnect(B);
-      });
+      if (!internal) {
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that.graphConnect(B, true);
+        });
+      }
 
       // TODO: this should be replaced in such a way that we
       // don't break all the outgoing connections every time we
@@ -882,6 +886,32 @@
       return this._graphParents.filter(isDefined).map(graphLookup);
     }
 
+    function graphX() {
+      if (notNumber(this._graphX)) {
+        this._graphX = 0;
+      }
+      return this._graphX;
+    }
+
+    function setGraphX(x) {
+      if (isNumber(x)) {
+        this._graphX = x;
+      }
+    }
+
+    function graphY() {
+      if (notNumber(this._graphY)) {
+        this._graphY = 0;
+      }
+      return this._graphY;
+    }
+
+    function setGraphY(y) {
+      if (isNumber(y)) {
+        this._graphY = y;
+      }
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype.hasChild = hasChild;
       ctr.prototype.hasParent = hasParent;
@@ -891,6 +921,10 @@
       ctr.prototype.graphParents = graphParents;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype.graphX = graphX;
+      ctr.prototype.setGraphX = setGraphX;
+      ctr.prototype.graphY = graphY;
+      ctr.prototype.setGraphY = setGraphY;
     };
 
     r.getMaster = function() {
@@ -1192,7 +1226,15 @@
       return ["Sampler", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
     };
 
-    r.addInstrument = function(type, options, gc, gp, id, idx) {
+    r.addInstrument = function(type, json, idx) {
+      var options, gc, gp, id;
+      if (isDefined(json)) {
+        options = json._params;
+        gc = json._graphChildren;
+        gp = json._graphParents;
+        id = json._id;
+      }
+
       var instr;
       if (type === "samp") {
         instr = new this._Sampler(options, id);
@@ -1597,7 +1639,9 @@
         "_type": "samp",
         "_params": params,
         "_graphChildren": gc,
-        "_graphParents": gp
+        "_graphParents": gp,
+        "_graphX": this._graphX,
+        "_graphY": this._graphY
       };
       return jsonVersion;
     };
@@ -1755,7 +1799,9 @@
         "_type": this._type,
         "_params": this._currentParams,
         "_graphChildren": gc,
-        "_graphParents": gp
+        "_graphParents": gp,
+        "_graphX": this._graphX,
+        "_graphY": this._graphY
       };
       return jsonVersion;
     };
@@ -2013,7 +2059,7 @@
       return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher"];
     };
 
-    r.addEffect = function(type, options, gc, gp, id) {
+    r.addEffect = function(type, json) {
       var ctrMap = {
         "dist" : r._Distortion,
         "filt" : r._Filter,
@@ -2024,6 +2070,14 @@
         "bitc" : r._BitCrusher
         // TODO: add more
       };
+
+      var options, gc, gp, id;
+      if (isDefined(json)) {
+        options = json._params;
+        gc = json._graphChildren;
+        gp = json._graphParents;
+        id = json._id;
+      }
 
       var ctr;
       if (type === "mast") {
@@ -2122,7 +2176,9 @@
         "_type": this._type,
         "_params": this._currentParams,
         "_graphChildren": this._graphChildren,
-        "_graphParents": this._graphParents
+        "_graphParents": this._graphParents,
+        "_graphX": this._graphX,
+        "_graphY": this._graphY
       };
       return jsonVersion;
     }
@@ -3226,12 +3282,12 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst._params, inst._graphChildren, inst._graphParents, +instId, instIdIdx);
+        this.addInstrument(inst._type, inst, +instIdIdx);
       }
 
       for (var effId in effects) {
         var eff = effects[effId];
-        this.addEffect(eff._type, eff._params, eff._graphChildren, eff._graphParents, +effId);
+        this.addEffect(eff._type, eff);
       }
 
       this._importFixGraph();

@@ -50,7 +50,7 @@
       return A.hasDescendant(this);
     }
 
-    function graphConnect(B) {
+    function graphConnect(B, internal) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
       }
@@ -68,10 +68,12 @@
         return false;
       }
 
-      var that = this;
-      r.Undo._addUndoAction(function() {
-        that.graphDisconnect(B);
-      });
+      if (!internal) {
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that.graphDisconnect(B, true);
+        });
+      }
 
       this._graphChildren.push(B._id);
       B._graphParents.push(this._id);
@@ -80,7 +82,7 @@
       return true;
     };
 
-    function graphDisconnect(B) {
+    function graphDisconnect(B, internal) {
       if (notDefined(this._graphChildren)) {
         this._graphChildren = [];
         return;
@@ -98,10 +100,12 @@
         B._graphParents.splice(BIdx, 1);
       }
 
-      var that = this;
-      r.Undo._addUndoAction(function() {
-        that.graphConnect(B);
-      });
+      if (!internal) {
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that.graphConnect(B, true);
+        });
+      }
 
       // TODO: this should be replaced in such a way that we
       // don't break all the outgoing connections every time we
@@ -140,6 +144,32 @@
       return this._graphParents.filter(isDefined).map(graphLookup);
     }
 
+    function graphX() {
+      if (notNumber(this._graphX)) {
+        this._graphX = 0;
+      }
+      return this._graphX;
+    }
+
+    function setGraphX(x) {
+      if (isNumber(x)) {
+        this._graphX = x;
+      }
+    }
+
+    function graphY() {
+      if (notNumber(this._graphY)) {
+        this._graphY = 0;
+      }
+      return this._graphY;
+    }
+
+    function setGraphY(y) {
+      if (isNumber(y)) {
+        this._graphY = y;
+      }
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype.hasChild = hasChild;
       ctr.prototype.hasParent = hasParent;
@@ -149,6 +179,10 @@
       ctr.prototype.graphParents = graphParents;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype.graphX = graphX;
+      ctr.prototype.setGraphX = setGraphX;
+      ctr.prototype.graphY = graphY;
+      ctr.prototype.setGraphY = setGraphY;
     };
 
     r.getMaster = function() {
