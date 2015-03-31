@@ -108,16 +108,6 @@
       },
 
       deleteNotes: function(notes) {
-        // undo stuff
-        var oldNotes = notes.slice(0);
-        var that = this;
-        r.Undo._addUndoAction(function() {
-          for (var i = 0; i < oldNotes.length; i++) {
-            var note = oldNotes[i];
-            that._noteMap[note._id] = note;
-          }
-        });
-
         for (var i = 0; i < notes.length; i++) {
           var note = notes[i];
           delete this._noteMap[note._id];

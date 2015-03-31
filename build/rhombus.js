@@ -2527,16 +2527,6 @@
       },
 
       deleteNotes: function(notes) {
-        // undo stuff
-        var oldNotes = notes.slice(0);
-        var that = this;
-        r.Undo._addUndoAction(function() {
-          for (var i = 0; i < oldNotes.length; i++) {
-            var note = oldNotes[i];
-            that._noteMap[note._id] = note;
-          }
-        });
-
         for (var i = 0; i < notes.length; i++) {
           var note = notes[i];
           delete this._noteMap[note._id];
@@ -3727,6 +3717,12 @@
     // at tick 0 internally)
     r.Edit.insertNotes = function(notes, ptnId, offset) {
       var ptn = r._song._patterns[ptnId];
+
+      var notesCopy = notes.slice(0);
+      r.Undo._addUndoAction(function() {
+        ptn.deleteNotes(notesCopy);
+      });
+
       for (var i = 0; i < notes.length; i++) {
         var note = notes[i];
         if (isDefined(note)) {
