@@ -200,7 +200,9 @@
         "_type": "samp",
         "_params": params,
         "_graphChildren": gc,
-        "_graphParents": gp
+        "_graphParents": gp,
+        "_graphX": this._graphX,
+        "_graphY": this._graphY
       };
       return jsonVersion;
     };

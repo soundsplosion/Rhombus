@@ -25,7 +25,7 @@
       return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher"];
     };
 
-    r.addEffect = function(type, options, gc, gp, id) {
+    r.addEffect = function(type, json) {
       var ctrMap = {
         "dist" : r._Distortion,
         "filt" : r._Filter,
@@ -36,6 +36,14 @@
         "bitc" : r._BitCrusher
         // TODO: add more
       };
+
+      var options, gc, gp, id;
+      if (isDefined(json)) {
+        options = json._params;
+        gc = json._graphChildren;
+        gp = json._graphParents;
+        id = json._id;
+      }
 
       var ctr;
       if (type === "mast") {
@@ -134,7 +142,9 @@
         "_type": this._type,
         "_params": this._currentParams,
         "_graphChildren": this._graphChildren,
-        "_graphParents": this._graphParents
+        "_graphParents": this._graphParents,
+        "_graphX": this._graphX,
+        "_graphY": this._graphY
       };
       return jsonVersion;
     }

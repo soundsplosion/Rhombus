@@ -276,12 +276,12 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst._params, inst._graphChildren, inst._graphParents, +instId, instIdIdx);
+        this.addInstrument(inst._type, inst, +instIdIdx);
       }
 
       for (var effId in effects) {
         var eff = effects[effId];
-        this.addEffect(eff._type, eff._params, eff._graphChildren, eff._graphParents, +effId);
+        this.addEffect(eff._type, eff);
       }
 
       this._importFixGraph();

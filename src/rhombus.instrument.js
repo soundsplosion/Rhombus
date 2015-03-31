@@ -13,7 +13,15 @@
       return ["Sampler", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
     };
 
-    r.addInstrument = function(type, options, gc, gp, id, idx) {
+    r.addInstrument = function(type, json, idx) {
+      var options, gc, gp, id;
+      if (isDefined(json)) {
+        options = json._params;
+        gc = json._graphChildren;
+        gp = json._graphParents;
+        id = json._id;
+      }
+
       var instr;
       if (type === "samp") {
         instr = new this._Sampler(options, id);

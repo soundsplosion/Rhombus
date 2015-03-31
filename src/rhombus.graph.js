@@ -144,6 +144,32 @@
       return this._graphParents.filter(isDefined).map(graphLookup);
     }
 
+    function graphX() {
+      if (notNumber(this._graphX)) {
+        this._graphX = 0;
+      }
+      return this._graphX;
+    }
+
+    function setGraphX(x) {
+      if (isNumber(x)) {
+        this._graphX = x;
+      }
+    }
+
+    function graphY() {
+      if (notNumber(this._graphY)) {
+        this._graphY = 0;
+      }
+      return this._graphY;
+    }
+
+    function setGraphY(y) {
+      if (isNumber(y)) {
+        this._graphY = y;
+      }
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype.hasChild = hasChild;
       ctr.prototype.hasParent = hasParent;
@@ -153,6 +179,10 @@
       ctr.prototype.graphParents = graphParents;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype.graphX = graphX;
+      ctr.prototype.setGraphX = setGraphX;
+      ctr.prototype.graphY = graphY;
+      ctr.prototype.setGraphY = setGraphY;
     };
 
     r.getMaster = function() {
