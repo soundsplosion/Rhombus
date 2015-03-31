@@ -2118,8 +2118,6 @@
           gc[i] = +(gc[i]);
         }
         eff._graphChildren = gc;
-      } else {
-        r._toMaster(eff);
       }
 
       if (isDefined(gp)) {
