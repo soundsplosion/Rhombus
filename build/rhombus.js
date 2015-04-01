@@ -1403,9 +1403,7 @@
         velocity = 0.5;
       }
 
-      console.log("[Rhombus] - starting preview note at tick " +
-                  this.getCurrentPosTicks());
-
+      // TODO: clean up all this time business
       var rtNote = new this.RtNote(pitch,
                                    velocity,
                                    this.getElapsedTime(),
@@ -1438,11 +1436,6 @@
           inst.triggerRelease(rtNote._id, 0);
           previewNotes.splice(i, 1);
 
-          var length = this.seconds2Ticks(curTime - rtNote._startTime);
-          console.log("[Rhombus] - stopping preview note at tick " + curTicks +
-                      ", length = " + length + " ticks");
-
-          // TODO: buffer stopped preview notes for recording purposes
           if (this.isPlaying() && this.getRecordEnabled()) {
             this.Record.addToBuffer(rtNote._pitch,
                                     rtNote._velocity,
@@ -2812,11 +2805,11 @@
 
     r.RtNote = function(pitch, velocity, start, end, target, startTime) {
       r._newRtId(this);
-      this._pitch = pitch || 60;
-      this._velocity = +velocity || 0.5;
-      this._start = start || 0;
-      this._end = end || 0;
-      this._target = target;
+      this._pitch     = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
+      this._velocity  = +velocity || 0.5;
+      this._start     = start || 0;
+      this._end       = end || 0;
+      this._target    = target;
       this._startTime = startTime;
 
       return this;
