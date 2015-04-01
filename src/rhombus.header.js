@@ -96,6 +96,9 @@
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
 
+    // MIDI
+    root.Rhombus._midiSetup(this);
+
     this.initSong();
   };
 
