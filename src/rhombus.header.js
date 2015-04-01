@@ -100,6 +100,7 @@
     root.Rhombus._midiSetup(this);
 
     this.initSong();
+    this.getMidiAccess();
   };
 
 })(this);
