@@ -96,7 +96,11 @@
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
 
+    // MIDI
+    root.Rhombus._midiSetup(this);
+
     this.initSong();
+    this.getMidiAccess();
   };
 
 })(this);
@@ -1403,9 +1407,7 @@
         velocity = 0.5;
       }
 
-      console.log("[Rhombus] - starting preview note at tick " +
-                  this.getCurrentPosTicks());
-
+      // TODO: clean up all this time business
       var rtNote = new this.RtNote(pitch,
                                    velocity,
                                    this.getElapsedTime(),
@@ -1438,11 +1440,6 @@
           inst.triggerRelease(rtNote._id, 0);
           previewNotes.splice(i, 1);
 
-          var length = this.seconds2Ticks(curTime - rtNote._startTime);
-          console.log("[Rhombus] - stopping preview note at tick " + curTicks +
-                      ", length = " + length + " ticks");
-
-          // TODO: buffer stopped preview notes for recording purposes
           if (this.isPlaying() && this.getRecordEnabled()) {
             this.Record.addToBuffer(rtNote._pitch,
                                     rtNote._velocity,
@@ -2812,11 +2809,11 @@
 
     r.RtNote = function(pitch, velocity, start, end, target, startTime) {
       r._newRtId(this);
-      this._pitch = pitch || 60;
-      this._velocity = +velocity || 0.5;
-      this._start = start || 0;
-      this._end = end || 0;
-      this._target = target;
+      this._pitch     = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
+      this._velocity  = +velocity || 0.5;
+      this._start     = start || 0;
+      this._end       = end || 0;
+      this._target    = target;
       this._startTime = startTime;
 
       return this;
@@ -4180,5 +4177,84 @@
     r.Record.clearBuffer = function() {
       recordBuffer.splice(0, recordBuffer.length);
     };
+  };
+})(this.Rhombus);
+
+//! rhombus.effect.midi.js
+//! authors: Spencer Phippen, Tim Grant
+//! license: MIT
+(function(Rhombus) {
+  Rhombus._midiSetup = function(r) {
+
+    // MIDI access object
+    r._midi = null;
+    r._inputMap = {};
+
+    function printMidiMessage(event) {
+      var str = "MIDI message received at timestamp " + event.timestamp + "[" + event.data.length + " bytes]: ";
+      for (var i=0; i<event.data.length; i++) {
+        str += "0x" + event.data[i].toString(16) + " ";
+      }
+      console.log(str);
+    }
+
+    function onMidiMessage(event) {
+      //printMidiMessage(event);
+
+      // only handle well-formed notes for now (don't worry about running status, etc.)
+      if (event.data.length !== 3) {
+        console.log("[MidiIn] - ignoring MIDI message");
+        return;
+      }
+
+      // parse the message bytes
+      var cmd   = event.data[0] & 0xF0;
+      var chan  = event.data[0] & 0x0F;
+      var pitch = event.data[1];
+      var vel   = event.data[2];
+
+      // check for note-off messages
+      if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
+        console.log("[MidiIn] - Note-Off, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
+        rhomb.stopPreviewNote(pitch);
+      }
+
+      // check for note-on messages
+      else if (cmd === 0x90 && vel > 0) {
+        vel /= 127;
+        console.log("[MidiIn] - Note-On, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
+        rhomb.startPreviewNote(pitch, vel);
+      }
+
+      // don't worry about other message types for now
+    }
+
+    function mapMidiInputs(midi) {
+      r._inputMap = {};
+      var it = midi.inputs.entries();
+      for (var entry = it.next(); !entry.done; entry = it.next()) {
+        var value = entry.value;
+        console.log("[MidiIn] - mapping entry " + value[0]);
+        r._inputMap[value[0]] = value[1];
+        value[1].onmidimessage = onMidiMessage;
+      }
+    }
+
+    function onMidiSuccess(midiAccess) {
+      console.log("[Rhombus] - MIDI Access Successful");
+      r._midi = midiAccess;
+      mapMidiInputs(r._midi);
+    }
+
+    function onMidiFailure(msg) {
+      console.log( "Failed to get MIDI access - " + msg );
+    }
+
+    r.getMidiAccess = function() {
+      r._midi = null;
+      if (typeof navigator.requestMIDIAccess !== "undefined") {
+        navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
+      }
+    }
   };
 })(this.Rhombus);
