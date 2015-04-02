@@ -32,6 +32,7 @@
     // the offset would typically be a negative value (since all patterns start
     // at tick 0 internally)
     r.Edit.insertNotes = function(notes, ptnId, offset) {
+      offset = (isDefined(offset)) ? offset : 0;
       var ptn = r._song._patterns[ptnId];
 
       var notesCopy = notes.slice(0);
