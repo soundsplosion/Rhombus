@@ -21,15 +21,12 @@
     var recordBuffer = new Array();
 
     // Adds an RtNote with the given parameters to the record buffer
-    r.Record.addToBuffer = function(pitch, velocity, start, end) {
-      // TODO: 'length' would probably be better than 'end'
-      var rtNote = new r.RtNote(pitch, velocity, start, end);
-
+    r.Record.addToBuffer = function(rtNote) {
       if (isDefined(rtNote)) {
         recordBuffer.push(rtNote);
       }
       else {
-        console.log("[Rhombus.Edit] - rtNote is undefined");
+        console.log("[Rhombus.Record] - rtNote is undefined");
       }
     };
 
@@ -44,8 +41,8 @@
       for (var i = 0; i < recordBuffer.length; i++) {
         var rtNote = recordBuffer[i];
         var note = new r.Note(+rtNote._pitch,
-                              Math.round(r.seconds2Ticks(rtNote._start)),
-                              Math.round(r.seconds2Ticks(rtNote._end - rtNote._start)),
+                              Math.round(rtNote._start),
+                              Math.round(rtNote._end - rtNote._start),
                               rtNote._velocity);
 
         // TODO: Decide if this define guard is redundant
@@ -53,7 +50,7 @@
           notes.push(note);
         }
         else {
-          console.log("[Rhombus.Edit] - note is undefined");
+          console.log("[Rhombus.Record] - note is undefined");
         }
       }
 
