@@ -13,6 +13,7 @@
 
     r.setRecordEnabled = function(enabled) {
       if (typeof enabled === "boolean") {
+        document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": enabled}));
         return this._recordEnabled = enabled;
       }
     };
