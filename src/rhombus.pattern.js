@@ -141,7 +141,7 @@
 
       // validate the length
       if (!isNumber(length) || length < 0) {
-        console.log("length invalid");
+        console.log("[Rhombus] - Note length invalid: " + length);
         return undefined;
       }
 
