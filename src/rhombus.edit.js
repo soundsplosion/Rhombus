@@ -221,7 +221,7 @@
 
       var lId = dstL._id;
       var rId = dstR._id;
-      r.Undo.addUndoAction(function() {
+      r.Undo._addUndoAction(function() {
         delete r._song._patterns[lId];
         delete r._song._patterns[rId];
       });
