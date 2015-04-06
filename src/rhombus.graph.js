@@ -148,7 +148,7 @@
       }
 
       var outputObj = this._graphOutputs[output];
-      var inputObj = this._graphInputs[input];
+      var inputObj = b._graphInputs[bInput];
 
       var outputPortIdx = -1;
       var inputPortIdx = -1;
@@ -180,7 +180,7 @@
       }
 
       outputObj.to.splice(outputPortIdx, 1);
-      inputObj.to.splice(inputPortIdx, 1);
+      inputObj.from.splice(inputPortIdx, 1);
 
       // TODO: use the slots when disconnecting
       var type = outputObj.type;
