@@ -4,13 +4,8 @@
 
 (function(root) {
 
-  var rhombs = [];
-
   // Add Rhombus constructor
   root.Rhombus = function() {
-
-    rhombs.push(this);
-
     this._active = true;
     this._disposed = false;
     this._ctx = Tone.context;
@@ -27,12 +22,6 @@
       this.setActive(false);
       this._disposed = true;
       delete this._ctx;
-      for (var i = 0; i < rhombs.length; i++) {
-        if (rhombs[i] === this) {
-          rhombs.splice(i, 1);
-          return;
-        }
-      }
     };
 
     this.setGlobalTarget = function(target) {
