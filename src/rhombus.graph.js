@@ -309,11 +309,8 @@
         var go = node.graphOutputs();
         go.forEach(function (slot) {
           slot.to.forEach(function (port) {
-            // TODO: use the slot indices here too
-            var child = graphLookup(port.node);
-            if (isDefined(child)) {
-              node.connect(child);
-            }
+            // TODO: use the slots here too
+            node.connect(port.node);
           });
         });
       });
