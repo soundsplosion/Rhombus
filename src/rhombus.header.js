@@ -5,7 +5,12 @@
 (function(root) {
 
   // Add Rhombus constructor
-  root.Rhombus = function() {
+  root.Rhombus = function(constraints) {
+    if (notDefined(constraints)) {
+      constraints = {};
+    }
+
+    this._constraints = constraints;
     this._active = true;
     this._disposed = false;
     this._ctx = Tone.context;
