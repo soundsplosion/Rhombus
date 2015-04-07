@@ -19,7 +19,7 @@
       addNote: function(note) {
         if (!(note instanceof r.Note)) {
           console.log("[Rhombus] - trying to add non-Note object to NoteMap");
-          return undefined;
+          return false;
         }
 
         var key = Math.round(note.getStart());
@@ -29,12 +29,20 @@
         for (var i = 0; i < elements.length; i++) {
           if (note === elements[i]) {
             console.log("[Rhombus] - trying to add duplicate Note to NoteMap");
-            return undefined;
+            return false;
           }
         }
 
+        if (isDefined(r._constraints.max_notes)) {
+          if (r._song._noteCount >= r._constraints.max_notes) {
+            return false;
+          }
+        }
+
+        r._song._noteCount++;
         this._avl.insert(key, note);
         console.log("[Rhombus] - added note to NoteMap at tick " + key);
+        return true;
       },
 
       getNote: function(noteId) {
@@ -59,11 +67,16 @@
 
         if (notDefined(note)) {
           console.log("[Rhombus] - note not found in NoteMap");
-          return undefined;
+          return false;
         }
 
-        this._avl.delete(note.getStart(), note);
-        return note;
+        var atStart = this._avl.search(note.getStart()).length;
+        if (atStart > 0) {
+          r._song._noteCount--;
+          this._avl.delete(note.getStart(), note);
+        }
+
+        return true;
       },
 
       toJSON: function() {

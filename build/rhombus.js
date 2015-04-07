@@ -2489,7 +2489,7 @@
       addNote: function(note) {
         if (!(note instanceof r.Note)) {
           console.log("[Rhombus] - trying to add non-Note object to NoteMap");
-          return undefined;
+          return false;
         }
 
         var key = Math.round(note.getStart());
@@ -2499,12 +2499,20 @@
         for (var i = 0; i < elements.length; i++) {
           if (note === elements[i]) {
             console.log("[Rhombus] - trying to add duplicate Note to NoteMap");
-            return undefined;
+            return false;
           }
         }
 
+        if (isDefined(r._constraints.max_notes)) {
+          if (r._song._noteCount >= r._constraints.max_notes) {
+            return false;
+          }
+        }
+
+        r._song._noteCount++;
         this._avl.insert(key, note);
         console.log("[Rhombus] - added note to NoteMap at tick " + key);
+        return true;
       },
 
       getNote: function(noteId) {
@@ -2529,11 +2537,16 @@
 
         if (notDefined(note)) {
           console.log("[Rhombus] - note not found in NoteMap");
-          return undefined;
+          return false;
         }
 
-        this._avl.delete(note.getStart(), note);
-        return note;
+        var atStart = this._avl.search(note.getStart()).length;
+        if (atStart > 0) {
+          r._song._noteCount--;
+          this._avl.delete(note.getStart(), note);
+        }
+
+        return true;
       },
 
       toJSON: function() {
@@ -3126,6 +3139,9 @@
       this._soloList = [];
 
       this._curId = 0;
+
+      // Tracks number of notes for constraint enforcement.
+      this._noteCount = 0;
     };
 
     Song.prototype = {
@@ -3851,11 +3867,11 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r._song._patterns[ptnId].addNote(note);
-
       r.Undo._addUndoAction(function() {
         r._song._patterns[ptnId].deleteNote(note._id);
       });
+
+      return r._song._patterns[ptnId].addNote(note);
     };
 
     // Inserts an array of notes into an existing pattern, with the start
@@ -3868,6 +3884,10 @@
       offset = (isDefined(offset)) ? offset : 0;
       var ptn = r._song._patterns[ptnId];
 
+      // Even though the notes are modified below,
+      // the slice is a shallow copy so the notes
+      // passed to deleteNotes in the undo action
+      // are the proper, modified versions.
       var notesCopy = notes.slice(0);
       r.Undo._addUndoAction(function() {
         ptn.deleteNotes(notesCopy);

@@ -23,6 +23,9 @@
       this._soloList = [];
 
       this._curId = 0;
+
+      // Tracks number of notes for constraint enforcement.
+      this._noteCount = 0;
     };
 
     Song.prototype = {
