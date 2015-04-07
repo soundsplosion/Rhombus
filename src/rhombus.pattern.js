@@ -207,7 +207,7 @@
           _name    : this._name,
           _color   : this._color,
           _length  : this._length,
-          _noteMap : this._noteMap.toJSON
+          _noteMap : this._noteMap.toJSON()
         };
         return jsonObj;
       }

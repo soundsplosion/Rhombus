@@ -2715,7 +2715,7 @@
           _name    : this._name,
           _color   : this._color,
           _length  : this._length,
-          _noteMap : this._noteMap.toJSON
+          _noteMap : this._noteMap.toJSON()
         };
         return jsonObj;
       }
@@ -3362,7 +3362,7 @@
                                    +noteMap[noteId]._velocity || 1,
                                    +noteId);
 
-          newPattern._noteMap[+noteId] = note;
+          newPattern.addNote(note);
         }
 
         this._song._patterns[+ptnId] = newPattern;
@@ -4365,14 +4365,6 @@
       if (typeof navigator.requestMIDIAccess !== "undefined") {
         navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
       }
-    };
-
-    r.trackToMidi = function(trkId) {
-      var track = this._song._tracks.getObjById(trkId);
-      if (notDefined(track)) {
-        console.log("[Rhombus] - track is not defined");
-        return undefined;
-      }
-    };    
+    }
   };
 })(this.Rhombus);
