@@ -98,12 +98,10 @@
               continue;
             }
 
-            //var noteMap = r._song._patterns[ptnId]._noteMap;
             var begin = scheduleStart - itemStart;
             var end   = begin + (scheduleEnd - scheduleStart);
             var notes = r.getSong().getPatterns()[ptnId].getNotesInRange(begin, end);
 
-            // TODO: find a more efficient way to determine which notes to play
             for (var i = 0; i < notes.length; i++) {
               var note  = notes[i];
               var start = note.getStart() + itemStart;
@@ -144,7 +142,6 @@
         r.loopPlayback(nowTicks);
       }
       else if (nowTicks >= r.getSong().getLength()) {
-        // TODO: we SHOULD stop playback, and somehow alert the GUI
         r.stopPlayback();
         document.dispatchEvent(new CustomEvent("rhombus-stop", {"detail": "stop"}));
       }
