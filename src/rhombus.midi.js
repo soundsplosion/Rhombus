@@ -73,6 +73,6 @@
       if (typeof navigator.requestMIDIAccess !== "undefined") {
         navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
       }
-    }
+    };
   };
 })(this.Rhombus);

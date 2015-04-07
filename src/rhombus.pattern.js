@@ -230,27 +230,23 @@
 
     // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, velocity, id) {
-       // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
-        console.log("pitch invalid:" + pitch);
+        console.log("[Rhombus] - Note pitch invalid: " + pitch);
         return undefined;
       }
 
-      // validate the start
       if (!isNumber(start) || start < 0) {
-        console.log("start invalid");
+        console.log("[Rhombus] - Note start invalid: " + start);
         return undefined;
       }
 
-      // validate the length
       if (!isNumber(length) || length < 0) {
         console.log("[Rhombus] - Note length invalid: " + length);
         return undefined;
       }
 
-      // validate the velocity
       if (!isNumber(velocity) || velocity < 0) {
-        console.log("velocity invalid");
+         console.log("[Rhombus] - Note velocity invalid: " + velocity);
         return undefined;
       }
 

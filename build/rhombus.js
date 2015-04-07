@@ -264,6 +264,52 @@
     return ("00" + val.toString(16)).substr(-2);
   }
 
+  // Converts an integer value to a variable-length base-128 array
+  window.intToVlv = function(val) {
+    var chunks = [];
+
+    for (var i = 0; i < 4; i++) {
+      chunks.push(val & 0x7F);
+      val = val >> 7;
+    }
+
+    chunks.reverse();
+
+    var leading = true;
+    var leadingCount = 0;
+
+    // set the MSB on the non-LSB bytes
+    for (var i = 0; i < 3; i++) {
+      // keep track of the number of leading 'digits'
+      if (leading && chunks[i] == 0) {
+        leadingCount++;
+      }
+      else {
+        leading = false;
+      }
+      chunks[i] = chunks[i] | 0x80;
+    }
+
+    // trim the leading zeros
+    chunks.splice(0, leadingCount);
+
+    return chunks;
+  }
+
+  window.vlvToInt = function(vlv) {
+    var val = 0;
+
+    var shftAmt = 7 * (vlv.length - 1);
+    for (var i = 0; i < vlv.length - 1; i++) {
+      val |= (vlv[i] & 0x7F) << shftAmt;
+      shftAmt -= 7;
+    }
+
+    val |= vlv[vlv.length - 1];
+
+    return val;
+  }
+
   // src: http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
   window.getRandomColor = function() {
     var letters = '0123456789ABCDEF'.split('');
@@ -2738,27 +2784,23 @@
 
     // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, velocity, id) {
-       // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
-        console.log("pitch invalid:" + pitch);
+        console.log("[Rhombus] - Note pitch invalid: " + pitch);
         return undefined;
       }
 
-      // validate the start
       if (!isNumber(start) || start < 0) {
-        console.log("start invalid");
+        console.log("[Rhombus] - Note start invalid: " + start);
         return undefined;
       }
 
-      // validate the length
       if (!isNumber(length) || length < 0) {
         console.log("[Rhombus] - Note length invalid: " + length);
         return undefined;
       }
 
-      // validate the velocity
       if (!isNumber(velocity) || velocity < 0) {
-        console.log("velocity invalid");
+         console.log("[Rhombus] - Note velocity invalid: " + velocity);
         return undefined;
       }
 
@@ -3517,7 +3559,6 @@
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
       scheduleEnd = (scheduleEnd < songEnd) ? scheduleEnd : songEnd;
 
-
       // TODO: decide to use the elapsed time since playback started,
       //       or the context time
       var scheduleEndTime = curTime + scheduleAhead;
@@ -3585,7 +3626,6 @@
 
               var instrument = r._song._instruments.getObjById(track._target);
               instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
-
             }
           }
         }
@@ -4374,6 +4414,6 @@
       if (typeof navigator.requestMIDIAccess !== "undefined") {
         navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
       }
-    }
+    };
   };
 })(this.Rhombus);

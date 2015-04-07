@@ -157,6 +157,52 @@
     return ("00" + val.toString(16)).substr(-2);
   }
 
+  // Converts an integer value to a variable-length base-128 array
+  window.intToVlv = function(val) {
+    var chunks = [];
+
+    for (var i = 0; i < 4; i++) {
+      chunks.push(val & 0x7F);
+      val = val >> 7;
+    }
+
+    chunks.reverse();
+
+    var leading = true;
+    var leadingCount = 0;
+
+    // set the MSB on the non-LSB bytes
+    for (var i = 0; i < 3; i++) {
+      // keep track of the number of leading 'digits'
+      if (leading && chunks[i] == 0) {
+        leadingCount++;
+      }
+      else {
+        leading = false;
+      }
+      chunks[i] = chunks[i] | 0x80;
+    }
+
+    // trim the leading zeros
+    chunks.splice(0, leadingCount);
+
+    return chunks;
+  }
+
+  window.vlvToInt = function(vlv) {
+    var val = 0;
+
+    var shftAmt = 7 * (vlv.length - 1);
+    for (var i = 0; i < vlv.length - 1; i++) {
+      val |= (vlv[i] & 0x7F) << shftAmt;
+      shftAmt -= 7;
+    }
+
+    val |= vlv[vlv.length - 1];
+
+    return val;
+  }
+
   // src: http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
   window.getRandomColor = function() {
     var letters = '0123456789ABCDEF'.split('');
