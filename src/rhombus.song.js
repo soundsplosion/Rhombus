@@ -236,7 +236,7 @@
                                    +noteMap[noteId]._velocity || 1,
                                    +noteId);
 
-          newPattern._noteMap[+noteId] = note;
+          newPattern.addNote(note);
         }
 
         this._song._patterns[+ptnId] = newPattern;

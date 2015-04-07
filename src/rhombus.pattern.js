@@ -5,6 +5,79 @@
 (function(Rhombus) {
   Rhombus._patternSetup = function(r) {
 
+    r.NoteMap = function(id) {
+      if (isDefined(id)) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
+      this._avl = new AVL();
+    };
+
+    r.NoteMap.prototype = {
+      addNote: function(note) {
+        if (!(note instanceof r.Note)) {
+          console.log("[Rhombus] - trying to add non-Note object to NoteMap");
+          return undefined;
+        }
+
+        var key = Math.round(note.getStart());
+
+        // don't allow multiple copies of the same note
+        var elements = this._avl.search(key);
+        for (var i = 0; i < elements.length; i++) {
+          if (note === elements[i]) {
+            console.log("[Rhombus] - trying to add duplicate Note to NoteMap");
+            return undefined;
+          }
+        }
+
+        this._avl.insert(key, note);
+        console.log("[Rhombus] - added note to NoteMap at tick " + key);
+      },
+
+      getNote: function(noteId) {
+        var retNote = undefined;
+        this._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            var note = node.data[i];
+            if (note._id === noteId) {
+              retNote = note;
+              return;
+            }
+          }
+        });
+
+        return retNote;
+      },
+
+      removeNote: function(noteId, note) {
+        if (notDefined(note) || !(note instanceof r.Note)) {
+          note = this.getNote(noteId);
+        }
+
+        if (notDefined(note)) {
+          console.log("[Rhombus] - note not found in NoteMap");
+          return undefined;
+        }
+
+        this._avl.delete(note.getStart(), note);
+        return note;
+      },
+
+      toJSON: function() {
+        var jsonObj = {};
+        this._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            var note = node.data[i];
+            jsonObj[note._id] = note;
+          }
+        });
+        return jsonObj;
+      }
+    };
+
     r.Pattern = function(id) {
       if (isDefined(id)) {
         r._setId(this, id);
@@ -19,7 +92,7 @@
 
       // pattern structure data
       this._length = 1920;
-      this._noteMap = {};
+      this._noteMap = new r.NoteMap();
     };
 
     // TODO: make this interface a little more sanitary...
@@ -76,41 +149,71 @@
       },
 
       addNote: function(note) {
-        this._noteMap[note._id] = note;
+        this._noteMap.addNote(note);
       },
 
-      getNoteMap: function() {
-        return this._noteMap;
+      addNotes: function(notes) {
+        for (var i = 0; i < notes.length; i++) {
+          this.addNote(notes[i]);
+        }
       },
 
-      deleteNote: function(noteId) {
-        var note = this._noteMap[noteId];
+      getNote: function(noteId) {
+        return this._noteMap.getNote(noteId);
+      },
+
+      deleteNote: function(noteId, note) {
+        if (notDefined(note)) {
+          note = this._noteMap.getNote(noteId);
+        }
 
         if (notDefined(note)) {
+          console.log("[Rhombus] - note not found in pattern");
           return undefined;
         }
 
-        delete this._noteMap[note._id];
-
+        this._noteMap.removeNote(noteId, note);
         return note;
-      },
-
-      getSelectedNotes: function() {
-        var selected = new Array();
-        for (var noteId in this._noteMap) {
-          var note = this._noteMap[noteId];
-          if (note.getSelected()) {
-            selected.push(note);
-          }
-        }
-
-        return selected;
       },
 
       deleteNotes: function(notes) {
         for (var i = 0; i < notes.length; i++) {
           var note = notes[i];
-          delete this._noteMap[note._id];
+          this.deleteNote(note._id, note);
+        }
+      },
+
+      getAllNotes: function() {
+        var notes = new Array();
+        this._noteMap._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            notes.push(node.data[i]);
+          }
+        });
+        return notes;
+      },
+
+      getNotesInRange: function(start, end) {
+        return this._noteMap._avl.betweenBounds({ $lt: end, $gte: start });
+      },
+
+      getSelectedNotes: function() {
+        var selected = new Array();
+        this._noteMap._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            var note = node.data[i];
+            if (note.getSelected()) {
+              selected.push(note);
+            }
+          }
+        });
+        return selected;
+      },
+
+      clearSelectedNotes: function() {
+        var selected = this.getSelectedNotes();
+        for (var i = 0; i < selected.length; i++) {
+          selected[i].deselect();
         }
       },
 
@@ -119,7 +222,7 @@
           _name    : this._name,
           _color   : this._color,
           _length  : this._length,
-          _noteMap : this._noteMap
+          _noteMap : this._noteMap.toJSON()
         };
         return jsonObj;
       }

@@ -17,7 +17,6 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      // TODO: put checks on the input arguments
       r._song._patterns[ptnId].addNote(note);
 
       r.Undo._addUndoAction(function() {
@@ -58,6 +57,13 @@
       });
     };
 
+    r.Edit.deleteNotes = function(notes, ptnId) {
+      r._song._patterns[ptnId].deleteNotes(notes);
+      r.Undo._addUndoAction(function() {
+        r._song._patterns[ptnId].addNotes(notes);
+      });
+    };
+
     // TODO: investigate ways to rescale RtNotes that are currently playing
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
 
@@ -65,7 +71,7 @@
         return undefined;
       }
 
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+      var note = r._song._patterns[ptnId]._noteMap.getNote(noteId);
 
       if (notDefined(note)) {
         return undefined;
@@ -73,12 +79,17 @@
 
       var oldStart = note._start;
       var oldLength = note._length;
+
+      r._song._patterns[ptnId].deleteNote(noteId, note);
       note._start = start;
       note._length = length;
+      r._song._patterns[ptnId].addNote(note);
 
       r.Undo._addUndoAction(function() {
+        r._song._patterns[ptnId].deleteNote(noteId, note);
         note._start = oldStart;
         note._length = oldLength;
+        r._song._patterns[ptnId].addNote(note);
       });
 
       return noteId;
@@ -86,7 +97,7 @@
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       // TODO: put checks on the input arguments
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+      var note = r._song._patterns[ptnId].getNote(noteId);
 
       if (notDefined(note)) {
         return undefined;
@@ -115,7 +126,7 @@
         return undefined;
       }
 
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+      var note = r._song._patterns[ptnId].getNote(noteId);
 
       if (notDefined(note)) {
         return undefined;
@@ -126,16 +137,20 @@
       var oldLength   = note._length;
       var oldVelocity = note._velocity;
 
+      r._song._patterns[ptnId].deleteNote(noteId, note);
       note._pitch    = pitch;
       note._start    = start;
       note._length   = length;
       note._velocity = velocity;
+      r._song._patterns[ptnId].addNote(note);
 
       r.Undo._addUndoAction(function() {
+        r._song._patterns[ptnId].deleteNote(noteId, note);
         note._pitch    = oldPitch;
         note._start    = oldStart;
         note._length   = oldLength;
         note._velocity = oldVelocity;
+        r._song._patterns[ptnId].addNote(note);
       });
 
       return noteId;
@@ -151,15 +166,17 @@
 
       var dstPtn = new r.Pattern();
 
-      for (var noteId in srcPtn._noteMap) {
-        var srcNote = srcPtn._noteMap[noteId];
-        var dstNote = new r.Note(srcNote._pitch,
+      srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
+        for (var i = 0; i < node.data.length; i++) {
+          var srcNote = node.data[i];
+          var dstNote = new r.Note(srcNote._pitch,
                                  srcNote._start,
                                  srcNote._length,
                                  srcNote._velocity);
 
-        dstPtn._noteMap[dstNote._id] = dstNote;
-      }
+          dstPtn.addNote(dstNote);
+        }
+      });
 
       dstPtn.setName(srcPtn.getName() + "-copy");
 
@@ -187,33 +204,35 @@
       var dstL = new r.Pattern();
       var dstR = new r.Pattern();
 
-      for (var noteId in srcPtn._noteMap) {
-        var srcNote = srcPtn._noteMap[noteId];
-        var dstLength = srcNote._length;
+      srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
+        for (var i = 0; i < node.data.length; i++) {
+          var srcNote = node.data[i];
+          var dstLength = srcNote._length;
 
-        var dstPtn;
-        var dstStart;
+          var dstPtn;
+          var dstStart;
 
-        // Determine which destination pattern to copy into
-        // and offset the note start accordingly
-        if (srcNote._start < splitPoint) {
-          dstPtn = dstL;
-          dstStart = srcNote._start;
+          // Determine which destination pattern to copy into
+          // and offset the note start accordingly
+          if (srcNote._start < splitPoint) {
+            dstPtn = dstL;
+            dstStart = srcNote._start;
 
-          // Truncate notes that straddle the split point
-          if ((srcNote._start + srcNote._length) > splitPoint) {
-            dstLength = splitPoint - srcNote._start;
+            // Truncate notes that straddle the split point
+            if ((srcNote._start + srcNote._length) > splitPoint) {
+              dstLength = splitPoint - srcNote._start;
+            }
           }
-        }
-        else {
-          dstPtn = dstR;
-          dstStart = srcNote._start - splitPoint;
-        }
+          else {
+            dstPtn = dstR;
+            dstStart = srcNote._start - splitPoint;
+          }
 
-        // Create a new note and add it to the appropriate destination pattern
-        var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
-        dstPtn._noteMap[dstNote._id] = dstNote;
-      }
+          // Create a new note and add it to the appropriate destination pattern
+          var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
+          dstPtn._noteMap[dstNote._id] = dstNote;
+        }
+      });
 
       // Uniquify the new pattern names (somewhat)
       dstL.setName(srcPtn.getName() + "-A");
@@ -249,19 +268,16 @@
       lowNote  = +lowNote  || 0;
       highNote = +highNote || 127;
 
-      var noteArray = [];
-      for (var noteId in srcPtn._noteMap) {
-        var srcNote = srcPtn._noteMap[noteId];
-        var srcStart = srcNote.getStart();
-        var srcPitch = srcNote.getPitch();
-        if (srcStart >= srcStart && srcStart < end &&
-            srcPitch >= lowNote && srcPitch <= highNote) {
-          noteArray.push(srcNote);
+      var notes = srcPtn.getNotesInRange(start, end);
+      for (var i = notes.length - 1; i >= 0; i--) {
+        var srcPitch = notes[i]._pitch;
+        if (srcPitch > highNote || srcPitch < lowNote) {
+          notes.splice(i, i);
         }
       }
 
       // TODO: decide if we should return undefined if there are no matching notes
-      return noteArray;
+      return notes;
     };
 
     r.Edit.quantizeNotes = function(notes, quantize, doEnds) {
