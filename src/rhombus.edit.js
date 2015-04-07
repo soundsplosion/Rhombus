@@ -17,11 +17,11 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      r._song._patterns[ptnId].addNote(note);
-
       r.Undo._addUndoAction(function() {
         r._song._patterns[ptnId].deleteNote(note._id);
       });
+
+      return r._song._patterns[ptnId].addNote(note);
     };
 
     // Inserts an array of notes into an existing pattern, with the start
@@ -34,6 +34,10 @@
       offset = (isDefined(offset)) ? offset : 0;
       var ptn = r._song._patterns[ptnId];
 
+      // Even though the notes are modified below,
+      // the slice is a shallow copy so the notes
+      // passed to deleteNotes in the undo action
+      // are the proper, modified versions.
       var notesCopy = notes.slice(0);
       r.Undo._addUndoAction(function() {
         ptn.deleteNotes(notesCopy);
