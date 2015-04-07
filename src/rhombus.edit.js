@@ -17,7 +17,6 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
-      // TODO: put checks on the input arguments
       r._song._patterns[ptnId].addNote(note);
 
       r.Undo._addUndoAction(function() {
@@ -65,7 +64,7 @@
         return undefined;
       }
 
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+      var note = r._song._patterns[ptnId]._noteMap.getNote(noteId);
 
       if (notDefined(note)) {
         return undefined;
@@ -73,12 +72,17 @@
 
       var oldStart = note._start;
       var oldLength = note._length;
+
+      r._song._patterns[ptnId].deleteNote(noteId, note);
       note._start = start;
       note._length = length;
+      r._song._patterns[ptnId].addNote(note);
 
       r.Undo._addUndoAction(function() {
+        r._song._patterns[ptnId].deleteNote(noteId, note);
         note._start = oldStart;
         note._length = oldLength;
+        r._song._patterns[ptnId].addNote(note);
       });
 
       return noteId;
@@ -86,7 +90,7 @@
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
       // TODO: put checks on the input arguments
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+      var note = r._song._patterns[ptnId].getNote(noteId);
 
       if (notDefined(note)) {
         return undefined;
@@ -115,7 +119,7 @@
         return undefined;
       }
 
-      var note = r._song._patterns[ptnId]._noteMap[noteId];
+      var note = r._song._patterns[ptnId].getNote(noteId);
 
       if (notDefined(note)) {
         return undefined;
@@ -126,16 +130,20 @@
       var oldLength   = note._length;
       var oldVelocity = note._velocity;
 
+      r._song._patterns[ptnId].deleteNote(noteId, note);
       note._pitch    = pitch;
       note._start    = start;
       note._length   = length;
       note._velocity = velocity;
+      r._song._patterns[ptnId].addNote(note);
 
       r.Undo._addUndoAction(function() {
+        r._song._patterns[ptnId].deleteNote(noteId, note);
         note._pitch    = oldPitch;
         note._start    = oldStart;
         note._length   = oldLength;
         note._velocity = oldVelocity;
+        r._song._patterns[ptnId].addNote(note);
       });
 
       return noteId;
@@ -143,6 +151,9 @@
 
     // Makes a copy of the source pattern and adds it to the song's pattern set.
     r.Edit.copyPattern = function(ptnId) {
+      console.log("[Rhombus] - this feature is broken pending notemap update");
+      return;
+
       var srcPtn = r._song._patterns[ptnId];
 
       if (notDefined(srcPtn)) {
@@ -174,6 +185,8 @@
     // Splits a source pattern into two destination patterns
     // at the tick specified by the splitPoint argument.
     r.Edit.splitPattern = function(ptnId, splitPoint) {
+      console.log("[Rhombus] - this feature is broken pending notemap update");
+      return;
       var srcPtn = r._song._patterns[ptnId];
 
       if (notDefined(srcPtn) || !isInteger(splitPoint)) {
@@ -240,6 +253,9 @@
     // The lowNote and highNote arguments are optional. If they are undefined, all
     // of the notes within the time range will be returned.
     r.Edit.getNotesInRange = function(ptnId, start, end, lowNote, highNote) {
+      console.log("[Rhombus] - this feature is broken pending notemap update");
+      return;
+
       var srcPtn = r._song._patterns[ptnId];
       if (notDefined(srcPtn) || !isInteger(start) || !isInteger(end)) {
         return undefined;
