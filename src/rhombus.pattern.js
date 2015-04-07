@@ -152,19 +152,35 @@
         this._noteMap.addNote(note);
       },
 
+      addNotes: function(notes) {
+        for (var i = 0; i < notes.length; i++) {
+          this.addNote(notes[i]);
+        }
+      },
+
       getNote: function(noteId) {
         return this._noteMap.getNote(noteId);
       },
 
-      deleteNote: function(noteId) {
-        var note = this._noteMap.getNote(noteId);
+      deleteNote: function(noteId, note) {
+        if (notDefined(note)) {
+          note = this._noteMap.getNote(noteId);
+        }
 
         if (notDefined(note)) {
+          console.log("[Rhombus] - note not found in pattern");
           return undefined;
         }
 
         this._noteMap.removeNote(noteId, note);
         return note;
+      },
+
+      deleteNotes: function(notes) {
+        for (var i = 0; i < notes.length; i++) {
+          var note = notes[i];
+          this.deleteNote(note._id, note);
+        }
       },
 
       getAllNotes: function() {
@@ -181,26 +197,25 @@
         return this._noteMap._avl.betweenBounds({ $lt: end, $gte: start });
       },
 
-      /*
       getSelectedNotes: function() {
         var selected = new Array();
-        for (var noteId in this._noteMap) {
-          var note = this._noteMap[noteId];
-          if (note.getSelected()) {
-            selected.push(note);
+        this._noteMap._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            var note = node.data[i];
+            if (note.getSelected()) {
+              selected.push(note);
+            }
           }
-        }
-
+        });
         return selected;
       },
 
-      deleteNotes: function(notes) {
-        for (var i = 0; i < notes.length; i++) {
-          var note = notes[i];
-          delete this._noteMap[note._id];
+      clearSelectedNotes: function() {
+        var selected = this.getSelectedNotes();
+        for (var i = 0; i < selected.length; i++) {
+          selected[i].deselect();
         }
       },
-      */
 
       toJSON: function() {
         var jsonObj = {

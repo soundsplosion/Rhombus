@@ -57,6 +57,13 @@
       });
     };
 
+    r.Edit.deleteNotes = function(notes, ptnId) {
+      r._song._patterns[ptnId].deleteNotes(notes);
+      r.Undo._addUndoAction(function() {
+        r._song._patterns[ptnId].addNotes(notes);
+      });
+    };
+
     // TODO: investigate ways to rescale RtNotes that are currently playing
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
 
@@ -185,8 +192,6 @@
     // Splits a source pattern into two destination patterns
     // at the tick specified by the splitPoint argument.
     r.Edit.splitPattern = function(ptnId, splitPoint) {
-      console.log("[Rhombus] - this feature is broken pending notemap update");
-      return;
       var srcPtn = r._song._patterns[ptnId];
 
       if (notDefined(srcPtn) || !isInteger(splitPoint)) {
@@ -200,33 +205,35 @@
       var dstL = new r.Pattern();
       var dstR = new r.Pattern();
 
-      for (var noteId in srcPtn._noteMap) {
-        var srcNote = srcPtn._noteMap[noteId];
-        var dstLength = srcNote._length;
+      srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
+        for (var i = 0; i < node.data.length; i++) {
+          var srcNote = node.data[i];
+          var dstLength = srcNote._length;
 
-        var dstPtn;
-        var dstStart;
+          var dstPtn;
+          var dstStart;
 
-        // Determine which destination pattern to copy into
-        // and offset the note start accordingly
-        if (srcNote._start < splitPoint) {
-          dstPtn = dstL;
-          dstStart = srcNote._start;
+          // Determine which destination pattern to copy into
+          // and offset the note start accordingly
+          if (srcNote._start < splitPoint) {
+            dstPtn = dstL;
+            dstStart = srcNote._start;
 
-          // Truncate notes that straddle the split point
-          if ((srcNote._start + srcNote._length) > splitPoint) {
-            dstLength = splitPoint - srcNote._start;
+            // Truncate notes that straddle the split point
+            if ((srcNote._start + srcNote._length) > splitPoint) {
+              dstLength = splitPoint - srcNote._start;
+            }
           }
-        }
-        else {
-          dstPtn = dstR;
-          dstStart = srcNote._start - splitPoint;
-        }
+          else {
+            dstPtn = dstR;
+            dstStart = srcNote._start - splitPoint;
+          }
 
-        // Create a new note and add it to the appropriate destination pattern
-        var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
-        dstPtn._noteMap[dstNote._id] = dstNote;
-      }
+          // Create a new note and add it to the appropriate destination pattern
+          var dstNote = new r.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
+          dstPtn._noteMap[dstNote._id] = dstNote;
+        }
+      });
 
       // Uniquify the new pattern names (somewhat)
       dstL.setName(srcPtn.getName() + "-A");
@@ -253,9 +260,6 @@
     // The lowNote and highNote arguments are optional. If they are undefined, all
     // of the notes within the time range will be returned.
     r.Edit.getNotesInRange = function(ptnId, start, end, lowNote, highNote) {
-      console.log("[Rhombus] - this feature is broken pending notemap update");
-      return;
-
       var srcPtn = r._song._patterns[ptnId];
       if (notDefined(srcPtn) || !isInteger(start) || !isInteger(end)) {
         return undefined;
@@ -265,19 +269,16 @@
       lowNote  = +lowNote  || 0;
       highNote = +highNote || 127;
 
-      var noteArray = [];
-      for (var noteId in srcPtn._noteMap) {
-        var srcNote = srcPtn._noteMap[noteId];
-        var srcStart = srcNote.getStart();
-        var srcPitch = srcNote.getPitch();
-        if (srcStart >= srcStart && srcStart < end &&
-            srcPitch >= lowNote && srcPitch <= highNote) {
-          noteArray.push(srcNote);
+      var notes = srcPtn.getNotesInRange(start, end);
+      for (var i = notes.length - 1; i >= 0; i--) {
+        var srcPitch = notes[i]._pitch;
+        if (srcPitch > highNote || srcPitch < lowNote) {
+          notes.splice(i, i);
         }
       }
 
       // TODO: decide if we should return undefined if there are no matching notes
-      return noteArray;
+      return notes;
     };
 
     r.Edit.quantizeNotes = function(notes, quantize, doEnds) {
