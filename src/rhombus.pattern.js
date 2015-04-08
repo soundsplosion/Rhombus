@@ -41,7 +41,6 @@
 
         r._song._noteCount++;
         this._avl.insert(key, note);
-        console.log("[Rhombus] - added note to NoteMap at tick " + key);
         return true;
       },
 
