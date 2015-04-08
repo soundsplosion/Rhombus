@@ -37,12 +37,14 @@
         // TODO: add more
       };
 
-      var options, gc, gp, id;
+      var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
-        gc = json._graphChildren;
-        gp = json._graphParents;
+        go = json._graphOutputs;
+        gi = json._graphInputs;
         id = json._id;
+        graphX = json._graphX;
+        graphY = json._graphY;
       }
 
       var ctr;
@@ -65,6 +67,9 @@
         return;
       }
 
+      eff.setGraphX(graphX);
+      eff.setGraphY(graphY);
+
       if (isNull(id) || notDefined(id)) {
         r._newId(eff);
       } else {
@@ -79,18 +84,22 @@
       eff._normalizedObjectSet(def, true);
       eff._normalizedObjectSet(options, true);
 
-      if (isDefined(gc)) {
-        for (var i = 0; i < gc.length; i++) {
-          gc[i] = +(gc[i]);
-        }
-        eff._graphChildren = gc;
+      if (ctr === r._Master) {
+        // TODO: get these slots right
+        eff._graphSetup(1, 1, 0, 0);
+      } else {
+        // TODO: get these slots right
+        eff._graphSetup(1, 1, 1, 0);
       }
 
-      if (isDefined(gp)) {
-        for (var i = 0; i < gp.length; i++) {
-          gp[i] = +(gp[i]);
-        }
-        eff._graphParents = gp;
+      if (isDefined(go)) {
+        Rhombus.Util.numberifyOutputs(go);
+        eff._graphOutputs = go;
+      }
+
+      if (isDefined(gi)) {
+        Rhombus.Util.numberifyInputs(gi);
+        eff._graphInputs = gi;
       }
 
       var that = this;
@@ -124,11 +133,11 @@
 
       var that = this;
       var effect = this._song._effects[id];
-      var gc = effect.graphChildren();
-      var gp = effect.graphParents();
+      var gi = effect.graphInputs();
+      var go = effect.graphOutputs();
       r.Undo._addUndoAction(function() {
         this._song._effects[id] = effect;
-        effect._restoreConnections(gc, gp);
+        effect._restoreConnections(go, gi);
       });
       effect._removeConnections();
       delete this._song._effects[id];
@@ -141,8 +150,8 @@
         "_id": this._id,
         "_type": this._type,
         "_params": this._currentParams,
-        "_graphChildren": this._graphChildren,
-        "_graphParents": this._graphParents,
+        "_graphOutputs": this._graphOutputs,
+        "_graphInputs": this._graphInputs,
         "_graphX": this._graphX,
         "_graphY": this._graphY
       };
