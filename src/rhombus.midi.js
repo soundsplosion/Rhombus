@@ -3,6 +3,78 @@
 //! license: MIT
 (function(Rhombus) {
   Rhombus._midiSetup = function(r) {
+    r.Midi = {};
+
+    r.Midi.makeHeaderChunk = function() {
+      var arr = new Uint8Array(14);
+      arr.set([77, 84, 104, 100], 0);
+      arr.set(intToBytes(6), 4);
+      arr.set(intToBytes(1).slice(2), 8);
+      arr.set(intToBytes(r.getSong().getTracks().length()).slice(2), 10);
+      arr.set(intToBytes(480).slice(2), 12);
+
+      return arr;
+    };
+
+    r.Midi.exportSong = function() {
+      var header = r.Midi.makeHeaderChunk();
+
+      var mTrks = [];
+      var dataBytes = 0;
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
+        var trkChunk = track.exportTrkChunk();
+        mTrks.push(trkChunk);
+        dataBytes += trkChunk.length;
+      });
+
+      var rawMidi = new Uint8Array(header.length + dataBytes);
+
+      rawMidi.set(header, 0);
+
+      var offset = header.length;
+      for (var i = 0; i < mTrks.length; i++) {
+        rawMidi.set(mTrks[i], offset);
+        offset += mTrks[i].length;
+      }
+
+      document.dispatchEvent(new CustomEvent("rhombus-exportmidi", {"detail": rawMidi}));
+      console.log("[Rhombus] - exported track to MIDI");
+
+      return rawMidi;
+    };
+
+    r.Midi.eventsToMTrk = function(events) {
+      var header = [ 77, 84, 114, 107 ];  // 'M' 'T' 'r' 'k'
+      var body   = [ ];
+
+      var lastStep = 0;
+      events.executeOnEveryNode(function (node) {
+        if (notDefined(node.key)) {
+          console.log("[Rhombus.MIDI - node is not defined");
+          return undefined;
+        }
+
+        var delta = node.key - lastStep;
+        lastStep = node.key;
+        body = body.concat(intToVlv(delta));
+        for (var i = 0; i < node.data.length; i++) {
+          body = body.concat(node.data[i]);
+        }
+      });
+
+      // set the chunk size
+      header = header.concat(intToBytes(body.length));
+
+      // append the body
+      header = header.concat(body);
+
+      var trkChunk = new Uint8Array(header.length);
+      for (var i = 0; i < header.length; i++) {
+        trkChunk[i] = header[i];
+      }
+      return trkChunk;
+    };
 
     // MIDI access object
     r._midi = null;

@@ -75,6 +75,7 @@
       return curId;
     };
 
+    root.Rhombus._midiSetup(this);
     root.Rhombus._undoSetup(this);
     root.Rhombus._graphSetup(this);
     root.Rhombus._patternSetup(this);
@@ -95,9 +96,6 @@
 
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
-
-    // MIDI
-    root.Rhombus._midiSetup(this);
 
     this.initSong();
     this.getMidiAccess();
