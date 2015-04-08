@@ -57,9 +57,10 @@
 
         var delta = node.key - lastStep;
         lastStep = node.key;
-        body = body.concat(intToVlv(delta));
         for (var i = 0; i < node.data.length; i++) {
+          body = body.concat(intToVlv(delta));
           body = body.concat(node.data[i]);
+          delta = 0;
         }
       });
 
@@ -73,6 +74,7 @@
       for (var i = 0; i < header.length; i++) {
         trkChunk[i] = header[i];
       }
+
       return trkChunk;
     };
 
