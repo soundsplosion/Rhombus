@@ -14,12 +14,14 @@
     };
 
     r.addInstrument = function(type, json, idx) {
-      var options, go, gi, id;
+      var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
         go = json._graphOutputs;
         gi = json._graphInputs;
         id = json._id;
+        graphX = json._graphX;
+        graphY = json._graphY;
       }
 
       var instr;
@@ -34,6 +36,9 @@
       if (isNull(instr) || notDefined(instr)) {
         return;
       }
+
+      instr.setGraphX(graphX);
+      instr.setGraphY(graphY);
 
       if (isDefined(go)) {
         Rhombus.Util.numberifyOutputs(go);

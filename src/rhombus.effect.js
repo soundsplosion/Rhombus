@@ -37,12 +37,14 @@
         // TODO: add more
       };
 
-      var options, go, gi, id;
+      var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
         go = json._graphOutputs;
         gi = json._graphInputs;
         id = json._id;
+        graphX = json._graphX;
+        graphY = json._graphY;
       }
 
       var ctr;
@@ -64,6 +66,9 @@
       if (isNull(eff) || notDefined(eff)) {
         return;
       }
+
+      eff.setGraphX(graphX);
+      eff.setGraphY(graphY);
 
       if (isNull(id) || notDefined(id)) {
         r._newId(eff);
