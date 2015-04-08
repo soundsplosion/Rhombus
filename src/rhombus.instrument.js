@@ -14,12 +14,14 @@
     };
 
     r.addInstrument = function(type, json, idx) {
-      var options, gc, gp, id;
+      var options, gc, gp, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
         gc = json._graphChildren;
         gp = json._graphParents;
         id = json._id;
+        graphX = json._graphX;
+        graphY = json._graphY;
       }
 
       var instr;
@@ -32,6 +34,9 @@
       if (isNull(instr) || notDefined(instr)) {
         return;
       }
+
+      instr.setGraphX(graphX);
+      instr.setGraphY(graphY);
 
       if (isDefined(gc)) {
         for (var i = 0; i < gc.length; i++) {
