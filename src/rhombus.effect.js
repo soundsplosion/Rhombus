@@ -37,12 +37,14 @@
         // TODO: add more
       };
 
-      var options, gc, gp, id;
+      var options, gc, gp, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
         gc = json._graphChildren;
         gp = json._graphParents;
         id = json._id;
+        graphX = json._graphX;
+        graphY = json._graphY;
       }
 
       var ctr;
@@ -64,6 +66,9 @@
       if (isNull(eff) || notDefined(eff)) {
         return;
       }
+
+      eff.setGraphX(graphX);
+      eff.setGraphY(graphY);
 
       if (isNull(id) || notDefined(id)) {
         r._newId(eff);

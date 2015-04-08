@@ -16,13 +16,31 @@
       this._loopEnd   = 1920;
 
       // song structure data
-      this._tracks = new Rhombus.Util.IdSlotContainer(16);
+      if (isNumber(r._constraints.max_tracks)) {
+        var maxTracks = Math.max(1, r._constraints.max_tracks);
+        this._tracks = new Rhombus.Util.IdSlotContainer(maxTracks);
+      } else {
+        // 32 tracks, I guess.
+        this._tracks = new Rhombus.Util.IdSlotContainer(32);
+      }
+
       this._patterns = {};
-      this._instruments = new Rhombus.Util.IdSlotContainer(16);
+
+      if (isNumber(r._constraints.max_instruments)) {
+        var maxInstruments = Math.max(1, r._constraints.max_instruments);
+        this._instruments = new Rhombus.Util.IdSlotContainer(maxInstruments);
+      } else {
+        // Once again, I guess 32.
+        this._instruments = new Rhombus.Util.IdSlotContainer(32);
+      }
+
       this._effects = {};
       this._soloList = [];
 
       this._curId = 0;
+
+      // Tracks number of notes for constraint enforcement.
+      this._noteCount = 0;
     };
 
     Song.prototype = {
