@@ -182,25 +182,15 @@
         "sampleSet": this._sampleSet
       };
 
-      var gc, gp;
-      if (isDefined(this._graphChildren)) {
-        gc = this._graphChildren;
-      } else {
-        gc = [];
-      }
-
-      if (isDefined(this._graphParents)) {
-        gp = this._graphParents;
-      } else {
-        gp = [];
-      }
+      var go = this._graphOutputs;
+      var gi = this._graphInputs;
 
       var jsonVersion = {
         "_id": this._id,
         "_type": "samp",
         "_params": params,
-        "_graphChildren": gc,
-        "_graphParents": gp,
+        "_graphOutputs": go,
+        "_graphInputs": gi,
         "_graphX": this._graphX,
         "_graphY": this._graphY
       };

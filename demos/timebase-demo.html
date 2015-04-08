@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8" />
 <script src="Tone.js"></script>
-<script src="AVL.js'></script>
+<script src="AVL.js"></script>
 <script src="../build/rhombus.js"></script>
 <script>
 var rhomb = new Rhombus();
@@ -121,8 +121,6 @@ function updateTime() {
 
   var drift = (rhomb.isPlaying() && rhomb.getLoopEnabled()) ? (elapsedTicks % 1920) - ticks : 0;
 
-  rhomb.setWetGain(wetGain.value/100);
-  rhomb.setFeedbackGain(feedbackGain.value/100);
   timeDisplay.innerHTML = "Current time: (" + ticks.toFixed(0) + " ticks, " + seconds.toFixed(3) + " seconds)";
   elapsedDisplay.innerHTML = "Elapsed time: (" + elapsedTicks.toFixed(0) + " ticks, " + elapsedSeconds.toFixed(3) + " seconds)";
   driftDisplay.innerHTML = "Drift: (" + drift.toFixed(0) + " ticks)";

@@ -14,12 +14,14 @@
     };
 
     r.addInstrument = function(type, json, idx) {
-      var options, gc, gp, id;
+      var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
-        gc = json._graphChildren;
-        gp = json._graphParents;
+        go = json._graphOutputs;
+        gi = json._graphInputs;
         id = json._id;
+        graphX = json._graphX;
+        graphY = json._graphY;
       }
 
       var instr;
@@ -29,24 +31,25 @@
         instr = new this._ToneInstrument(type, options, id);
       }
 
+      // TODO: get these slots right
+      instr._graphSetup(0, 1, 1, 0);
       if (isNull(instr) || notDefined(instr)) {
         return;
       }
 
-      if (isDefined(gc)) {
-        for (var i = 0; i < gc.length; i++) {
-          gc[i] = +(gc[i]);
-        }
-        instr._graphChildren = gc;
+      instr.setGraphX(graphX);
+      instr.setGraphY(graphY);
+
+      if (isDefined(go)) {
+        Rhombus.Util.numberifyOutputs(go);
+        instr._graphOutputs = go;
       } else {
         r._toMaster(instr);
       }
 
-      if (isDefined(gp)) {
-        for (var i = 0; i < gp.length; i++) {
-          gp[i] = +(gp[i]);
-        }
-        instr._graphParents = gp;
+      if (isDefined(gi)) {
+        Rhombus.Util.numberifyInputs(gi);
+        instr._graphInputs = gi;
       }
 
       var idToRemove = instr._id;
@@ -79,12 +82,12 @@
 
       var instr = r._song._instruments.getObjById(id);
       var slot = r._song._instruments.getSlotById(id);
-      var gc = instr.graphChildren();
-      var gp = instr.graphParents();
+      var go = instr.graphOutputs();
+      var gi = instr.graphInputs();
 
       r.Undo._addUndoAction(function() {
         r._song._instruments.addObj(instr, slot);
-        instr.restoreConnections(gc, gp);
+        instr.restoreConnections(go, gi);
       });
       instr._removeConnections();
       r._song._instruments.removeId(id);
