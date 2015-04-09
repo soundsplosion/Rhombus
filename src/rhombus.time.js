@@ -58,7 +58,6 @@
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
       scheduleEnd = (scheduleEnd < songEnd) ? scheduleEnd : songEnd;
 
-
       // TODO: decide to use the elapsed time since playback started,
       //       or the context time
       var scheduleEndTime = curTime + scheduleAhead;
@@ -126,7 +125,6 @@
 
               var instrument = r._song._instruments.getObjById(track._target);
               instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
-
             }
           }
         }

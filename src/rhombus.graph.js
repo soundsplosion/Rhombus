@@ -268,6 +268,7 @@
       ctr.prototype.graphOutputs = graphOutputs;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype.connectionExists = connectionExists;
       ctr.prototype._removeConnections = removeConnections;
       ctr.prototype._restoreConnections = restoreConnections;
       ctr.prototype.graphX = graphX;
@@ -314,6 +315,20 @@
           });
         });
       });
+    };
+
+    r.getNodeById = function(nodeId) {
+      var effect = this._song._effects[nodeId];
+      var inst   = this._song._instruments.getObjById(nodeId);
+
+      if (isDefined(effect)) {
+        return effect;
+      }
+      if (isDefined(inst)) {
+        return inst;
+      }
+
+      return undefined;
     };
 
   };

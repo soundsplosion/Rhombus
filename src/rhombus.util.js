@@ -155,6 +155,74 @@
     }
 
     return ("00" + val.toString(16)).substr(-2);
+  },
+
+  window.intToBytes = function(val) {
+    return [ (val >> 24) & 0xFF,
+             (val >> 16) & 0xFF,
+             (val >>  8) & 0xFF,
+             (val      ) & 0xFF ];
+  }
+
+  // Converts an integer value to a variable-length base-128 array
+  window.intToVlv = function(val) {
+    if (!isInteger(val) || val < 0) {
+      console.log("[Rhombus] - input must be a positive integer");
+      return undefined;
+    }
+
+    var chunks = [];
+
+    for (var i = 0; i < 4; i++) {
+      chunks.push(val & 0x7F);
+      val = val >> 7;
+    }
+
+    chunks.reverse();
+
+    var leading = true;
+    var leadingCount = 0;
+
+    // set the MSB on the non-LSB bytes
+    for (var i = 0; i < 3; i++) {
+      // keep track of the number of leading 'digits'
+      if (leading && chunks[i] == 0) {
+        leadingCount++;
+      }
+      else {
+        leading = false;
+      }
+      chunks[i] = chunks[i] | 0x80;
+    }
+
+    // trim the leading zeros
+    chunks.splice(0, leadingCount);
+
+    return chunks;
+  }
+
+  // Converts a variable-length value back to an integer
+  window.vlvToInt = function(vlv) {
+    if (!(vlv instanceof Array)) {
+      console.log("[Rhombus] - input must be an integer array");
+      return undefined;
+    }
+
+    var val = 0;
+    var shftAmt = 7 * (vlv.length - 1);
+    for (var i = 0; i < vlv.length - 1; i++) {
+      val |= (vlv[i] & 0x7F) << shftAmt;
+      shftAmt -= 7;
+    }
+
+    val |= vlv[vlv.length - 1];
+
+    if (!isInteger(val)) {
+      console.log("[Rhombus] - invalid input");
+      return undefined;
+    }
+
+    return val;
   }
 
   // src: http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript

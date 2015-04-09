@@ -69,6 +69,7 @@
       return curId;
     };
 
+    root.Rhombus._midiSetup(this);
     root.Rhombus._undoSetup(this);
     root.Rhombus._graphSetup(this);
     root.Rhombus._patternSetup(this);
@@ -89,9 +90,6 @@
 
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);
-
-    // MIDI
-    root.Rhombus._midiSetup(this);
 
     this.initSong();
     this.getMidiAccess();
@@ -256,6 +254,74 @@
     }
 
     return ("00" + val.toString(16)).substr(-2);
+  },
+
+  window.intToBytes = function(val) {
+    return [ (val >> 24) & 0xFF,
+             (val >> 16) & 0xFF,
+             (val >>  8) & 0xFF,
+             (val      ) & 0xFF ];
+  }
+
+  // Converts an integer value to a variable-length base-128 array
+  window.intToVlv = function(val) {
+    if (!isInteger(val) || val < 0) {
+      console.log("[Rhombus] - input must be a positive integer");
+      return undefined;
+    }
+
+    var chunks = [];
+
+    for (var i = 0; i < 4; i++) {
+      chunks.push(val & 0x7F);
+      val = val >> 7;
+    }
+
+    chunks.reverse();
+
+    var leading = true;
+    var leadingCount = 0;
+
+    // set the MSB on the non-LSB bytes
+    for (var i = 0; i < 3; i++) {
+      // keep track of the number of leading 'digits'
+      if (leading && chunks[i] == 0) {
+        leadingCount++;
+      }
+      else {
+        leading = false;
+      }
+      chunks[i] = chunks[i] | 0x80;
+    }
+
+    // trim the leading zeros
+    chunks.splice(0, leadingCount);
+
+    return chunks;
+  }
+
+  // Converts a variable-length value back to an integer
+  window.vlvToInt = function(vlv) {
+    if (!(vlv instanceof Array)) {
+      console.log("[Rhombus] - input must be an integer array");
+      return undefined;
+    }
+
+    var val = 0;
+    var shftAmt = 7 * (vlv.length - 1);
+    for (var i = 0; i < vlv.length - 1; i++) {
+      val |= (vlv[i] & 0x7F) << shftAmt;
+      shftAmt -= 7;
+    }
+
+    val |= vlv[vlv.length - 1];
+
+    if (!isInteger(val)) {
+      console.log("[Rhombus] - invalid input");
+      return undefined;
+    }
+
+    return val;
   }
 
   // src: http://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
@@ -1015,6 +1081,7 @@
       ctr.prototype.graphOutputs = graphOutputs;
       ctr.prototype.graphConnect = graphConnect;
       ctr.prototype.graphDisconnect = graphDisconnect;
+      ctr.prototype.connectionExists = connectionExists;
       ctr.prototype._removeConnections = removeConnections;
       ctr.prototype._restoreConnections = restoreConnections;
       ctr.prototype.graphX = graphX;
@@ -1061,6 +1128,20 @@
           });
         });
       });
+    };
+
+    r.getNodeById = function(nodeId) {
+      var effect = this._song._effects[nodeId];
+      var inst   = this._song._instruments.getObjById(nodeId);
+
+      if (isDefined(effect)) {
+        return effect;
+      }
+      if (isDefined(inst)) {
+        return inst;
+      }
+
+      return undefined;
     };
 
   };
@@ -2516,7 +2597,6 @@
 
         r._song._noteCount++;
         this._avl.insert(key, note);
-        console.log("[Rhombus] - added note to NoteMap at tick " + key);
         return true;
       },
 
@@ -2718,27 +2798,23 @@
 
     // TODO: Note should probably have its own source file
     r.Note = function(pitch, start, length, velocity, id) {
-       // validate the pitch
       if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
-        console.log("pitch invalid:" + pitch);
+        console.log("[Rhombus] - Note pitch invalid: " + pitch);
         return undefined;
       }
 
-      // validate the start
       if (!isNumber(start) || start < 0) {
-        console.log("start invalid");
+        console.log("[Rhombus] - Note start invalid: " + start);
         return undefined;
       }
 
-      // validate the length
       if (!isNumber(length) || length < 0) {
         console.log("[Rhombus] - Note length invalid: " + length);
         return undefined;
       }
 
-      // validate the velocity
       if (!isNumber(velocity) || velocity < 0) {
-        console.log("velocity invalid");
+         console.log("[Rhombus] - Note velocity invalid: " + velocity);
         return undefined;
       }
 
@@ -3107,13 +3183,34 @@
       },
 
       toJSON: function() {
-        // Don't include "_playingNotes"
         var toReturn = {};
         toReturn._id = this._id;
         toReturn._name = this._name;
         toReturn._target = this._target;
         toReturn._playlist = this._playlist;
         return toReturn;
+      },
+
+      exportEvents: function() {
+        var events = new AVL();
+        var playlist = this._playlist;
+        for (var itemId in playlist) {
+          var srcPtn = r.getSong().getPatterns()[playlist[itemId]._ptnId];
+          var notes = srcPtn.getAllNotes();
+
+          for (var i = 0; i < notes.length; i++) {
+            var note  = notes[i];
+            var start = Math.round(note.getStart() + playlist[itemId]._start);
+            var end   = start + Math.round(note.getLength());
+            var vel   = Math.round(note.getVelocity() * 127);
+
+            // insert the note-on and note-off events
+            events.insert(start, [ 0x90, note.getPitch(), vel ]);
+            events.insert(end,   [ 0x80, note.getPitch(), 64 ]);
+          }
+        }
+
+        return events;
       }
     };
   };
@@ -3515,7 +3612,6 @@
       var scheduleEnd = (doWrap) ? r.getLoopEnd() : nowTicks + aheadTicks;
       scheduleEnd = (scheduleEnd < songEnd) ? scheduleEnd : songEnd;
 
-
       // TODO: decide to use the elapsed time since playback started,
       //       or the context time
       var scheduleEndTime = curTime + scheduleAhead;
@@ -3583,7 +3679,6 @@
 
               var instrument = r._song._instruments.getObjById(track._target);
               instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
-
             }
           }
         }
@@ -4306,10 +4401,105 @@
 //! license: MIT
 (function(Rhombus) {
   Rhombus._midiSetup = function(r) {
+    r.Midi = {};
 
     // MIDI access object
     r._midi = null;
     r._inputMap = {};
+
+    // Returns a MIDI Type 1 header chunk based on the current song
+    r.Midi.makeHeaderChunk = function() {
+      var arr = new Uint8Array(14);
+
+      // ['M', 'T', 'r', 'k'] header
+      arr.set([77, 84, 104, 100], 0);
+
+      // number of data bytes in chunk
+      arr.set(intToBytes(6), 4);
+
+      // specify Type 1 format
+      arr.set(intToBytes(1).slice(2), 8);
+
+      // specify the number of tracks
+      arr.set(intToBytes(r.getSong().getTracks().length()).slice(2), 10);
+
+      // specify the timebase resolution
+      arr.set(intToBytes(480).slice(2), 12);
+
+      return arr;
+    };
+
+    // Exports the current song structure to a raw byte array in Type 1 MIDI format
+    // Only the note data is exported, no tempo or time signature information
+    r.Midi.getRawMidi = function() {
+      // render each Rhombus track to a MIDI track chunk
+      var mTrks    = [];
+      var numBytes = 0;
+      r._song._tracks.objIds().forEach(function(trkId) {
+        var track = r._song._tracks.getObjById(trkId);
+        var trkChunk = r.Midi.eventsToMTrk(track.exportEvents());
+        mTrks.push(trkChunk);
+        numBytes += trkChunk.length;
+      });
+
+      var header = r.Midi.makeHeaderChunk();
+
+      // allocate the byte array
+      var rawMidi = new Uint8Array(header.length + numBytes);
+
+      // set the file header
+      rawMidi.set(header, 0);
+
+      // insert each track chunk at the appropriate offset
+      var offset = header.length;
+      for (var i = 0; i < mTrks.length; i++) {
+        rawMidi.set(mTrks[i], offset);
+        offset += mTrks[i].length;
+      }
+
+      return rawMidi;
+    };
+
+    // Passes the raw MIDI dump to any interested parties (e.g., the front-end)
+    r.Midi.exportSong = function() {
+      var rawMidi = r.Midi.getRawMidi();
+      document.dispatchEvent(new CustomEvent("rhombus-exportmidi", {"detail": rawMidi}));
+    };
+
+    // Converts a list of track events to a MIDI Track Chunk
+    r.Midi.eventsToMTrk = function(events) {
+      var header = [ 77, 84, 114, 107 ];  // 'M' 'T' 'r' 'k'
+      var body   = [ ];
+
+      var lastStep = 0;
+      events.executeOnEveryNode(function (node) {
+        if (notDefined(node.key)) {
+          console.log("[Rhombus.MIDI - node is not defined");
+          return undefined;
+        }
+
+        var delta = node.key - lastStep;
+        lastStep = node.key;
+        for (var i = 0; i < node.data.length; i++) {
+          body = body.concat(intToVlv(delta));
+          body = body.concat(node.data[i]);
+          delta = 0;
+        }
+      });
+
+      // set the chunk size
+      header = header.concat(intToBytes(body.length));
+
+      // append the body
+      header = header.concat(body);
+
+      var trkChunk = new Uint8Array(header.length);
+      for (var i = 0; i < header.length; i++) {
+        trkChunk[i] = header[i];
+      }
+
+      return trkChunk;
+    };
 
     function printMidiMessage(event) {
       var str = "MIDI message received at timestamp " + event.timestamp + "[" + event.data.length + " bytes]: ";
@@ -4376,6 +4566,6 @@
       if (typeof navigator.requestMIDIAccess !== "undefined") {
         navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
       }
-    }
+    };
   };
 })(this.Rhombus);

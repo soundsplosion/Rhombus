@@ -290,13 +290,34 @@
       },
 
       toJSON: function() {
-        // Don't include "_playingNotes"
         var toReturn = {};
         toReturn._id = this._id;
         toReturn._name = this._name;
         toReturn._target = this._target;
         toReturn._playlist = this._playlist;
         return toReturn;
+      },
+
+      exportEvents: function() {
+        var events = new AVL();
+        var playlist = this._playlist;
+        for (var itemId in playlist) {
+          var srcPtn = r.getSong().getPatterns()[playlist[itemId]._ptnId];
+          var notes = srcPtn.getAllNotes();
+
+          for (var i = 0; i < notes.length; i++) {
+            var note  = notes[i];
+            var start = Math.round(note.getStart() + playlist[itemId]._start);
+            var end   = start + Math.round(note.getLength());
+            var vel   = Math.round(note.getVelocity() * 127);
+
+            // insert the note-on and note-off events
+            events.insert(start, [ 0x90, note.getPitch(), vel ]);
+            events.insert(end,   [ 0x80, note.getPitch(), 64 ]);
+          }
+        }
+
+        return events;
       }
     };
   };
