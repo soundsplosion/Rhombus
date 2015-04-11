@@ -109,6 +109,8 @@
     r._addGraphFunctions(Track);
     r.Track = Track;
 
+    Track.prototype._graphType = "track";
+
     Track.prototype.setId = function(id) {
       this._id = id;
     };

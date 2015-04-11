@@ -58,8 +58,7 @@
       });
       this._song._instruments.addObj(instr, idx);
 
-      instr.isInstrument = function() { return true; };
-      instr.isEffect = function() { return false; };
+      instr._graphType = "instrument";
 
       return instr._id;
     };

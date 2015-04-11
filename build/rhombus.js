@@ -1089,6 +1089,18 @@
       }
     }
 
+    function isEffect() {
+      return this._graphType === "effect";
+    }
+
+    function isInstrument() {
+      return this._graphType === "instrument";
+    }
+
+    function isTrack() {
+      return this._graphType === "track";
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype._graphSetup = graphSetup;
       ctr.prototype.graphInputs = graphInputs;
@@ -1102,6 +1114,10 @@
       ctr.prototype.setGraphX = setGraphX;
       ctr.prototype.graphY = graphY;
       ctr.prototype.setGraphY = setGraphY;
+      
+      ctr.prototype.isEffect = isEffect;
+      ctr.prototype.isInstrument = isInstrument;
+      ctr.prototype.isTrack = isTrack;
     };
 
     r.getMaster = function() {
@@ -1374,8 +1390,7 @@
       });
       this._song._instruments.addObj(instr, idx);
 
-      instr.isInstrument = function() { return true; };
-      instr.isEffect = function() { return false; };
+      instr._graphType = "instrument";
 
       return instr._id;
     };
@@ -2236,8 +2251,7 @@
 
       this._song._effects[eff._id] = eff;
 
-      eff.isInstrument = function() { return false; };
-      eff.isEffect = function() { return true; };
+      eff._graphType = "effect";
 
       return eff._id;
     }
@@ -3023,6 +3037,8 @@
     };
     r._addGraphFunctions(Track);
     r.Track = Track;
+
+    Track.prototype._graphType = "track";
 
     Track.prototype.setId = function(id) {
       this._id = id;

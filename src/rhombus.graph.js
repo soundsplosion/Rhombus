@@ -275,6 +275,18 @@
       }
     }
 
+    function isEffect() {
+      return this._graphType === "effect";
+    }
+
+    function isInstrument() {
+      return this._graphType === "instrument";
+    }
+
+    function isTrack() {
+      return this._graphType === "track";
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype._graphSetup = graphSetup;
       ctr.prototype.graphInputs = graphInputs;
@@ -288,6 +300,10 @@
       ctr.prototype.setGraphX = setGraphX;
       ctr.prototype.graphY = graphY;
       ctr.prototype.setGraphY = setGraphY;
+      
+      ctr.prototype.isEffect = isEffect;
+      ctr.prototype.isInstrument = isInstrument;
+      ctr.prototype.isTrack = isTrack;
     };
 
     r.getMaster = function() {
