@@ -54,7 +54,7 @@
 
       var idToRemove = instr._id;
       r.Undo._addUndoAction(function() {
-        r.removeInstrument(idToRemove);
+        r.removeInstrument(idToRemove, true);
       });
       this._song._instruments.addObj(instr, idx);
 
@@ -74,7 +74,7 @@
       return id;
     }
 
-    r.removeInstrument = function(instrOrId) {
+    r.removeInstrument = function(instrOrId, internal) {
       var id = inToId(instrOrId);
       if (id < 0) {
         return;
@@ -85,10 +85,13 @@
       var go = instr.graphOutputs();
       var gi = instr.graphInputs();
 
-      r.Undo._addUndoAction(function() {
-        r._song._instruments.addObj(instr, slot);
-        instr.restoreConnections(go, gi);
-      });
+      if (!internal) {
+        r.Undo._addUndoAction(function() {
+          r._song._instruments.addObj(instr, slot);
+          instr._restoreConnections(go, gi);
+        });
+      }
+
       instr._removeConnections();
       r._song._instruments.removeId(id);
     };
