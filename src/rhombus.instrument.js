@@ -183,9 +183,11 @@
       for (var i = previewNotes.length - 1; i >=0; i--) {
         var rtNote = previewNotes[i];
         if (rtNote._pitch === pitch) {
-          var inst = this._song._instruments.getObjById(rtNote._target);
-
-          if (isDefined(inst)) {
+          for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
+            var inst = this._song._instruments.getObjById(rtNote._targets[targetIdx]);
+            if (notDefined(inst)) {
+              continue;
+            }
             inst.triggerRelease(rtNote._id, 0);
           }
 
@@ -214,15 +216,15 @@
     r.killAllPreviewNotes = function() {
       while (previewNotes.length > 0) {
         var rtNote = previewNotes.pop();
-        var inst = this._song._instruments.getObjById(rtNote._target);
+        for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
+          var inst = this._song._instruments.getObjById(rtNote._targets[targetIdx]);
 
-        // TODO: this check will need to change when full track->instrument
-        // routing is implemented
-        if (notDefined(inst)) {
-          continue;
+          if (notDefined(inst)) {
+            continue;
+          }
+
+          inst.triggerRelease(rtNote._id, 0);
         }
-
-        inst.triggerRelease(rtNote._id, 0);
       }
 
       console.log("[Rhombus] - killed all preview notes");

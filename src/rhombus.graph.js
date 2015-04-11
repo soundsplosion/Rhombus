@@ -162,13 +162,7 @@
       outputObj.to.push(new Port(b._id, bInput));
       inputObj.from.push(new Port(this._id, output));
 
-      // TODO: use the slots when connecting
-      var type = outputObj.type;
-      if (type === "audio") {
-        this.connect(b);
-      } else if (type === "control") {
-        // TODO: implement control routing
-      }
+      this._internalGraphConnect(output, b, bInput);
       return true;
     };
 
@@ -215,21 +209,7 @@
       outputObj.to.splice(outputPortIdx, 1);
       inputObj.from.splice(inputPortIdx, 1);
 
-      // TODO: use the slots when disconnecting
-      var type = outputObj.type;
-      if (type === "audio") {
-        // TODO: this should be replaced in such a way that we
-        // don't break all the outgoing connections every time we
-        // disconnect from one thing. Put gain nodes in the middle
-        // or something.
-        this.disconnect();
-        var that = this;
-        outputObj.to.forEach(function (port) {
-          that.connect(graphLookup(port.node));
-        });
-      } else if (type === "control") {
-        // TODO: implement control routing
-      }
+      this._internalGraphDisconnect(output, b, bInput);
     }
 
     function graphX() {

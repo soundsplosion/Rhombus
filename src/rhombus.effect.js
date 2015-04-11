@@ -162,6 +162,7 @@
       ctr.prototype._normalizedObjectSet = normalizedObjectSet;
       r._addParamFunctions(ctr);
       r._addGraphFunctions(ctr);
+      r._addAudioNodeFunctions(ctr);
       ctr.prototype.toJSON = toJSON;
       ctr.prototype.isMaster = isMaster;
     }
