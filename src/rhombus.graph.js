@@ -90,6 +90,35 @@
       return this._graphOutputs.map(getRealNodes);
     }
 
+    function existsPathFrom(from, to) {
+      function existsPathRecursive(a, b, seen) {
+        if (a._id === b._id) {
+          return true;
+        }
+
+        var newSeen = seen.slice(0);
+        newSeen.push(a);
+
+        var inAny = false;
+        var outputs = a.graphOutputs();
+
+        for (var outputIdx = 0; outputIdx < outputs.length; outputIdx++) {
+          var output = outputs[outputIdx];
+          for (var portIdx = 0; portIdx < output.to.length; portIdx++) {
+            var port = output.to[portIdx];
+            if (newSeen.indexOf(port.node) !== -1) {
+              continue;
+            }
+            inAny = inAny || existsPathRecursive(port.node, b, newSeen);
+          }
+        }
+
+        return inAny;
+      }
+
+      return existsPathRecursive(from, to, []);
+    }
+
     function connectionExists(a, output, b, input) {
       var ports = a._graphOutputs[output].to;
       for (var i = 0; i < ports.length; i++) {
@@ -112,6 +141,10 @@
       var outputObj = this._graphOutputs[output];
       var inputObj = b._graphInputs[bInput];
       if (outputObj.type !== inputObj.type) {
+        return false;
+      }
+
+      if (existsPathFrom(b, this)) {
         return false;
       }
 
