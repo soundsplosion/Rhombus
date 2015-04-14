@@ -247,17 +247,17 @@
         return undefined;
       }
 
-      if (!isNumber(start) || start < 0) {
+      if (!isInteger(start) || start < 0) {
         console.log("[Rhombus] - Note start invalid: " + start);
         return undefined;
       }
 
-      if (!isNumber(length) || length < 0) {
+      if (!isInteger(length) || length < 1) {
         console.log("[Rhombus] - Note length invalid: " + length);
         return undefined;
       }
 
-      if (!isNumber(velocity) || velocity < 0) {
+      if (!isNumber(velocity) || velocity < 0 || velocity > 1) {
          console.log("[Rhombus] - Note velocity invalid: " + velocity);
         return undefined;
       }
