@@ -60,6 +60,10 @@
       if (isDefined(instr)) {
         return instr;
       }
+      var track = r._song._tracks.getObjById(id);
+      if (isDefined(track)) {
+        return track;
+      }
       return r._song._effects[id];
     }
     r.graphLookup = graphLookup;
@@ -346,19 +350,7 @@
       });
     };
 
-    r.getNodeById = function(nodeId) {
-      var effect = this._song._effects[nodeId];
-      var inst   = this._song._instruments.getObjById(nodeId);
-
-      if (isDefined(effect)) {
-        return effect;
-      }
-      if (isDefined(inst)) {
-        return inst;
-      }
-
-      return undefined;
-    };
+    r.getNodeById = graphLookup;
 
   };
 })(this.Rhombus);
