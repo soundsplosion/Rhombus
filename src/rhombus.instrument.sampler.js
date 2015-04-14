@@ -82,6 +82,7 @@
     Tone.extend(Sampler, Tone.Instrument);
     r._addParamFunctions(Sampler);
     r._addGraphFunctions(Sampler);
+    r._addAudioNodeFunctions(Sampler);
 
     Sampler.prototype.setBuffers = function(bufferMap) {
       if (notDefined(bufferMap)) {

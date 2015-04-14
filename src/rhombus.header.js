@@ -77,6 +77,7 @@
     root.Rhombus._songSetup(this);
     root.Rhombus._paramSetup(this);
     root.Rhombus._recordSetup(this);
+    root.Rhombus._audioNodeSetup(this);
 
     // Instruments
     root.Rhombus._instrumentSetup(this);
