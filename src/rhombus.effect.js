@@ -18,11 +18,11 @@
     }
 
     r.effectTypes = function() {
-      return ["dist", "filt", "eq", "dely", "comp", "gain", "bitc"];
+      return ["dist", "filt", "eq", "dely", "comp", "gain", "bitc", "revb", "chor"];
     };
 
     r.effectDisplayNames = function() {
-      return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher"];
+      return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher", "Reverb", "Chorus"];
     };
 
     r.addEffect = function(type, json) {
@@ -33,8 +33,9 @@
         "dely" : r._Delay,
         "comp" : r._Compressor,
         "gain" : r._Gainer,
-        "bitc" : r._BitCrusher
-        // TODO: add more
+        "bitc" : r._BitCrusher,
+        "revb" : r._Reverb,
+        "chor" : r._Chorus
       };
 
       var options, go, gi, id, graphX, graphY;
@@ -85,10 +86,8 @@
       eff._normalizedObjectSet(options, true);
 
       if (ctr === r._Master) {
-        // TODO: get these slots right
         eff._graphSetup(1, 1, 0, 0);
       } else {
-        // TODO: get these slots right
         eff._graphSetup(1, 1, 1, 0);
       }
 
