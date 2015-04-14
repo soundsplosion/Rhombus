@@ -159,6 +159,21 @@
       return noteId;
     };
 
+    r.Edit.isValidTranslation = function(notes, pitchOffset, timeOffset) {
+      for (i = 0; i < notes.length; i++) {
+        var dstPitch = notes[i]._pitch + pitchOffset;
+        var dstStart = notes[i]._start + timeOffset;
+
+        // validate the translations
+        if (dstPitch > 127 || dstPitch < 0 || dstStart < 0) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    // TODO: possibly implement clamping in one form or another
     r.Edit.translateNotes = function(notes, pitchOffset, timeOffset) {
       var i;
 
