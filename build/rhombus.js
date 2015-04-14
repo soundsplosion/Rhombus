@@ -4069,7 +4069,6 @@
       });
     };
 
-    // TODO: investigate ways to rescale RtNotes that are currently playing
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
 
       if (start < 0 || length < 1) {
@@ -4159,6 +4158,42 @@
       });
 
       return noteId;
+    };
+
+    r.Edit.translateNotes = function(notes, pitchOffset, timeOffset) {
+      var i;
+
+      var newValues = new Array(notes.length);
+      var oldValues = new Array(notes.length);
+      
+      // pre-compute and validate the translations before applying them
+      for (i = 0; i < notes.length; i++) {
+        var dstPitch = notes[i]._pitch + pitchOffset;
+        var dstStart = notes[i]._start + timeOffset;
+
+        // validate the translations
+        if (dstPitch > 127 || dstPitch < 0 || dstStart < 0) {
+          return false;
+        }
+
+        newValues[i] = [dstPitch, dstStart];
+        oldValues[i] = [notes[i]._pitch, notes[i]._start];
+      }
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < notes.length; i++) {
+          notes[i]._pitch = oldValues[i][0];
+          notes[i]._start = oldValues[i][1];
+        }
+      });
+
+      // apply the translations
+      for (i = 0; i < notes.length; i++) {
+        notes[i]._pitch = newValues[i][0];
+        notes[i]._start = newValues[i][1];
+      }
+
+      return true;
     };
 
     // Makes a copy of the source pattern and adds it to the song's pattern set.
