@@ -2270,6 +2270,10 @@
 
       var that = this;
       var effect = this._song._effects[id];
+      if (effect.isMaster()) {
+        return;
+      }
+
       var gi = effect.graphInputs();
       var go = effect.graphOutputs();
       r.Undo._addUndoAction(function() {
