@@ -56,8 +56,12 @@ function ins(a, b, c) {
 var instrId = rhomb.addInstrument("mono");
 var instr = rhomb.getSong().getInstruments().getObjById(instrId);
 instr.normalizedSetByName("volume", 0.6);
+instr.graphDisconnect(0, rhomb.getMaster(), 0);
 
 var effId = rhomb.addEffect("revb");
+var eff = rhomb.graphLookup(effId);
+instr.graphConnect(0, eff, 0);
+eff.graphConnect(0, rhomb.getMaster(), 0);
 
 var trackId = rhomb._song.addTrack();
 var track = rhomb.getSong().getTracks().getObjById(trackId);
