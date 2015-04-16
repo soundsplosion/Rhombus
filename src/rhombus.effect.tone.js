@@ -198,7 +198,7 @@
       "rate" : [Rhombus._map.mapLinear(0, 20), Rhombus._map.hzDisplay, 2.0],
       "delayTime" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
       "depth" : [Rhombus._map.mapLinear(0, 2), rawDisplay, 0.35],
-      "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), rawDisplay, 0.0]
+      "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), rawDisplay, 0.0],
       "feedback" : feedbackMapSpec
     });
 
