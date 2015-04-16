@@ -174,37 +174,64 @@
     };
 
     // TODO: possibly implement clamping in one form or another
-    r.Edit.translateNotes = function(notes, pitchOffset, timeOffset) {
+    r.Edit.translateNotes = function(ptnId, notes, pitchOffset, timeOffset) {
       var i;
+
+      var ptn = r._song._patterns[ptnId];
+
+      if (notDefined(ptn)) {
+        console.log("[Rhombus.Edit] - pattern is not defined");
+        return false;
+      }
 
       var newValues = new Array(notes.length);
       var oldValues = new Array(notes.length);
+
+      var maxPitch = 0;
+      var minPitch = 127;
+      var minStart = 1e6;
 
       // pre-compute and validate the translations before applying them
       for (i = 0; i < notes.length; i++) {
         var dstPitch = notes[i]._pitch + pitchOffset;
         var dstStart = notes[i]._start + timeOffset;
 
-        // validate the translations
-        if (dstPitch > 127 || dstPitch < 0 || dstStart < 0) {
-          return false;
-        }
+        maxPitch = (dstPitch > maxPitch) ? dstPitch : maxPitch;
+        minPitch = (dstPitch < minPitch) ? dstPitch : minPitch;
+        minStart = (dstStart < minStart) ? dstStart : minStart;
 
         newValues[i] = [dstPitch, dstStart];
         oldValues[i] = [notes[i]._pitch, notes[i]._start];
       }
 
+      var pitchDiff = 0;
+      if (maxPitch > 127) {
+        pitchDiff = 127 - maxPitch;
+      }
+      else if (minPitch < 0) {
+        pitchDiff = -minPitch;
+      }
+
+      var startDiff = 0;
+      if (minStart < 0) {
+        startDiff = -minStart;
+      }
+
       r.Undo._addUndoAction(function() {
         for (var i = 0; i < notes.length; i++) {
+          ptn._noteMap._avl.delete(notes[i]._start, notes[i]);
           notes[i]._pitch = oldValues[i][0];
           notes[i]._start = oldValues[i][1];
+          ptn._noteMap._avl.insert(notes[i]._start, notes[i]);
         }
       });
 
       // apply the translations
       for (i = 0; i < notes.length; i++) {
-        notes[i]._pitch = newValues[i][0];
-        notes[i]._start = newValues[i][1];
+        ptn._noteMap._avl.delete(notes[i]._start, notes[i]);
+        notes[i]._pitch = newValues[i][0] + pitchDiff;
+        notes[i]._start = newValues[i][1] + startDiff;
+        ptn._noteMap._avl.insert(notes[i]._start, notes[i]);
       }
 
       return true;

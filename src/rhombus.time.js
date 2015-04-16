@@ -108,7 +108,13 @@
               var note  = notes[i];
               var start = note.getStart() + itemStart;
 
+              // prevent notes from before the loop start from triggering
               if (!loopOverride && r.getLoopEnabled() && start < loopStart) {
+                continue;
+              }
+
+              // prevent other spurious note triggers
+              if (start >= itemEnd) {
                 continue;
               }
 
