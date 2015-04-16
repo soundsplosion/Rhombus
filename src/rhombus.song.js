@@ -271,9 +271,12 @@
         var newTrack = new this.Track(trkId);
 
         newTrack._name = track._name;
-        newTrack._targets = track._targets;
-        for (var targetIdx = 0; targetIdx < newTrack._targets.length; targetIdx++) {
-          newTrack._targets[targetIdx] = +(newTrack._targets[targetIdx]);
+
+        if (isDefined(track._targets)) {
+          newTrack._targets = track._targets;
+          for (var targetIdx = 0; targetIdx < newTrack._targets.length; targetIdx++) {
+            newTrack._targets[targetIdx] = +(newTrack._targets[targetIdx]);
+          }
         }
 
         for (var itemId in playlist) {
