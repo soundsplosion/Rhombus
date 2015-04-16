@@ -235,6 +235,11 @@
     return color;
   };
 
+
+  Rhombus.Util.clampMinMax = function(val, min, max) {
+    return (val < min) ? min : (val > max) ? max : val;
+  }
+
   function calculator(noteNum) {
     return Math.pow(2, (noteNum-69)/12) * 440;
   }

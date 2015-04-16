@@ -68,7 +68,6 @@
       });
     };
 
-    // TODO: investigate ways to rescale RtNotes that are currently playing
     r.Edit.changeNoteTime = function(noteId, start, length, ptnId) {
 
       if (start < 0 || length < 1) {
@@ -158,6 +157,84 @@
       });
 
       return noteId;
+    };
+
+    r.Edit.isValidTranslation = function(notes, pitchOffset, timeOffset) {
+      for (i = 0; i < notes.length; i++) {
+        var dstPitch = notes[i]._pitch + pitchOffset;
+        var dstStart = notes[i]._start + timeOffset;
+
+        // validate the translations
+        if (dstPitch > 127 || dstPitch < 0 || dstStart < 0) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    // TODO: possibly implement clamping in one form or another
+    r.Edit.translateNotes = function(ptnId, notes, pitchOffset, timeOffset) {
+      var i;
+
+      var ptn = r._song._patterns[ptnId];
+
+      if (notDefined(ptn)) {
+        console.log("[Rhombus.Edit] - pattern is not defined");
+        return false;
+      }
+
+      var newValues = new Array(notes.length);
+      var oldValues = new Array(notes.length);
+
+      var maxPitch = 0;
+      var minPitch = 127;
+      var minStart = 1e6;
+
+      // pre-compute and validate the translations before applying them
+      for (i = 0; i < notes.length; i++) {
+        var dstPitch = notes[i]._pitch + pitchOffset;
+        var dstStart = notes[i]._start + timeOffset;
+
+        maxPitch = (dstPitch > maxPitch) ? dstPitch : maxPitch;
+        minPitch = (dstPitch < minPitch) ? dstPitch : minPitch;
+        minStart = (dstStart < minStart) ? dstStart : minStart;
+
+        newValues[i] = [dstPitch, dstStart];
+        oldValues[i] = [notes[i]._pitch, notes[i]._start];
+      }
+
+      var pitchDiff = 0;
+      if (maxPitch > 127) {
+        pitchDiff = 127 - maxPitch;
+      }
+      else if (minPitch < 0) {
+        pitchDiff = -minPitch;
+      }
+
+      var startDiff = 0;
+      if (minStart < 0) {
+        startDiff = -minStart;
+      }
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < notes.length; i++) {
+          ptn._noteMap._avl.delete(notes[i]._start, notes[i]);
+          notes[i]._pitch = oldValues[i][0];
+          notes[i]._start = oldValues[i][1];
+          ptn._noteMap._avl.insert(notes[i]._start, notes[i]);
+        }
+      });
+
+      // apply the translations
+      for (i = 0; i < notes.length; i++) {
+        ptn._noteMap._avl.delete(notes[i]._start, notes[i]);
+        notes[i]._pitch = newValues[i][0] + pitchDiff;
+        notes[i]._start = newValues[i][1] + startDiff;
+        ptn._noteMap._avl.insert(notes[i]._start, notes[i]);
+      }
+
+      return true;
     };
 
     // Makes a copy of the source pattern and adds it to the song's pattern set.
@@ -284,25 +361,35 @@
       return notes;
     };
 
-    r.Edit.quantizeNotes = function(notes, quantize, doEnds) {
-      var notes = [];
-      var oldStarts = [];
-      var oldLengths = [];
+    r.Edit.quantizeNotes = function(ptnId, notes, quantize, doEnds) {
+      var srcPtn = r._song._patterns[ptnId];
+      if (notDefined(srcPtn) || !isInteger(quantize)) {
+        console.log("[Rhomb.Edit] - srcPtn is not defined");
+        return undefined;
+      }
 
-      r.Undo.addUndoAction(function() {
-        for (var i = 0; i < notes.length; i++) {
-          var note = notes[i];
+      var oldNotes = notes.slice();
+
+      var oldStarts  = new Array(notes.length);
+      var oldLengths = new Array(notes.length);
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < oldNotes.length; i++) {
+          var note = oldNotes[i];
+          srcPtn.deleteNote(note._id, note);
           note._start = oldStarts[i];
           note._length = oldLengths[i];
+          srcPtn.addNote(note);
         }
       });
 
       for (var i = 0; i < notes.length; i++) {
         var srcNote = notes[i];
 
-        notes.push(srcNote);
-        oldStarts.push(srcNote._start);
-        oldLengths.push(srcNote._length);
+        srcPtn.deleteNote(srcNote._id, srcNote);
+
+        oldStarts[i]  = srcNote._start;
+        oldLengths[i] = srcNote._length;
 
         var srcStart = srcNote.getStart();
         srcNote._start = quantizeTick(srcStart, quantize);
@@ -319,6 +406,8 @@
             srcNote._length = quantizeTick(srcEnd, quantize) - srcNote.getStart();
           }
         }
+
+        srcPtn.addNote(srcNote);
       }
     };
   };
