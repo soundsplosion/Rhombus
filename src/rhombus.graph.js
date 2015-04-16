@@ -60,6 +60,10 @@
       if (isDefined(instr)) {
         return instr;
       }
+      var track = r._song._tracks.getObjById(id);
+      if (isDefined(track)) {
+        return track;
+      }
       return r._song._effects[id];
     }
     r.graphLookup = graphLookup;
@@ -162,13 +166,7 @@
       outputObj.to.push(new Port(b._id, bInput));
       inputObj.from.push(new Port(this._id, output));
 
-      // TODO: use the slots when connecting
-      var type = outputObj.type;
-      if (type === "audio") {
-        this.connect(b);
-      } else if (type === "control") {
-        // TODO: implement control routing
-      }
+      this._internalGraphConnect(output, b, bInput);
       return true;
     };
 
@@ -215,21 +213,7 @@
       outputObj.to.splice(outputPortIdx, 1);
       inputObj.from.splice(inputPortIdx, 1);
 
-      // TODO: use the slots when disconnecting
-      var type = outputObj.type;
-      if (type === "audio") {
-        // TODO: this should be replaced in such a way that we
-        // don't break all the outgoing connections every time we
-        // disconnect from one thing. Put gain nodes in the middle
-        // or something.
-        this.disconnect();
-        var that = this;
-        outputObj.to.forEach(function (port) {
-          that.connect(graphLookup(port.node));
-        });
-      } else if (type === "control") {
-        // TODO: implement control routing
-      }
+      this._internalGraphDisconnect(output, b, bInput);
     }
 
     function graphX() {
@@ -295,6 +279,18 @@
       }
     }
 
+    function isEffect() {
+      return this._graphType === "effect";
+    }
+
+    function isInstrument() {
+      return this._graphType === "instrument";
+    }
+
+    function isTrack() {
+      return this._graphType === "track";
+    }
+
     r._addGraphFunctions = function(ctr) {
       ctr.prototype._graphSetup = graphSetup;
       ctr.prototype.graphInputs = graphInputs;
@@ -308,6 +304,10 @@
       ctr.prototype.setGraphX = setGraphX;
       ctr.prototype.graphY = graphY;
       ctr.prototype.setGraphY = setGraphY;
+      
+      ctr.prototype.isEffect = isEffect;
+      ctr.prototype.isInstrument = isInstrument;
+      ctr.prototype.isTrack = isTrack;
     };
 
     r.getMaster = function() {
@@ -350,19 +350,7 @@
       });
     };
 
-    r.getNodeById = function(nodeId) {
-      var effect = this._song._effects[nodeId];
-      var inst   = this._song._instruments.getObjById(nodeId);
-
-      if (isDefined(effect)) {
-        return effect;
-      }
-      if (isDefined(inst)) {
-        return inst;
-      }
-
-      return undefined;
-    };
+    r.getNodeById = graphLookup;
 
   };
 })(this.Rhombus);

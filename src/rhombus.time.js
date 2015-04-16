@@ -76,7 +76,10 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            r._song._instruments.getObjById(rtNote._target).triggerRelease(rtNote._id, delay);
+            var instrs = r._song._instruments;
+            for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
+              instrs.getObjById(rtNote._targets[targetIdx]).triggerRelease(rtNote._id, delay);
+            }
             delete playingNotes[rtNoteId];
           }
         }
@@ -119,12 +122,14 @@
                                         note.getVelocity(),
                                         startTime,
                                         endTime,
-                                        track._target);
+                                        track._targets);
 
               playingNotes[rtNote._id] = rtNote;
 
-              var instrument = r._song._instruments.getObjById(track._target);
-              instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
+              for (var targetIdx = 0; targetIdx < track._targets.length; targetIdx++) {
+                var instrument = r._song._instruments.getObjById(track._targets[targetIdx]);
+                instrument.triggerAttack(rtNote._id, note.getPitch(), delay, note.getVelocity());
+              }
             }
           }
         }

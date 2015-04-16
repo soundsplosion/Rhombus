@@ -51,6 +51,7 @@
     Tone.extend(ToneInstrument, Tone.PolySynth);
     r._addGraphFunctions(ToneInstrument);
     r._addParamFunctions(ToneInstrument);
+    r._addAudioNodeFunctions(ToneInstrument);
 
     ToneInstrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
       // Don't play out-of-range notes

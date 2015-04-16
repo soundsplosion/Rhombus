@@ -59,7 +59,7 @@ instr.normalizedSetByName("volume", 0.6);
 
 var trackId = rhomb._song.addTrack();
 var track = rhomb.getSong().getTracks().getObjById(trackId);
-track._target = instrId;
+track.graphConnect(0, instr, 0);
 track.addToPlaylist(patId, 0, 3840);
 
 ins(60, 0, 240);

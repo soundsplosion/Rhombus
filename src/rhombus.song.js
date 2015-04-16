@@ -146,12 +146,14 @@
           // TODO: find a more robust way to terminate playing notes
           for (var rtNoteId in this._playingNotes) {
             var note = this._playingNotes[rtNoteId];
-            r._song._instruments.getObjById(track._target).triggerRelease(rtNoteId, 0);
+
+            var instrs = r._song._instruments;
+            for (var targetIdx = 0; targetIdx < track._targets.length; targetIdx++) {
+              instrs.getObjById(track._targets[targetIdx]).triggerRelease(rtNoteId, 0);
+            }
+
             delete this._playingNotes[rtNoteId];
           }
-
-          // TODO: Figure out why this doesn't work
-          //r.removeInstrument(track._target);
 
           // Remove the track from the solo list, if it's soloed
           var index = r._song._soloList.indexOf(track._id);
@@ -269,7 +271,10 @@
         var newTrack = new this.Track(trkId);
 
         newTrack._name = track._name;
-        newTrack._target = +track._target;
+        newTrack._targets = track._targets;
+        for (var targetIdx = 0; targetIdx < newTrack._targets.length; targetIdx++) {
+          newTrack._targets[targetIdx] = +(newTrack._targets[targetIdx]);
+        }
 
         for (var itemId in playlist) {
           var item = playlist[itemId];
