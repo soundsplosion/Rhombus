@@ -6,7 +6,7 @@
   Rhombus._samplerSetup = function(r) {
 
     function SuperToneSampler() {
-      Tone.Sampler.call(this, Array.prototype.slice.call(arguments));
+      Tone.Sampler.apply(this, Array.prototype.slice.call(arguments));
     }
     Tone.extend(SuperToneSampler, Tone.Sampler);
 
