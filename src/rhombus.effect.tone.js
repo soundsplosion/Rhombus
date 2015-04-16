@@ -132,31 +132,6 @@
       return "EQ";
     };
 
-    // Delay
-    function delay() {
-      Tone.Effect.call(this);
-      this._delay = r._ctx.createDelay(10.5);
-      this.connectEffect(this._delay);
-    }
-    Tone.extend(delay, Tone.Effect);
-    r._addEffectFunctions(delay);
-    r._Delay = delay;
-
-    delay.prototype.set = function(options) {
-      Tone.Effect.prototype.set.apply(this, arguments);
-      if (isDefined(options) && isDefined(options.delay)) {
-        this._delay.delayTime.value = options.delay;
-      }
-    };
-
-    delay.prototype._unnormalizeMap = makeEffectMap({
-      "delay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.2]
-    });
-
-    delay.prototype.displayName = function() {
-      return "Delay";
-    };
-
     // Compressor
     function comp() {
       Tone.Effect.call(this);
@@ -206,6 +181,63 @@
 
     gain.prototype.displayName = function() {
       return "Gain";
+    };
+
+    // For feedback effects
+    var feedbackMapSpec = [Rhombus._map.mapLinear(-1, 1), rawDisplay, 0.5];
+
+    // Chorus
+    function chorus() {
+      Tone.Chorus.call(this);
+    }
+    Tone.extend(chorus, Tone.Chorus);
+    r._addEffectFunctions(chorus);
+    r._Chorus = chorus;
+
+    chorus.prototype._unnormalizeMap = makeEffectMap({
+      "rate" : [Rhombus._map.mapLinear(0, 20), Rhombus._map.hzDisplay, 2.0],
+      "delayTime" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
+      "depth" : [Rhombus._map.mapLinear(0, 2), rawDisplay, 0.35],
+      "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), rawDisplay, 0.0],
+      "feedback" : [Rhombus._map.mapLinear(-0.2, 0.2), rawDisplay, 0.5]
+    });
+
+    chorus.prototype.displayName = function() {
+      return "Chorus";
+    };
+
+    // (Feedback) Delay
+    function delay() {
+      Tone.FeedbackDelay.call(this);
+    }
+    Tone.extend(delay, Tone.FeedbackDelay);
+    r._addEffectFunctions(delay);
+    r._Delay = delay;
+
+    delay.prototype._unnormalizeMap = makeEffectMap({
+      "delayTime" : [Rhombus._map.timeMapFn, secondsDisplay, 0.2],
+      "feedback" : feedbackMapSpec
+    });
+
+    delay.prototype.displayName = function() {
+      return "Delay";
+    };
+
+    // Reverb
+    function reverb() {
+      Tone.Freeverb.call(this);
+    }
+    Tone.extend(reverb, Tone.Freeverb);
+    r._addEffectFunctions(reverb);
+    r._Reverb = reverb;
+
+    reverb.prototype._unnormalizeMap = makeEffectMap({
+      "roomSize" : [Rhombus._map.mapLinear(0.001, 0.999), rawDisplay, 0.7],
+      "dampening" : [Rhombus._map.mapLinear(0, 1), rawDisplay, 0.5]
+    });
+
+    reverb.prototype.displayName = function() {
+      return "Reverb";
     };
 
   };
