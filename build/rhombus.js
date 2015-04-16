@@ -2540,7 +2540,7 @@
 
     // Chorus
     function chorus() {
-      this.Chorus.call(this);
+      Tone.Chorus.call(this);
     }
     Tone.extend(chorus, Tone.Chorus);
     r._addEffectFunctions(chorus);
