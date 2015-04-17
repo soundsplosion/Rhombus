@@ -126,6 +126,10 @@
     return Math.round(obj) === obj;
   };
 
+  window.notInteger = function(obj) {
+    return !(window.isInteger(obj));
+  };
+
   window.isNumber = function(obj) {
     return typeof obj === "number";
   }
@@ -2737,6 +2741,31 @@
       }
     };
 
+    r.AutomationEvent = function(time, value, id) {
+      if (isDefined(id)) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
+      this._time = time;
+      this._value = value;
+    };
+
+    r.AutomationEvent.prototype.getTime = function() {
+      if (notInteger(this._time)) {
+        this._time = 0;
+      }
+      return this._time;
+    }
+
+    r.AutomationEvent.prototype.getValue = function() {
+      if (notInteger(this._value)) {
+        this._value = 0.5;
+      }
+      return this._value;
+    }
+
     r.Pattern = function(id) {
       if (isDefined(id)) {
         r._setId(this, id);
@@ -2753,21 +2782,7 @@
       this._length = 1920;
       this._noteMap = new r.NoteMap();
 
-      // TODO: not hardcode this
-      this.automation = new AVL();
-      var autom = this.automation;
-      function newPoint(time, value) {
-        autom.insert(time, [time, value]);
-      }
-      for (var i = 0; i < 8; i++) {
-        var tick = 60 * i;
-        var noPower = i / 7.0;
-        newPoint(tick, noPower * noPower * noPower * noPower * noPower);
-      }
-/*      this.automation.insert(0, [0, 1.0]);
-      this.automation.insert(480-1, [480-1, 0.4]);
-      this.automation.insert(960-1, [960-1, 0.7]);
-      this.automation.insert(1440-1, [1440-1, 0.4]);*/
+      this._automation = new AVL({ unique: true });
     };
 
     // TODO: make this interface a little more sanitary...
@@ -2890,6 +2905,10 @@
         for (var i = 0; i < selected.length; i++) {
           selected[i].deselect();
         }
+      },
+
+      getAutomationEventsInRange: function(start, end) {
+        return this._automation._avl.betweenBounds({ $lt: end, $gte: start });
       },
 
       toJSON: function() {
@@ -3794,32 +3813,6 @@
 
             var begin = scheduleStart - itemStart;
             var end   = begin + (scheduleEnd - scheduleStart);
-//////////////////////////////////////////////
-// HACKY AUTOMATION HERE
-            
-            var master = r.getMaster();
-            var autom = r.getSong().getPatterns()[ptnId].automation;
-            var values = autom.betweenBounds({ $gte: begin, $lt: end });
-            for (var i = 0; i < values.length; i++) {
-              var value = values[i];
-              var time = value[0] + itemStart;
-
-              if (!loopOverride && r.getLoopEnabled() && time < loopStart) {
-                continue;
-              }
-
-              if (time >= itemEnd) {
-                continue;
-              }
-
-              var delay = r.ticks2Seconds(time) - curPos;
-              var realTime = curTime + delay;
-              console.log("Setting " + value[1] + " with delay " + realTime);
-              master.input.gain.setValueAtTime(value[1], realTime);
-            }
-
-// HACKY AUTOMATION HERE
-//////////////////////////////////////////////
             var notes = r.getSong().getPatterns()[ptnId].getNotesInRange(begin, end);
 
             for (var i = 0; i < notes.length; i++) {
@@ -4396,6 +4389,84 @@
         ptn._noteMap._avl.insert(notes[i]._start, notes[i]);
       }
 
+      return true;
+    };
+
+    function findEventInArray(id, eventArray) {
+      for (var i = 0; i < eventArray.length; i++) {
+        if (eventArray[i]._id === id) {
+          return eventArray[i];
+        }
+      }
+      return undefined;
+    }
+
+    r.Edit.insertAutomationEvent = function(time, value, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+      if (atThatTime.length > 0) {
+        return false;
+      }
+
+      pattern._automation.insert(time, new r.AutomationEvent(time, value));
+      
+      r.Undo._addUndoAction(function() {
+        pattern._automation.delete(time);
+      });
+
+      return true;
+    };
+
+    r.Edit.deleteAutomationEvent = function(eventId, ptnId, internal) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+
+      var theEvent = findEventInArray(eventId, atThatTime);
+      if (notDefined(theEvent)) {
+        return false;
+      }
+      
+      if (!internal) {
+        r.Undo._addUndoAction(function() {
+          pattern._automation.insert(time, theEvent);
+        });
+      }
+
+      pattern._automation.delete(time, theEvent);
+      return true;
+    };
+
+    r.Edit.deleteAutomationEventsInRange = function(start, end, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var events = pattern.getAutomationEventsInRange(start, end);
+      for (var i = 0; i < events.length; i++) {
+        var ev = events[i];
+        r.Edit.deleteAutomationEvent(ev._id, ptnId, true);
+      }
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < events.length; i++) {
+          var ev = events[i];
+          pattern._automation.insert(ev.getTime(), ev);
+        }
+      });
+    }
+
+    r.Edit.changeAutomationEventValue = function(eventId, newValue, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+
+      var theEvent = findEventInArray(eventId, atThatTime);
+      if (notDefined(theEvent)) {
+        return false;
+      }
+
+      var oldValue = theEvent._value;
+      r.Undo._addUndoAction(function() {
+        theEvent._value = oldValue;
+      });
+
+      theEvent._value = newValue;
       return true;
     };
 

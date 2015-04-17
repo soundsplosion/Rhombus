@@ -259,6 +259,84 @@
       return true;
     };
 
+    function findEventInArray(id, eventArray) {
+      for (var i = 0; i < eventArray.length; i++) {
+        if (eventArray[i]._id === id) {
+          return eventArray[i];
+        }
+      }
+      return undefined;
+    }
+
+    r.Edit.insertAutomationEvent = function(time, value, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+      if (atThatTime.length > 0) {
+        return false;
+      }
+
+      pattern._automation.insert(time, new r.AutomationEvent(time, value));
+      
+      r.Undo._addUndoAction(function() {
+        pattern._automation.delete(time);
+      });
+
+      return true;
+    };
+
+    r.Edit.deleteAutomationEvent = function(eventId, ptnId, internal) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+
+      var theEvent = findEventInArray(eventId, atThatTime);
+      if (notDefined(theEvent)) {
+        return false;
+      }
+      
+      if (!internal) {
+        r.Undo._addUndoAction(function() {
+          pattern._automation.insert(time, theEvent);
+        });
+      }
+
+      pattern._automation.delete(time, theEvent);
+      return true;
+    };
+
+    r.Edit.deleteAutomationEventsInRange = function(start, end, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var events = pattern.getAutomationEventsInRange(start, end);
+      for (var i = 0; i < events.length; i++) {
+        var ev = events[i];
+        r.Edit.deleteAutomationEvent(ev._id, ptnId, true);
+      }
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < events.length; i++) {
+          var ev = events[i];
+          pattern._automation.insert(ev.getTime(), ev);
+        }
+      });
+    }
+
+    r.Edit.changeAutomationEventValue = function(eventId, newValue, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+
+      var theEvent = findEventInArray(eventId, atThatTime);
+      if (notDefined(theEvent)) {
+        return false;
+      }
+
+      var oldValue = theEvent._value;
+      r.Undo._addUndoAction(function() {
+        theEvent._value = oldValue;
+      });
+
+      theEvent._value = newValue;
+      return true;
+    };
+
     // Makes a copy of the source pattern and adds it to the song's pattern set.
     r.Edit.copyPattern = function(ptnId) {
       var srcPtn = r._song._patterns[ptnId];

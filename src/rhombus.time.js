@@ -102,32 +102,6 @@
 
             var begin = scheduleStart - itemStart;
             var end   = begin + (scheduleEnd - scheduleStart);
-//////////////////////////////////////////////
-// HACKY AUTOMATION HERE
-            
-            var master = r.getMaster();
-            var autom = r.getSong().getPatterns()[ptnId].automation;
-            var values = autom.betweenBounds({ $gte: begin, $lt: end });
-            for (var i = 0; i < values.length; i++) {
-              var value = values[i];
-              var time = value[0] + itemStart;
-
-              if (!loopOverride && r.getLoopEnabled() && time < loopStart) {
-                continue;
-              }
-
-              if (time >= itemEnd) {
-                continue;
-              }
-
-              var delay = r.ticks2Seconds(time) - curPos;
-              var realTime = curTime + delay;
-              console.log("Setting " + value[1] + " with delay " + realTime);
-              master.input.gain.setValueAtTime(value[1], realTime);
-            }
-
-// HACKY AUTOMATION HERE
-//////////////////////////////////////////////
             var notes = r.getSong().getPatterns()[ptnId].getNotesInRange(begin, end);
 
             for (var i = 0; i < notes.length; i++) {

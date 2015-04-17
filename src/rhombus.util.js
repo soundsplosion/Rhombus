@@ -26,6 +26,10 @@
     return Math.round(obj) === obj;
   };
 
+  window.notInteger = function(obj) {
+    return !(window.isInteger(obj));
+  };
+
   window.isNumber = function(obj) {
     return typeof obj === "number";
   }

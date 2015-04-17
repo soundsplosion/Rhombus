@@ -90,6 +90,31 @@
       }
     };
 
+    r.AutomationEvent = function(time, value, id) {
+      if (isDefined(id)) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
+      this._time = time;
+      this._value = value;
+    };
+
+    r.AutomationEvent.prototype.getTime = function() {
+      if (notInteger(this._time)) {
+        this._time = 0;
+      }
+      return this._time;
+    }
+
+    r.AutomationEvent.prototype.getValue = function() {
+      if (notInteger(this._value)) {
+        this._value = 0.5;
+      }
+      return this._value;
+    }
+
     r.Pattern = function(id) {
       if (isDefined(id)) {
         r._setId(this, id);
@@ -106,21 +131,7 @@
       this._length = 1920;
       this._noteMap = new r.NoteMap();
 
-      // TODO: not hardcode this
-      this.automation = new AVL();
-      var autom = this.automation;
-      function newPoint(time, value) {
-        autom.insert(time, [time, value]);
-      }
-      for (var i = 0; i < 8; i++) {
-        var tick = 60 * i;
-        var noPower = i / 7.0;
-        newPoint(tick, noPower * noPower * noPower * noPower * noPower);
-      }
-/*      this.automation.insert(0, [0, 1.0]);
-      this.automation.insert(480-1, [480-1, 0.4]);
-      this.automation.insert(960-1, [960-1, 0.7]);
-      this.automation.insert(1440-1, [1440-1, 0.4]);*/
+      this._automation = new AVL({ unique: true });
     };
 
     // TODO: make this interface a little more sanitary...
@@ -243,6 +254,10 @@
         for (var i = 0; i < selected.length; i++) {
           selected[i].deselect();
         }
+      },
+
+      getAutomationEventsInRange: function(start, end) {
+        return this._automation._avl.betweenBounds({ $lt: end, $gte: start });
       },
 
       toJSON: function() {
