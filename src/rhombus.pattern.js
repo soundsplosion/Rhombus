@@ -105,6 +105,22 @@
       // pattern structure data
       this._length = 1920;
       this._noteMap = new r.NoteMap();
+
+      // TODO: not hardcode this
+      this.automation = new AVL();
+      var autom = this.automation;
+      function newPoint(time, value) {
+        autom.insert(time, [time, value]);
+      }
+      for (var i = 0; i < 8; i++) {
+        var tick = 60 * i;
+        var noPower = i / 7.0;
+        newPoint(tick, noPower * noPower * noPower * noPower * noPower);
+      }
+/*      this.automation.insert(0, [0, 1.0]);
+      this.automation.insert(480-1, [480-1, 0.4]);
+      this.automation.insert(960-1, [960-1, 0.7]);
+      this.automation.insert(1440-1, [1440-1, 0.4]);*/
     };
 
     // TODO: make this interface a little more sanitary...
