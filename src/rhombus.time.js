@@ -122,7 +122,7 @@
               }
 
               var delay = r.ticks2Seconds(time) - curPos;
-              var realTime = curTime + delay;
+              var realTime = curTime + delay + startTime;
 
               track._targets.forEach(function(id) {
                 var instr = r.graphLookup(id);
@@ -130,6 +130,7 @@
                 //instr.
               });
               track._effectTargets.forEach(function(id) {
+                // TODO: make this do proper routing, mapping, etc.
                 var eff = r.graphLookup(id);
                 eff.output.gain.setValueAtTime(ev.getValue(), realTime);
               });
@@ -154,13 +155,12 @@
 
               var delay = r.ticks2Seconds(start) - curPos;
 
-              // TODO: disambiguate startTime
-              var startTime = curTime + delay;
-              var endTime = startTime + r.ticks2Seconds(note._length);
+              var noteStartTime = curTime + delay;
+              var endTime = noteStartTime + r.ticks2Seconds(note._length);
 
               var rtNote = new r.RtNote(note.getPitch(),
                                         note.getVelocity(),
-                                        startTime,
+                                        noteStartTime,
                                         endTime,
                                         track._targets);
 
