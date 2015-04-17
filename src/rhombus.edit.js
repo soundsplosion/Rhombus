@@ -334,8 +334,6 @@
 
     r.Edit.changeAutomationEventValue = function(eventId, newValue, ptnId) {
       var pattern = r._song._patterns[ptnId];
-      var atThatTime = pattern._automation.search(time);
-
       var theEvent = findEventInAVL(eventId, pattern._automation);
       if (notDefined(theEvent)) {
         return false;
