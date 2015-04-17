@@ -4409,6 +4409,20 @@
       return undefined;
     }
 
+    function findEventInAVL(id, avl) {
+      var theEvent;
+      avl.executeOnEveryNode(function(evs) {
+        for (var i = 0; i < evs.length; i++) {
+          var ev = evs[i];
+          if (ev._id === id) {
+            theEvent = ev;
+            return;
+          }
+        }
+      });
+      return theEvent;
+    }
+
     r.Edit.insertAutomationEvent = function(time, value, ptnId) {
       var pattern = r._song._patterns[ptnId];
       var atThatTime = pattern._automation.search(time);
@@ -4428,17 +4442,7 @@
     r.Edit.deleteAutomationEvent = function(eventId, ptnId, internal) {
       var pattern = r._song._patterns[ptnId];
 
-      var theEvent;
-      pattern._automation.executeOnEveryNode(function(evs) {
-        for (var i = 0; i < evs.length; i++) {
-          var ev = evs[i];
-          if (ev._id === eventId) {
-            theEvent = ev;
-            return;
-          }
-        }
-      });
-
+      var theEvent = findEventInAVL(eventId, pattern._automation);
       if (notDefined(theEvent)) {
         return false;
       }
@@ -4473,7 +4477,7 @@
       var pattern = r._song._patterns[ptnId];
       var atThatTime = pattern._automation.search(time);
 
-      var theEvent = findEventInArray(eventId, atThatTime);
+      var theEvent = findEventInAVL(eventId, pattern._automation);
       if (notDefined(theEvent)) {
         return false;
       }
