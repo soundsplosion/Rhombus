@@ -257,7 +257,7 @@
       },
 
       getAutomationEventsInRange: function(start, end) {
-        return this._automation._avl.betweenBounds({ $lt: end, $gte: start });
+        return this._automation.betweenBounds({ $lt: end, $gte: start });
       },
 
       toJSON: function() {
