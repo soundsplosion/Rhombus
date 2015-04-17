@@ -286,13 +286,22 @@
 
     r.Edit.deleteAutomationEvent = function(eventId, ptnId, internal) {
       var pattern = r._song._patterns[ptnId];
-      var atThatTime = pattern._automation.search(time);
 
-      var theEvent = findEventInArray(eventId, atThatTime);
+      var theEvent;
+      pattern._automation.executeOnEveryNode(function(evs) {
+        for (var i = 0; i < evs.length; i++) {
+          var ev = evs[i];
+          if (ev._id === eventId) {
+            theEvent = ev;
+            return;
+          }
+        }
+      });
+
       if (notDefined(theEvent)) {
         return false;
       }
-      
+
       if (!internal) {
         r.Undo._addUndoAction(function() {
           pattern._automation.insert(time, theEvent);
