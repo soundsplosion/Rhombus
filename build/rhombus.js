@@ -338,7 +338,7 @@
     var t = v * (1 - (1 - f) * s);
 
     var r, g, b;
-    
+
     if (h_i == 0) {
       r = v;
       g = t;
@@ -369,11 +369,11 @@
       g = p;
       b = q;
     }
-    
+
     r = Math.floor(r*256);
     g = Math.floor(g*256);
     b = Math.floor(b*256);
-    
+
     return (intToHexByte(r) + intToHexByte(g) + intToHexByte(b));
   }
 
