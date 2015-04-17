@@ -4459,14 +4459,27 @@
 
       pattern._automation.insert(time, new r.AutomationEvent(time, value));
       
+      /*
       r.Undo._addUndoAction(function() {
         pattern._automation.delete(time);
       });
+      */
 
       return true;
     };
 
-    r.Edit.deleteAutomationEvent = function(eventId, ptnId, internal) {
+    r.Edit.deleteAutomationEvent = function(time, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atTime = pattern._automation.search(time);
+      if (atTime.length === 0) {
+        return false;
+      }
+
+      pattern._automation.delete(time);
+      return true;
+    };
+
+    r.Edit.deleteAutomationEventById = function(eventId, ptnId, internal) {
       var pattern = r._song._patterns[ptnId];
 
       var theEvent = findEventInAVL(eventId, pattern._automation);
@@ -4474,13 +4487,15 @@
         return false;
       }
 
+      /*
       if (!internal) {
         r.Undo._addUndoAction(function() {
           pattern._automation.insert(time, theEvent);
         });
       }
+      */
 
-      pattern._automation.delete(theEvent.getTime(), theEvent);
+      pattern._automation.delete(theEvent.getTime());
       return true;
     };
 
@@ -4489,15 +4504,17 @@
       var events = pattern.getAutomationEventsInRange(start, end);
       for (var i = 0; i < events.length; i++) {
         var ev = events[i];
-        r.Edit.deleteAutomationEvent(ev._id, ptnId, true);
+        r.Edit.deleteAutomationEventById(ev._id, ptnId, true);
       }
 
+      /*
       r.Undo._addUndoAction(function() {
         for (var i = 0; i < events.length; i++) {
           var ev = events[i];
           pattern._automation.insert(ev.getTime(), ev);
         }
       });
+      */
     }
 
     r.Edit.insertOrEditAutomationEvent = function(time, value, ptnId) {
@@ -4509,9 +4526,12 @@
 
       var theEvent = atThatTime[0];
       var oldValue = theEvent._value;
+
+      /*
       r.Undo._addUndoAction(function() {
         theEvent._value = oldValue;
       });
+      */
 
       theEvent._value = value;
       return true;
@@ -4524,10 +4544,12 @@
         return false;
       }
 
+      /*
       var oldValue = theEvent._value;
       r.Undo._addUndoAction(function() {
         theEvent._value = oldValue;
       });
+      */
 
       theEvent._value = newValue;
       return true;
