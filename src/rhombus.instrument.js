@@ -6,11 +6,11 @@
   Rhombus._instrumentSetup = function(r) {
 
     r.instrumentTypes = function() {
-      return ["samp", "mono", "am", "fm", "noise", "duo"];
+      return ["samp_drum", "samp_fl", "mono", "am", "fm", "noise", "duo"];
     };
 
     r.instrumentDisplayNames = function() {
-      return ["Sampler", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
+      return ["Sampler (drums)", "Sampler (flute)", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
     };
 
     r.addInstrument = function(type, json, idx) {
@@ -24,9 +24,21 @@
         graphY = json._graphY;
       }
 
+      function samplerOptionsFrom(options, set) {
+        if (isDefined(options)) {
+          options.sampleSet = set;
+          return options;
+        } else {
+          return { sampleSet: set };
+        }
+      }
+
       var instr;
-      if (type === "samp") {
-        instr = new this._Sampler(options, id);
+      // "samp" for backwards compatibility
+      if (type === "samp_drum" || type === "samp") {
+        instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
+      } else if (type === "samp_fl") {
+        instr = new this._Sampler(samplerOptionsFrom(options, "tron_flute"), id);
       } else {
         instr = new this._ToneInstrument(type, options, id);
       }
