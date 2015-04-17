@@ -102,7 +102,41 @@
 
             var begin = scheduleStart - itemStart;
             var end   = begin + (scheduleEnd - scheduleStart);
-            var notes = r.getSong().getPatterns()[ptnId].getNotesInRange(begin, end);
+            var pattern = r.getSong().getPatterns()[ptnId];
+
+            // Schedule automation events
+            var events = pattern.getAutomationEventsInRange(begin, end);
+            for (var i = 0; i < events.length; i++) {
+              var ev = events[i];
+
+              // Lots of this copied from the note loop below...
+
+              var time = ev.getTime() + itemStart;
+
+              if (!loopOverride && r.getLoopEnabled() && start < loopStart) {
+                continue;
+              }
+
+              if (start >= itemEnd) {
+                continue;
+              }
+
+              var delay = r.ticks2Seconds(time) - curPos;
+              var realTime = curTime + delay;
+
+              track._targets.forEach(function(id) {
+                var instr = r.graphLookup(id);
+                // TODO: set the instrument stuff here
+                //instr.
+              });
+              track._effectTargets.forEach(function(id) {
+                var eff = r.graphLookup(id);
+                eff.output.gain.setValueAtTime(ev.getValue(), realTime);
+              });
+            }
+
+            // Schedule notes
+            var notes = pattern.getNotesInRange(begin, end);
 
             for (var i = 0; i < notes.length; i++) {
               var note  = notes[i];

@@ -270,9 +270,9 @@
 
     function findEventInAVL(id, avl) {
       var theEvent;
-      avl.executeOnEveryNode(function(evs) {
-        for (var i = 0; i < evs.length; i++) {
-          var ev = evs[i];
+      avl.executeOnEveryNode(function(node) {
+        for (var i = 0; i < node.data.length; i++) {
+          var ev = node.data[i];
           if (ev._id === id) {
             theEvent = ev;
             return;
@@ -312,7 +312,7 @@
         });
       }
 
-      pattern._automation.delete(time, theEvent);
+      pattern._automation.delete(theEvent.getTime(), theEvent);
       return true;
     };
 
