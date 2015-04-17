@@ -55,7 +55,7 @@ function ins(a, b, c) {
 var pat = rhomb.getSong().getPatterns()[patId];
 var aeSuccess = rhomb.Edit.insertAutomationEvent(1, 1, patId);
 var aeId = pat.getAutomationEventsInRange(0, 10)[0]._id;
-var aeRSuccess = rhomb.Edit.deleteAutomationEvent(aeId, patId);
+var aeRSuccess = rhomb.Edit.deleteAutomationEventById(aeId, patId);
 
 var instrId = rhomb.addInstrument("mono");
 var instr = rhomb.getSong().getInstruments().getObjById(instrId);
