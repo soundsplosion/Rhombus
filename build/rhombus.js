@@ -4473,6 +4473,23 @@
       });
     }
 
+    r.Edit.insertOrEditAutomationEvent = function(time, value, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+      if (atThatTime.length == 0) {
+        return r.Edit.insertAutomationEvent(time, value, ptnId);
+      }
+
+      var theEvent = atThatTime[0];
+      var oldValue = theEvent._value;
+      r.Undo._addUndoAction(function() {
+        theEvent._value = oldValue;
+      });
+
+      theEvent._value = value;
+      return true;
+    };
+
     r.Edit.changeAutomationEventValue = function(eventId, newValue, ptnId) {
       var pattern = r._song._patterns[ptnId];
       var theEvent = findEventInAVL(eventId, pattern._automation);
