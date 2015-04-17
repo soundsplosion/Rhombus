@@ -14,16 +14,7 @@
     Master.prototype.isMaster = function() { return true; };
     r._Master = Master;
 
-    Master.prototype.set = function(options) {
-      Tone.Effect.prototype.set.apply(this, arguments);
-      if (isDefined(options) && isDefined(options.gain)) {
-        this.input.gain.value = options.gain;
-      }
-    };
-
-    Master.prototype._unnormalizeMap = {
-      "gain" : [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0]
-    };
+    Master.prototype._unnormalizeMap = r._makeEffectMap({});
 
     Master.prototype.displayName = function() {
       return "Master";
