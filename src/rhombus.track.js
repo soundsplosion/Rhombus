@@ -101,6 +101,7 @@
 
       // track structure data
       this._targets = [];
+      this._effectTargets = [];
       this._playingNotes = {};
       this._playlist = {};
 
@@ -327,19 +328,26 @@
     Track.prototype._internalGraphConnect = function(output, b, bInput) {
       if (b.isInstrument()) {
         this._targets.push(b._id);
-      } else {
-        // TODO: effect automation here
+      } else if (b.isEffect()) {
+        this._effectTargets.push(b._id);
       }
     };
 
     Track.prototype._internalGraphDisconnect = function(output, b, bInput) {
+      var toSearch;
       if (b.isInstrument()) {
-        var idx = this._targets.indexOf(b._id);
-        if (idx >= 0) {
-          this._targets.splice(idx, 1);
-        }
-      } else {
-        // TODO: effect automation here
+        toSearch = this._targets;
+      } else if (b.isEffect()) {
+        toSearch = this._effectTargets;
+      }
+
+      if (notDefined(toSearch)) {
+        return;
+      }
+
+      var idx = toSearch.indexOf(b._id);
+      if (idx >= 0) {
+        toSearch.splice(idx, 1);
       }
     };
 
