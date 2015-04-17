@@ -126,6 +126,10 @@
     return Math.round(obj) === obj;
   };
 
+  window.notInteger = function(obj) {
+    return !(window.isInteger(obj));
+  };
+
   window.isNumber = function(obj) {
     return typeof obj === "number";
   }
@@ -2737,6 +2741,31 @@
       }
     };
 
+    r.AutomationEvent = function(time, value, id) {
+      if (isDefined(id)) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
+      this._time = time;
+      this._value = value;
+    };
+
+    r.AutomationEvent.prototype.getTime = function() {
+      if (notInteger(this._time)) {
+        this._time = 0;
+      }
+      return this._time;
+    }
+
+    r.AutomationEvent.prototype.getValue = function() {
+      if (notInteger(this._value)) {
+        this._value = 0.5;
+      }
+      return this._value;
+    }
+
     r.Pattern = function(id) {
       if (isDefined(id)) {
         r._setId(this, id);
@@ -2752,6 +2781,8 @@
       // pattern structure data
       this._length = 1920;
       this._noteMap = new r.NoteMap();
+
+      this._automation = new AVL({ unique: true });
     };
 
     // TODO: make this interface a little more sanitary...
@@ -2874,6 +2905,10 @@
         for (var i = 0; i < selected.length; i++) {
           selected[i].deselect();
         }
+      },
+
+      getAutomationEventsInRange: function(start, end) {
+        return this._automation._avl.betweenBounds({ $lt: end, $gte: start });
       },
 
       toJSON: function() {
@@ -4354,6 +4389,84 @@
         ptn._noteMap._avl.insert(notes[i]._start, notes[i]);
       }
 
+      return true;
+    };
+
+    function findEventInArray(id, eventArray) {
+      for (var i = 0; i < eventArray.length; i++) {
+        if (eventArray[i]._id === id) {
+          return eventArray[i];
+        }
+      }
+      return undefined;
+    }
+
+    r.Edit.insertAutomationEvent = function(time, value, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+      if (atThatTime.length > 0) {
+        return false;
+      }
+
+      pattern._automation.insert(time, new r.AutomationEvent(time, value));
+      
+      r.Undo._addUndoAction(function() {
+        pattern._automation.delete(time);
+      });
+
+      return true;
+    };
+
+    r.Edit.deleteAutomationEvent = function(eventId, ptnId, internal) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+
+      var theEvent = findEventInArray(eventId, atThatTime);
+      if (notDefined(theEvent)) {
+        return false;
+      }
+      
+      if (!internal) {
+        r.Undo._addUndoAction(function() {
+          pattern._automation.insert(time, theEvent);
+        });
+      }
+
+      pattern._automation.delete(time, theEvent);
+      return true;
+    };
+
+    r.Edit.deleteAutomationEventsInRange = function(start, end, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var events = pattern.getAutomationEventsInRange(start, end);
+      for (var i = 0; i < events.length; i++) {
+        var ev = events[i];
+        r.Edit.deleteAutomationEvent(ev._id, ptnId, true);
+      }
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < events.length; i++) {
+          var ev = events[i];
+          pattern._automation.insert(ev.getTime(), ev);
+        }
+      });
+    }
+
+    r.Edit.changeAutomationEventValue = function(eventId, newValue, ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      var atThatTime = pattern._automation.search(time);
+
+      var theEvent = findEventInArray(eventId, atThatTime);
+      if (notDefined(theEvent)) {
+        return false;
+      }
+
+      var oldValue = theEvent._value;
+      r.Undo._addUndoAction(function() {
+        theEvent._value = oldValue;
+      });
+
+      theEvent._value = newValue;
       return true;
     };
 

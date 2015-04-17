@@ -90,6 +90,31 @@
       }
     };
 
+    r.AutomationEvent = function(time, value, id) {
+      if (isDefined(id)) {
+        r._setId(this, id);
+      } else {
+        r._newId(this);
+      }
+
+      this._time = time;
+      this._value = value;
+    };
+
+    r.AutomationEvent.prototype.getTime = function() {
+      if (notInteger(this._time)) {
+        this._time = 0;
+      }
+      return this._time;
+    }
+
+    r.AutomationEvent.prototype.getValue = function() {
+      if (notInteger(this._value)) {
+        this._value = 0.5;
+      }
+      return this._value;
+    }
+
     r.Pattern = function(id) {
       if (isDefined(id)) {
         r._setId(this, id);
@@ -105,6 +130,8 @@
       // pattern structure data
       this._length = 1920;
       this._noteMap = new r.NoteMap();
+
+      this._automation = new AVL({ unique: true });
     };
 
     // TODO: make this interface a little more sanitary...
@@ -227,6 +254,10 @@
         for (var i = 0; i < selected.length; i++) {
           selected[i].deselect();
         }
+      },
+
+      getAutomationEventsInRange: function(start, end) {
+        return this._automation._avl.betweenBounds({ $lt: end, $gte: start });
       },
 
       toJSON: function() {
