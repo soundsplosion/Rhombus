@@ -18,18 +18,6 @@
 
   Rhombus._wrappedEffectSetup = function(r) {
 
-    function makeEffectMap(obj) {
-      var newObj = {};
-      for (var prop in obj) {
-        if (obj.hasOwnProperty(prop)) {
-          newObj[prop] = obj[prop];
-        }
-      }
-      newObj["dry"] = [Rhombus._map.mapIdentity, rawDisplay, 0];
-      newObj["wet"] = [Rhombus._map.mapIdentity, rawDisplay, 1];
-      return newObj;
-    }
-
     // Distortion
     function dist() {
       Tone.Distortion.apply(this, arguments);
@@ -38,7 +26,7 @@
     r._addEffectFunctions(dist);
     r._Distortion = dist;
 
-    dist.prototype._unnormalizeMap = makeEffectMap({
+    dist.prototype._unnormalizeMap = r._makeEffectMap({
       "distortion" : [Rhombus._map.mapIdentity, rawDisplay, 0.4],
       "oversample" : [Rhombus._map.mapDiscrete("none", "2x", "4x"), rawDisplay, 0.0]
     });
@@ -52,7 +40,6 @@
       Tone.Effect.apply(this, arguments);
     }
     Tone.extend(bitcrusher, Tone.Effect);
-    r._addEffectFunctions(bitcrusher);
     r._BitCrusher = bitcrusher;
 
     bitcrusher.prototype.set = function(options) {
@@ -68,6 +55,7 @@
         this.connectEffect(this._bitCrusher);
       }
     };
+    r._addEffectFunctions(bitcrusher);
 
     var bitValues = [];
     (function() {
@@ -75,7 +63,7 @@
         bitValues.push(i);
       }
     })();
-    bitcrusher.prototype._unnormalizeMap = makeEffectMap({
+    bitcrusher.prototype._unnormalizeMap = r._makeEffectMap({
       "bits" : [Rhombus._map.mapDiscrete.apply(this, bitValues), rawDisplay, 0.49]
     });
 
@@ -90,15 +78,15 @@
       this.connectEffect(this._filter);
     }
     Tone.extend(filter, Tone.Effect);
-    r._addEffectFunctions(filter);
     r._Filter = filter;
 
     filter.prototype.set = function() {
       Tone.Effect.prototype.set.apply(this, arguments);
       this._filter.set.apply(this._filter, arguments);
     };
+    r._addEffectFunctions(filter);
 
-    filter.prototype._unnormalizeMap = makeEffectMap(Rhombus._map.filterMap);
+    filter.prototype._unnormalizeMap = r._makeEffectMap(Rhombus._map.filterMap);
 
     filter.prototype.displayName = function() {
       return "Filter";
@@ -111,16 +99,16 @@
       this.connectEffect(this._eq);
     }
     Tone.extend(eq, Tone.Effect);
-    r._addEffectFunctions(eq);
     r._EQ = eq;
 
     eq.prototype.set = function() {
       Tone.Effect.prototype.set.apply(this, arguments);
       this._eq.set.apply(this._eq, arguments);
     };
+    r._addEffectFunctions(eq);
 
     var volumeMap = [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 1.0];
-    eq.prototype._unnormalizeMap = makeEffectMap({
+    eq.prototype._unnormalizeMap = r._makeEffectMap({
       "low" : volumeMap,
       "mid" : volumeMap,
       "high" : volumeMap,
@@ -139,15 +127,15 @@
       this.connectEffect(this._comp);
     }
     Tone.extend(comp, Tone.Effect);
-    r._addEffectFunctions(comp);
     r._Compressor = comp;
 
     comp.prototype.set = function() {
       Tone.Effect.prototype.set.apply(this, arguments);
       this._comp.set.apply(this._comp, arguments);
     };
+    r._addEffectFunctions(comp);
 
-    comp.prototype._unnormalizeMap = makeEffectMap({
+    comp.prototype._unnormalizeMap = r._makeEffectMap({
       "attack" : [Rhombus._map.timeMapFn, secondsDisplay, 0.0],
       "release" : [Rhombus._map.timeMapFn, secondsDisplay, 0.0],
       "threshold" : [Rhombus._map.mapLog(-100, 0), dbDisplay, 0.3],
@@ -165,19 +153,10 @@
       this.effectSend.connect(this.effectReturn);
     }
     Tone.extend(gain, Tone.Effect);
-    r._addEffectFunctions(gain);
     r._Gainer = gain;
+    r._addEffectFunctions(gain);
 
-    gain.prototype.set = function(options) {
-      Tone.Effect.prototype.set.apply(this, arguments);
-      if (isDefined(options) && isDefined(options.gain)) {
-        this.input.gain.value = options.gain;
-      }
-    };
-
-    gain.prototype._unnormalizeMap = makeEffectMap({
-      "gain" : [Rhombus._map.mapLinear(0, 3), rawDisplay, 1.0/3.0]
-    });
+    gain.prototype._unnormalizeMap = r._makeEffectMap({});
 
     gain.prototype.displayName = function() {
       return "Gain";
@@ -194,7 +173,7 @@
     r._addEffectFunctions(chorus);
     r._Chorus = chorus;
 
-    chorus.prototype._unnormalizeMap = makeEffectMap({
+    chorus.prototype._unnormalizeMap = r._makeEffectMap({
       "rate" : [Rhombus._map.mapLinear(0, 20), Rhombus._map.hzDisplay, 2.0],
       "delayTime" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
       "depth" : [Rhombus._map.mapLinear(0, 2), rawDisplay, 0.35],
@@ -214,7 +193,7 @@
     r._addEffectFunctions(delay);
     r._Delay = delay;
 
-    delay.prototype._unnormalizeMap = makeEffectMap({
+    delay.prototype._unnormalizeMap = r._makeEffectMap({
       "delayTime" : [Rhombus._map.timeMapFn, secondsDisplay, 0.2],
       "feedback" : feedbackMapSpec
     });
@@ -231,7 +210,7 @@
     r._addEffectFunctions(reverb);
     r._Reverb = reverb;
 
-    reverb.prototype._unnormalizeMap = makeEffectMap({
+    reverb.prototype._unnormalizeMap = r._makeEffectMap({
       "roomSize" : [Rhombus._map.mapLinear(0.001, 0.999), rawDisplay, 0.7],
       "dampening" : [Rhombus._map.mapLinear(0, 1), rawDisplay, 0.5]
     });

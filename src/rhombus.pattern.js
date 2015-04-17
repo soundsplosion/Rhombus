@@ -109,7 +109,7 @@
     }
 
     r.AutomationEvent.prototype.getValue = function() {
-      if (notInteger(this._value)) {
+      if (notNumber(this._value)) {
         this._value = 0.5;
       }
       return this._value;
@@ -257,7 +257,7 @@
       },
 
       getAutomationEventsInRange: function(start, end) {
-        return this._automation._avl.betweenBounds({ $lt: end, $gte: start });
+        return this._automation.betweenBounds({ $lt: end, $gte: start });
       },
 
       toJSON: function() {

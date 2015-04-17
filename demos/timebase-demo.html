@@ -7,7 +7,7 @@
 <script src="AVL.js"></script>
 <script src="../build/rhombus.js"></script>
 <script>
-var constraints = {max_notes: 2};
+var constraints = {max_notes: 100};
 var rhomb = new Rhombus(constraints);
 rhomb.setSampleResolver(function(sampleSetName, callback) {
   var infoReq = new XMLHttpRequest();
@@ -52,6 +52,12 @@ var patId = rhomb._song.addPattern();
 function ins(a, b, c) {
   rhomb.Edit.insertNote(new rhomb.Note(a, b, c, 1.0), patId);
 }
+var pat = rhomb.getSong().getPatterns()[patId];
+
+for (var i = 0; i < 1000; i++) {
+  var time = Math.round(i/999.0 * 3600);
+  rhomb.Edit.insertAutomationEvent(time, i/999.0, patId);
+}
 
 var instrId = rhomb.addInstrument("mono");
 var instr = rhomb.getSong().getInstruments().getObjById(instrId);
@@ -67,6 +73,7 @@ var trackId = rhomb._song.addTrack();
 var track = rhomb.getSong().getTracks().getObjById(trackId);
 track.graphConnect(0, instr, 0);
 track.addToPlaylist(patId, 0, 3840);
+track.graphConnect(0, rhomb.getMaster(), 1);
 
 ins(60, 0, 240);
 ins(63, 240, 240);

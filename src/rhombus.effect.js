@@ -167,8 +167,31 @@
       r._addAudioNodeFunctions(ctr);
       ctr.prototype.toJSON = toJSON;
       ctr.prototype.isMaster = isMaster;
+
+      // Swizzle out the set method for one that does gain.
+      var oldSet = ctr.prototype.set;
+      ctr.prototype.set = function(options) {
+        oldSet.apply(this, arguments);
+        if (isDefined(options)) {
+          if (isDefined(options.gain)) {
+            this.output.gain.value = options.gain;
+          }
+
+          if (isDefined(options["dry/wet"])) {
+            this.setWet(options["dry/wet"]);
+          }
+        }
+      };
     }
     r._addEffectFunctions = installFunctions;
+
+    function makeEffectMap(obj) {
+      obj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
+      obj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
+      return obj;
+    }
+
+    r._makeEffectMap = makeEffectMap;
 
     function normalizedObjectSet(params, internal) {
       if (notObject(params)) {
