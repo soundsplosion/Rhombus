@@ -109,7 +109,7 @@
     }
 
     r.AutomationEvent.prototype.getValue = function() {
-      if (notInteger(this._value)) {
+      if (notNumber(this._value)) {
         this._value = 0.5;
       }
       return this._value;
