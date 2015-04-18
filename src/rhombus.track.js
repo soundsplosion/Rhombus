@@ -76,13 +76,13 @@
       }
     };
 
-    r.RtNote = function(pitch, velocity, start, end, targets) {
+    r.RtNote = function(pitch, velocity, start, end, target) {
       r._newRtId(this);
       this._pitch    = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
       this._velocity = +velocity || 0.5;
       this._start    = start || 0;
       this._end      = end || 0;
-      this._targets  = targets;
+      this._target   = target;
 
       return this;
     };

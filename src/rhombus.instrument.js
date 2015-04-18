@@ -164,7 +164,8 @@
     var previewNotes = new Array();
 
     r.startPreviewNote = function(pitch, velocity) {
-      var targetId = getInstIdByIndex(this._globalTarget);
+
+      var targetId = this._globalTarget;
 
       if (notDefined(velocity) || velocity < 0 || velocity > 1) {
         velocity = 0.5;
@@ -174,18 +175,23 @@
                                    velocity,
                                    Math.round(this.getPosTicks()),
                                    0,
-                                   [targetId]);
+                                   targetId);
 
       previewNotes.push(rtNote);
 
-      var inst = this._song._instruments.getObjById(targetId);
-      if (isDefined(inst)) {
-        inst.triggerAttack(rtNote._id, pitch, 0, velocity);
+      var targets = this._song._tracks.getObjBySlot(targetId)._targets;
+      for (var i = 0; i < targets.length; i++) {
+        var inst = this._song._instruments.getObjById(targets[i]);
+        if (isDefined(inst)) {
+          inst.triggerAttack(rtNote._id, pitch, 0, velocity);
+        }
       }
     };
 
     r.stopPreviewNote = function(pitch) {
       var curTicks = Math.round(this.getPosTicks());
+
+      var deadNotes = [];
 
       // Kill all preview notes with the same pitch as the input pitch, since
       // there is no way to distinguish between them
@@ -194,13 +200,7 @@
       for (var i = previewNotes.length - 1; i >=0; i--) {
         var rtNote = previewNotes[i];
         if (rtNote._pitch === pitch) {
-          for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
-            var inst = this._song._instruments.getObjById(rtNote._targets[targetIdx]);
-            if (notDefined(inst)) {
-              continue;
-            }
-            inst.triggerRelease(rtNote._id, 0);
-          }
+          deadNotes.push(rtNote._id);
 
           // handle wrap-around notes by clamping at the loop end
           if (curTicks < rtNote._start) {
@@ -222,6 +222,23 @@
           previewNotes.splice(i, 1);
         }
       }
+
+      var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
+
+      for (var i = 0; i < targets.length; i++) {
+        var inst = r._song._instruments.getObjById(targets[i]);
+
+        if (notDefined(inst)) {
+          continue;
+        }
+
+        for (var j = 0; j < deadNotes.length; j++) {
+          inst.triggerRelease(deadNotes[i][0], 0);
+        }
+
+        inst.triggerRelease(rtNote._id, 0);
+      }
+
     };
 
     r.killAllPreviewNotes = function() {

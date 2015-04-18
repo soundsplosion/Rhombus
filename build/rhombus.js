@@ -1542,7 +1542,8 @@
     var previewNotes = new Array();
 
     r.startPreviewNote = function(pitch, velocity) {
-      var targetId = getInstIdByIndex(this._globalTarget);
+
+      var targetId = this._globalTarget;
 
       if (notDefined(velocity) || velocity < 0 || velocity > 1) {
         velocity = 0.5;
@@ -1552,18 +1553,23 @@
                                    velocity,
                                    Math.round(this.getPosTicks()),
                                    0,
-                                   [targetId]);
+                                   targetId);
 
       previewNotes.push(rtNote);
 
-      var inst = this._song._instruments.getObjById(targetId);
-      if (isDefined(inst)) {
-        inst.triggerAttack(rtNote._id, pitch, 0, velocity);
+      var targets = this._song._tracks.getObjBySlot(targetId)._targets;
+      for (var i = 0; i < targets.length; i++) {
+        var inst = this._song._instruments.getObjById(targets[i]);
+        if (isDefined(inst)) {
+          inst.triggerAttack(rtNote._id, pitch, 0, velocity);
+        }
       }
     };
 
     r.stopPreviewNote = function(pitch) {
       var curTicks = Math.round(this.getPosTicks());
+
+      var deadNotes = [];
 
       // Kill all preview notes with the same pitch as the input pitch, since
       // there is no way to distinguish between them
@@ -1572,13 +1578,7 @@
       for (var i = previewNotes.length - 1; i >=0; i--) {
         var rtNote = previewNotes[i];
         if (rtNote._pitch === pitch) {
-          for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
-            var inst = this._song._instruments.getObjById(rtNote._targets[targetIdx]);
-            if (notDefined(inst)) {
-              continue;
-            }
-            inst.triggerRelease(rtNote._id, 0);
-          }
+          deadNotes.push(rtNote._id);
 
           // handle wrap-around notes by clamping at the loop end
           if (curTicks < rtNote._start) {
@@ -1600,6 +1600,23 @@
           previewNotes.splice(i, 1);
         }
       }
+
+      var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
+
+      for (var i = 0; i < targets.length; i++) {
+        var inst = r._song._instruments.getObjById(targets[i]);
+
+        if (notDefined(inst)) {
+          continue;
+        }
+
+        for (var j = 0; j < deadNotes.length; j++) {
+          inst.triggerRelease(deadNotes[i][0], 0);
+        }
+
+        inst.triggerRelease(rtNote._id, 0);
+      }
+
     };
 
     r.killAllPreviewNotes = function() {
@@ -3133,13 +3150,13 @@
       }
     };
 
-    r.RtNote = function(pitch, velocity, start, end, targets) {
+    r.RtNote = function(pitch, velocity, start, end, target) {
       r._newRtId(this);
       this._pitch    = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
       this._velocity = +velocity || 0.5;
       this._start    = start || 0;
       this._end      = end || 0;
-      this._targets  = targets;
+      this._target   = target;
 
       return this;
     };
@@ -3824,6 +3841,8 @@
         var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
+        var elapsedNotes = [];
+
         // Schedule note-offs for notes playing on the current track.
         // Do this before scheduling note-ons to prevent back-to-back notes from
         // interfering with each other.
@@ -3833,11 +3852,17 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            var instrs = r._song._instruments;
-            for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
-              instrs.getObjById(rtNote._targets[targetIdx]).triggerRelease(rtNote._id, delay);
-            }
+
+            elapsedNotes.push([rtNote._id, delay]);
+
             delete playingNotes[rtNoteId];
+          }
+        }
+
+        for (var i = 0; i < track._targets.length; i++) {
+          var inst = r._song._instruments.getObjById(track._targets[i]);
+          for (var j = 0; j < elapsedNotes.length; j++) {
+            inst.triggerRelease(elapsedNotes[i][0], elapsedNotes[i][1]);
           }
         }
 
@@ -3919,7 +3944,7 @@
                                         note.getVelocity(),
                                         noteStartTime,
                                         endTime,
-                                        track._targets);
+                                        track._id);
 
               playingNotes[rtNote._id] = rtNote;
 

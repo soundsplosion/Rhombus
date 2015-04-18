@@ -67,6 +67,8 @@
         var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
+        var elapsedNotes = [];
+
         // Schedule note-offs for notes playing on the current track.
         // Do this before scheduling note-ons to prevent back-to-back notes from
         // interfering with each other.
@@ -76,11 +78,17 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            var instrs = r._song._instruments;
-            for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
-              instrs.getObjById(rtNote._targets[targetIdx]).triggerRelease(rtNote._id, delay);
-            }
+
+            elapsedNotes.push([rtNote._id, delay]);
+
             delete playingNotes[rtNoteId];
+          }
+        }
+
+        for (var i = 0; i < track._targets.length; i++) {
+          var inst = r._song._instruments.getObjById(track._targets[i]);
+          for (var j = 0; j < elapsedNotes.length; j++) {
+            inst.triggerRelease(elapsedNotes[i][0], elapsedNotes[i][1]);
           }
         }
 
@@ -162,7 +170,7 @@
                                         note.getVelocity(),
                                         noteStartTime,
                                         endTime,
-                                        track._targets);
+                                        track._id);
 
               playingNotes[rtNote._id] = rtNote;
 
