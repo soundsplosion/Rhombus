@@ -3625,6 +3625,8 @@
           that._tracks.addObj(track, slot);
         });
 
+        track._removeConnections();
+
         return trkId;
       },
 
