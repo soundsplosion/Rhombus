@@ -88,7 +88,7 @@
         for (var i = 0; i < track._targets.length; i++) {
           var inst = r._song._instruments.getObjById(track._targets[i]);
           for (var j = 0; j < elapsedNotes.length; j++) {
-            inst.triggerRelease(elapsedNotes[i][0], elapsedNotes[i][1]);
+            inst.triggerRelease(elapsedNotes[j][0], elapsedNotes[j][1]);
           }
         }
 
