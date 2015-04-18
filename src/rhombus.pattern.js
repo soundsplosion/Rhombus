@@ -59,6 +59,44 @@
         return retNote;
       },
 
+      getNotesAtTick: function(tick, lowPitch, highPitch) {
+        if (notDefined(lowPitch) && notDefined(highPitch)) {
+          var lowPitch  = 0;
+          var highPitch = 127;
+        }
+        if (!isInteger(tick) || tick < 0) {
+          console.log("[Rhombus] - tick must be a positive integer");
+          return undefined;
+        }
+
+        if (!isInteger(lowPitch) || lowPitch < 0 || lowPitch > 127) {
+          console.log("[Rhombus] - lowPitch must be an integer between 0 and 127");
+          return undefined;
+        }
+
+        if (!isInteger(highPitch) || highPitch < 0 || highPitch > 127) {
+          console.log("[Rhombus] - highPitch must be an integer between 0 and 127");
+          return undefined;
+        }
+
+        var retNotes = new Array();
+        this._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            var note = node.data[i];
+            var noteStart = note._start;
+            var noteEnd   = noteStart + note._length;
+            var notePitch = note._pitch;
+
+            if ((noteStart <= tick) && (noteEnd >= tick) &&
+                (notePitch >= lowPitch && notePitch <= highPitch)) {
+              retNotes.push(note);
+            }
+          }
+        });
+
+        return retNotes;
+      },
+
       removeNote: function(noteId, note) {
         if (notDefined(note) || !(note instanceof r.Note)) {
           note = this.getNote(noteId);
@@ -234,6 +272,10 @@
 
       getNotesInRange: function(start, end) {
         return this._noteMap._avl.betweenBounds({ $lt: end, $gte: start });
+      },
+
+      getNotesAtTick: function(tick, lowPitch, highPitch) {
+        return this._noteMap.getNotesAtTick(tick, lowPitch, highPitch);
       },
 
       getSelectedNotes: function() {
