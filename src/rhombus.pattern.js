@@ -304,10 +304,11 @@
 
       toJSON: function() {
         var jsonObj = {
-          _name    : this._name,
-          _color   : this._color,
-          _length  : this._length,
-          _noteMap : this._noteMap.toJSON()
+          "_id"      : this._id,
+          "_name"    : this._name,
+          "_color"   : this._color,
+          "_length"  : this._length,
+          "_noteMap" : this._noteMap.toJSON()
         };
         return jsonObj;
       }
@@ -401,10 +402,11 @@
 
       toJSON: function() {
         var jsonObj = {
-          _pitch    : this._pitch,
-          _start    : this._start,
-          _length   : this._length,
-          _velocity : this._velocity
+          "_id"       : this._id,
+          "_pitch"    : this._pitch,
+          "_start"    : this._start,
+          "_length"   : this._length,
+          "_velocity" : this._velocity
         };
         return jsonObj;
       }

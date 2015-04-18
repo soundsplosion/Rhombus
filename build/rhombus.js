@@ -3029,10 +3029,11 @@
 
       toJSON: function() {
         var jsonObj = {
-          _name    : this._name,
-          _color   : this._color,
-          _length  : this._length,
-          _noteMap : this._noteMap.toJSON()
+          "_id"      : this._id,
+          "_name"    : this._name,
+          "_color"   : this._color,
+          "_length"  : this._length,
+          "_noteMap" : this._noteMap.toJSON()
         };
         return jsonObj;
       }
@@ -3126,10 +3127,11 @@
 
       toJSON: function() {
         var jsonObj = {
-          _pitch    : this._pitch,
-          _start    : this._start,
-          _length   : this._length,
-          _velocity : this._velocity
+          "_id"       : this._id,
+          "_pitch"    : this._pitch,
+          "_start"    : this._start,
+          "_length"   : this._length,
+          "_velocity" : this._velocity
         };
         return jsonObj;
       }
@@ -3156,6 +3158,7 @@
       this._ptnId = ptnId;
       this._start = start;
       this._length = length;
+      this._selected = false;
     };
 
     r.PlaylistItem.prototype = {
@@ -3212,6 +3215,38 @@
 
       getPatternId: function() {
         return this._ptnId;
+      },
+
+      // TODO: factor out shared selection code
+      select: function() {
+        return (this._selected = true);
+      },
+
+      deselect: function() {
+        return (this._selected = false);
+      },
+
+      toggleSelect: function() {
+        return (this._selected = !this._selected);
+      },
+
+      getSelected: function() {
+        return this._selected;
+      },
+
+      setSelected: function(select) {
+        return (this._selected = select);
+      },
+
+      toJSON: function() {
+        var jsonObj = {
+          "_id"     : this._id,
+          "_trkId"  : this._trkId,
+          "_ptnId"  : this._ptnId,
+          "_start"  : this._start,
+          "_length" : this._length
+        };
+        return jsonObj;
       }
     };
 
