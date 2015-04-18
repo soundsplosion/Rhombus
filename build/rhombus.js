@@ -1539,12 +1539,29 @@
 
     // TODO: find a more suitable place for this stuff
 
+    isTargetTrackDefined = function(rhomb) {
+      var targetId  = rhomb._globalTarget;
+      var targetTrk = rhomb._song._tracks.getObjBySlot(targetId);
+
+      if (notDefined(targetTrk)) {
+        console.log("[Rhombus] - target track is not defined");
+        return false;
+      }
+      else {
+        return true;
+      }
+    };
+
     // Maintain an array of the currently sounding preview notes
     var previewNotes = new Array();
 
     r.startPreviewNote = function(pitch, velocity) {
+      var targetId  = this._globalTarget;
+      var targetTrk = this._song._tracks.getObjBySlot(targetId);
 
-      var targetId = this._globalTarget;
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
 
       if (notDefined(velocity) || velocity < 0 || velocity > 1) {
         velocity = 0.5;
@@ -1579,6 +1596,10 @@
     };
 
     r.stopPreviewNote = function(pitch) {
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
+
       var curTicks = Math.round(this.getPosTicks());
 
       var deadNoteIds = [];
@@ -1618,6 +1639,10 @@
     };
 
     r.killAllPreviewNotes = function() {
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
+
       var deadNoteIds = [];
       while (previewNotes.length > 0) {
         var rtNote = previewNotes.pop();
@@ -3582,35 +3607,25 @@
         if (notDefined(track)) {
           return undefined;
         }
-        else {
-          // TODO: find a more robust way to terminate playing notes
-          for (var rtNoteId in this._playingNotes) {
-            var note = this._playingNotes[rtNoteId];
 
-            var instrs = r._song._instruments;
-            for (var targetIdx = 0; targetIdx < track._targets.length; targetIdx++) {
-              instrs.getObjById(track._targets[targetIdx]).triggerRelease(rtNoteId, 0);
-            }
+        track.killAllNotes();
+        r.killAllPreviewNotes();
 
-            delete this._playingNotes[rtNoteId];
-          }
-
-          // Remove the track from the solo list, if it's soloed
-          var index = r._song._soloList.indexOf(track._id);
-          if (index > -1) {
-            r._song._soloList.splice(index, 1);
-          }
-
-          var slot = this._tracks.getSlotById(trkId);
-          var track = this._tracks.removeId(trkId);
-
-          var that = this;
-          r.Undo._addUndoAction(function() {
-            that._tracks.addObj(track, slot);
-          });
-
-          return trkId;
+        // Remove the track from the solo list, if it's soloed
+        var index = r._song._soloList.indexOf(track._id);
+        if (index > -1) {
+          r._song._soloList.splice(index, 1);
         }
+
+        var slot = this._tracks.getSlotById(trkId);
+        var track = this._tracks.removeId(trkId);
+
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._tracks.addObj(track, slot);
+        });
+
+        return trkId;
       },
 
       getTracks: function() {

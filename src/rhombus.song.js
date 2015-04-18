@@ -142,35 +142,25 @@
         if (notDefined(track)) {
           return undefined;
         }
-        else {
-          // TODO: find a more robust way to terminate playing notes
-          for (var rtNoteId in this._playingNotes) {
-            var note = this._playingNotes[rtNoteId];
 
-            var instrs = r._song._instruments;
-            for (var targetIdx = 0; targetIdx < track._targets.length; targetIdx++) {
-              instrs.getObjById(track._targets[targetIdx]).triggerRelease(rtNoteId, 0);
-            }
+        track.killAllNotes();
+        r.killAllPreviewNotes();
 
-            delete this._playingNotes[rtNoteId];
-          }
-
-          // Remove the track from the solo list, if it's soloed
-          var index = r._song._soloList.indexOf(track._id);
-          if (index > -1) {
-            r._song._soloList.splice(index, 1);
-          }
-
-          var slot = this._tracks.getSlotById(trkId);
-          var track = this._tracks.removeId(trkId);
-
-          var that = this;
-          r.Undo._addUndoAction(function() {
-            that._tracks.addObj(track, slot);
-          });
-
-          return trkId;
+        // Remove the track from the solo list, if it's soloed
+        var index = r._song._soloList.indexOf(track._id);
+        if (index > -1) {
+          r._song._soloList.splice(index, 1);
         }
+
+        var slot = this._tracks.getSlotById(trkId);
+        var track = this._tracks.removeId(trkId);
+
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._tracks.addObj(track, slot);
+        });
+
+        return trkId;
       },
 
       getTracks: function() {

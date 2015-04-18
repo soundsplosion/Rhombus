@@ -160,12 +160,29 @@
 
     // TODO: find a more suitable place for this stuff
 
+    isTargetTrackDefined = function(rhomb) {
+      var targetId  = rhomb._globalTarget;
+      var targetTrk = rhomb._song._tracks.getObjBySlot(targetId);
+
+      if (notDefined(targetTrk)) {
+        console.log("[Rhombus] - target track is not defined");
+        return false;
+      }
+      else {
+        return true;
+      }
+    };
+
     // Maintain an array of the currently sounding preview notes
     var previewNotes = new Array();
 
     r.startPreviewNote = function(pitch, velocity) {
+      var targetId  = this._globalTarget;
+      var targetTrk = this._song._tracks.getObjBySlot(targetId);
 
-      var targetId = this._globalTarget;
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
 
       if (notDefined(velocity) || velocity < 0 || velocity > 1) {
         velocity = 0.5;
@@ -200,6 +217,10 @@
     };
 
     r.stopPreviewNote = function(pitch) {
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
+
       var curTicks = Math.round(this.getPosTicks());
 
       var deadNoteIds = [];
@@ -239,6 +260,10 @@
     };
 
     r.killAllPreviewNotes = function() {
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
+
       var deadNoteIds = [];
       while (previewNotes.length > 0) {
         var rtNote = previewNotes.pop();
