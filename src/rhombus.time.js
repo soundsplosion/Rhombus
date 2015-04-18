@@ -263,14 +263,14 @@
     }
 
     r.killAllNotes = function() {
-      var thisr = this;
-      thisr._song._tracks.objIds().forEach(function(trkId) {
-        var track = thisr._song._tracks.getObjById(trkId);
+      var that = this;
+      that._song._tracks.objIds().forEach(function(trkId) {
+        var track = that._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
-          thisr._song._instruments.objIds().forEach(function(instId) {
-            thisr._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+          that._song._instruments.objIds().forEach(function(instId) {
+            that._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
           });
           delete playingNotes[rtNoteId];
         }

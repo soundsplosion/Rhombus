@@ -153,6 +153,11 @@
       });
 
       this._mute = mute;
+
+      if (mute) {
+        this.killAllNotes();
+      }
+
       return mute;
     };
 
@@ -292,6 +297,17 @@
       }
 
       return itemId;
+    };
+
+    Track.prototype.killAllNotes = function() {
+      var playingNotes = this._playingNotes;
+
+      for (var rtNoteId in playingNotes) {
+        r._song._instruments.objIds().forEach(function(instId) {
+          r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+        });
+        delete playingNotes[rtNoteId];
+      }
     };
 
     Track.prototype.toJSON = function() {
