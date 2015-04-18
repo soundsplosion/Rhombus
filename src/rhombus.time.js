@@ -67,6 +67,8 @@
         var track = r._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
+        var elapsedNotes = [];
+
         // Schedule note-offs for notes playing on the current track.
         // Do this before scheduling note-ons to prevent back-to-back notes from
         // interfering with each other.
@@ -76,18 +78,27 @@
 
           if (end <= scheduleEndTime) {
             var delay = end - curTime;
-            var instrs = r._song._instruments;
-            for (var targetIdx = 0; targetIdx < rtNote._targets.length; targetIdx++) {
-              instrs.getObjById(rtNote._targets[targetIdx]).triggerRelease(rtNote._id, delay);
-            }
+
+            elapsedNotes.push([rtNote._id, delay]);
+
             delete playingNotes[rtNoteId];
+          }
+        }
+
+        for (var i = 0; i < track._targets.length; i++) {
+          var inst = r._song._instruments.getObjById(track._targets[i]);
+          for (var j = 0; j < elapsedNotes.length; j++) {
+            inst.triggerRelease(elapsedNotes[j][0], elapsedNotes[j][1]);
           }
         }
 
         // Determine how soloing and muting affect this track
         var inactive = track._mute || (r._song._soloList.length > 0 && !track._solo);
 
-        if (r.isPlaying() && !inactive) {
+        if (!r.isPlaying() || inactive) {
+          track.killAllNotes();
+        }
+        else {
           for (var playlistId in track._playlist) {
             var ptnId     = track._playlist[playlistId]._ptnId;
             var itemStart = track._playlist[playlistId]._start;
@@ -162,7 +173,7 @@
                                         note.getVelocity(),
                                         noteStartTime,
                                         endTime,
-                                        track._targets);
+                                        track._id);
 
               playingNotes[rtNote._id] = rtNote;
 
@@ -255,14 +266,14 @@
     }
 
     r.killAllNotes = function() {
-      var thisr = this;
-      thisr._song._tracks.objIds().forEach(function(trkId) {
-        var track = thisr._song._tracks.getObjById(trkId);
+      var that = this;
+      that._song._tracks.objIds().forEach(function(trkId) {
+        var track = that._song._tracks.getObjById(trkId);
         var playingNotes = track._playingNotes;
 
         for (var rtNoteId in playingNotes) {
-          thisr._song._instruments.objIds().forEach(function(instId) {
-            thisr._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+          that._song._instruments.objIds().forEach(function(instId) {
+            that._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
           });
           delete playingNotes[rtNoteId];
         }

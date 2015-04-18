@@ -76,13 +76,13 @@
       }
     };
 
-    r.RtNote = function(pitch, velocity, start, end, targets) {
+    r.RtNote = function(pitch, velocity, start, end, target) {
       r._newRtId(this);
       this._pitch    = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
       this._velocity = +velocity || 0.5;
       this._start    = start || 0;
       this._end      = end || 0;
-      this._targets  = targets;
+      this._target   = target;
 
       return this;
     };
@@ -153,6 +153,11 @@
       });
 
       this._mute = mute;
+
+      if (mute) {
+        this.killAllNotes();
+      }
+
       return mute;
     };
 
@@ -292,6 +297,17 @@
       }
 
       return itemId;
+    };
+
+    Track.prototype.killAllNotes = function() {
+      var playingNotes = this._playingNotes;
+
+      for (var rtNoteId in playingNotes) {
+        r._song._instruments.objIds().forEach(function(instId) {
+          r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+        });
+        delete playingNotes[rtNoteId];
+      }
     };
 
     Track.prototype.toJSON = function() {
