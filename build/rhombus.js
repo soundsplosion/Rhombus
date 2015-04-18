@@ -3112,6 +3112,10 @@
         return (this._selected = false);
       },
 
+      toggleSelect: function() {
+        return (this._selected = !this._selected);
+      },
+
       getSelected: function() {
         return this._selected;
       },
