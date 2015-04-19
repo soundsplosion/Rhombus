@@ -1449,14 +1449,6 @@
           instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
         }
       }
-
-      // TODO: possibly get rid of these specific constructors
-      else if (type === "samp_drum") {
-        instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
-      }
-      else if (type === "samp_fl") {
-        instr = new this._Sampler(samplerOptionsFrom(options, "tron_flute"), id);
-      }
       else {
         instr = new this._ToneInstrument(type, options, id);
       }
@@ -1509,10 +1501,22 @@
         return;
       }
 
+      // exercise the nuclear option
+      r.killAllNotes();
+
       var instr = r._song._instruments.getObjById(id);
       var slot = r._song._instruments.getSlotById(id);
       var go = instr.graphOutputs();
       var gi = instr.graphInputs();
+
+      // TODO: super hacky fix for import bug
+      for (var i = 0; i < gi.length; i++) {
+        var from = gi[i].from;
+        for (var j = 0; j < from.length; j++) {
+          var trk = from[j].node;
+          trk._internalDisconnectInstrument(instr);
+        }
+      }
 
       if (!internal) {
         r.Undo._addUndoAction(function() {
@@ -2420,6 +2424,19 @@
       });
       effect._removeConnections();
       delete this._song._effects[id];
+
+      // exercise the nuclear option
+      r.killAllNotes();
+      
+      // TODO: super hacky fix for import bug
+      for (var i = 0; i < gi.length; i++) {
+        var from = gi[i].from;
+        for (var j = 0; j < from.length; j++) {
+          var trk = from[j].node;
+          trk._internalDisconnectEffect(effect);
+        }
+      }
+
     };
 
     function isMaster() { return false; }
@@ -3565,6 +3582,7 @@
     };
 
     Track.prototype._internalGraphDisconnect = function(output, b, bInput) {
+      console.log("removing track connection");
       var toSearch;
       if (b.isInstrument()) {
         toSearch = this._targets;
@@ -3579,6 +3597,20 @@
       var idx = toSearch.indexOf(b._id);
       if (idx >= 0) {
         toSearch.splice(idx, 1);
+      }
+    };
+
+    Track.prototype._internalDisconnectInstrument = function(inst) {
+      var index = this._targets.indexOf(inst._id);
+      if (index >= 0) {
+        this._targets.splice(index, 1);
+      }
+    };
+
+    Track.prototype._internalDisconnectEffect = function(effect) {
+      var index = this._targets.indexOf(effect._id);
+      if (index >= 0) {
+        this._targets.splice(index, 1);
       }
     };
 
@@ -5267,6 +5299,7 @@
         // don't break all the outgoing connections every time we
         // disconnect from one thing. Put gain nodes in the middle
         // or something.
+        console.log("removing audio connection");
         this.disconnect();
         var that = this;
         this._graphOutputs[output].to.forEach(function(port) {
@@ -5274,6 +5307,10 @@
         });
       } else if (type === "control") {
         // TODO: implement control routing
+        console.log("removing control connection");
+      }
+      else {
+        console.log("removing unknown connection");
       }
     }
 

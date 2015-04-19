@@ -70,14 +70,6 @@
           instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
         }
       }
-
-      // TODO: possibly get rid of these specific constructors
-      else if (type === "samp_drum") {
-        instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
-      }
-      else if (type === "samp_fl") {
-        instr = new this._Sampler(samplerOptionsFrom(options, "tron_flute"), id);
-      }
       else {
         instr = new this._ToneInstrument(type, options, id);
       }
@@ -130,10 +122,22 @@
         return;
       }
 
+      // exercise the nuclear option
+      r.killAllNotes();
+
       var instr = r._song._instruments.getObjById(id);
       var slot = r._song._instruments.getSlotById(id);
       var go = instr.graphOutputs();
       var gi = instr.graphInputs();
+
+      // TODO: super hacky fix for import bug
+      for (var i = 0; i < gi.length; i++) {
+        var from = gi[i].from;
+        for (var j = 0; j < from.length; j++) {
+          var trk = from[j].node;
+          trk._internalDisconnectInstrument(instr);
+        }
+      }
 
       if (!internal) {
         r.Undo._addUndoAction(function() {

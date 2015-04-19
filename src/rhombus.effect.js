@@ -143,6 +143,19 @@
       });
       effect._removeConnections();
       delete this._song._effects[id];
+
+      // exercise the nuclear option
+      r.killAllNotes();
+
+      // TODO: super hacky fix for import bug
+      for (var i = 0; i < gi.length; i++) {
+        var from = gi[i].from;
+        for (var j = 0; j < from.length; j++) {
+          var trk = from[j].node;
+          trk._internalDisconnectEffect(effect);
+        }
+      }
+
     };
 
     function isMaster() { return false; }

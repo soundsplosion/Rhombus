@@ -383,6 +383,7 @@
     };
 
     Track.prototype._internalGraphDisconnect = function(output, b, bInput) {
+      console.log("removing track connection");
       var toSearch;
       if (b.isInstrument()) {
         toSearch = this._targets;
@@ -397,6 +398,20 @@
       var idx = toSearch.indexOf(b._id);
       if (idx >= 0) {
         toSearch.splice(idx, 1);
+      }
+    };
+
+    Track.prototype._internalDisconnectInstrument = function(inst) {
+      var index = this._targets.indexOf(inst._id);
+      if (index >= 0) {
+        this._targets.splice(index, 1);
+      }
+    };
+
+    Track.prototype._internalDisconnectEffect = function(effect) {
+      var index = this._targets.indexOf(effect._id);
+      if (index >= 0) {
+        this._targets.splice(index, 1);
       }
     };
 
