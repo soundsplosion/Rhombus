@@ -1387,12 +1387,14 @@
     var instMap = [
       [ "samp",  "Drums",       "drums1"         ],
       [ "samp",  "Flute",       "tron_flute"     ],
-      [ "samp",  "Cello",       "tron_cello"     ],
+      [ "samp",  "Woodwinds",   "tron_woodwinds" ],
       [ "samp",  "Brass 01",    "tron_brass_01"  ],
+      [ "samp",  "Guitar",      "tron_guitar"    ],
       [ "samp",  "Choir",       "tron_choir"     ],
+      [ "samp",  "Cello",       "tron_cello"     ],
       [ "samp",  "Strings",     "tron_strings"   ],
       [ "samp",  "Violins",     "tron_violins"   ],
-      [ "samp",  "Woodwinds",   "tron_woodwinds" ],
+      [ "samp",  "Violins 02",  "tron_16vlns"    ],
       [ "mono",  "PolySynth",   undefined        ],
       [ "am",    "AM Synth",    undefined        ],
       [ "fm",    "FM Synth",    undefined        ],
@@ -2854,17 +2856,14 @@
           var highPitch = 127;
         }
         if (!isInteger(tick) || tick < 0) {
-          console.log("[Rhombus] - tick must be a positive integer");
           return undefined;
         }
 
         if (!isInteger(lowPitch) || lowPitch < 0 || lowPitch > 127) {
-          console.log("[Rhombus] - lowPitch must be an integer between 0 and 127");
           return undefined;
         }
 
         if (!isInteger(highPitch) || highPitch < 0 || highPitch > 127) {
-          console.log("[Rhombus] - highPitch must be an integer between 0 and 127");
           return undefined;
         }
 
@@ -5218,16 +5217,16 @@
     }
 
     function onMidiMessage(event) {
-      //printMidiMessage(event);
+      // get the status byte
+      var cmd = event.data[0] & 0xF0;
 
       // only handle well-formed notes for now (don't worry about running status, etc.)
-      if (event.data.length !== 3) {
+      if (event.data.length !== 3 && cmd == 0xFE) {
         console.log("[MidiIn] - ignoring MIDI message");
         return;
       }
 
       // parse the message bytes
-      var cmd   = event.data[0] & 0xF0;
       var chan  = event.data[0] & 0x0F;
       var pitch = event.data[1];
       var vel   = event.data[2];

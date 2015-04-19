@@ -65,17 +65,14 @@
           var highPitch = 127;
         }
         if (!isInteger(tick) || tick < 0) {
-          console.log("[Rhombus] - tick must be a positive integer");
           return undefined;
         }
 
         if (!isInteger(lowPitch) || lowPitch < 0 || lowPitch > 127) {
-          console.log("[Rhombus] - lowPitch must be an integer between 0 and 127");
           return undefined;
         }
 
         if (!isInteger(highPitch) || highPitch < 0 || highPitch > 127) {
-          console.log("[Rhombus] - highPitch must be an integer between 0 and 127");
           return undefined;
         }
 
