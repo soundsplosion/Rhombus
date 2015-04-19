@@ -239,8 +239,6 @@
           newPattern.setColor(pattern._color);
         }
 
-        // dumbing down Note (e.g., by removing methods from its
-        // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
           var note = new this.Note(+noteMap[noteId]._pitch,
                                    +noteMap[noteId]._start,
@@ -294,7 +292,11 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst, +instIdIdx);
+        console.log("[Rhomb.importSong] - adding instrument of type " + inst._type);
+        if (isDefined(inst._sampleSet)) {
+          console.log("[Rhomb.importSong] - sample set is: " + inst._sampleSet);
+        }
+        this.addInstrument(inst._type, inst, +instIdIdx, inst._sampleSet);
       }
 
       for (var effId in effects) {
@@ -324,7 +326,6 @@
 
     r.exportSong = function() {
       this._song._curId = this.getCurId();
-      //this._song._length = this._song.findSongLength();
       return JSON.stringify(this._song);
     };
 

@@ -5,15 +5,41 @@
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
 
+    var instMap = [
+      [ "samp",  "Drums",       "drums1"     ],
+      [ "samp",  "Flute",       "tron_flute" ],
+      [ "mono",  "PolySynth",   undefined    ],
+      [ "am",    "AM Synth",    undefined    ],
+      [ "fm",    "FM Synth",    undefined    ],
+      [ "noise", "Noise Synth", undefined    ],
+      [ "duo",   "Duo Synth",   undefined    ]
+    ];
+
     r.instrumentTypes = function() {
-      return ["samp_drum", "samp_fl", "mono", "am", "fm", "noise", "duo"];
+      var types = [];
+      for (var i = 0; i < instMap.length; i++) {
+        types.push(instMap[i][0]);
+      }
+      return types;
     };
 
     r.instrumentDisplayNames = function() {
-      return ["Sampler (drums)", "Sampler (flute)", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
+      var names = [];
+      for (var i = 0; i < instMap.length; i++) {
+        names.push(instMap[i][1]);
+      }
+      return names;
     };
 
-    r.addInstrument = function(type, json, idx) {
+    r.sampleSets = function() {
+      var sets = [];
+      for (var i = 0; i < instMap.length; i++) {
+        sets.push(instMap[i][2]);
+      }
+      return sets;
+    };
+
+    r.addInstrument = function(type, json, idx, sampleSet) {
       var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
@@ -34,12 +60,25 @@
       }
 
       var instr;
-      // "samp" for backwards compatibility
-      if (type === "samp_drum" || type === "samp") {
+
+      // sampleSet determines the type of sampler....
+      if (type === "samp") {
+        if (notDefined(sampleSet)) {
+          instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
+        }
+        else {
+          instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
+        }
+      }
+
+      // TODO: possibly get rid of these specific constructors
+      else if (type === "samp_drum") {
         instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
-      } else if (type === "samp_fl") {
+      }
+      else if (type === "samp_fl") {
         instr = new this._Sampler(samplerOptionsFrom(options, "tron_flute"), id);
-      } else {
+      }
+      else {
         instr = new this._ToneInstrument(type, options, id);
       }
 

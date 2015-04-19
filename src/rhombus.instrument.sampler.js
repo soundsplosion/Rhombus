@@ -53,8 +53,9 @@
       this.samples = {};
       this._triggered = {};
       this._currentParams = {};
+      this._sampleSet = undefined;
 
-      var sampleSet = "drums1";
+      this._sampleSet = "drums1";
       if (isDefined(options) && isDefined(options.sampleSet)) {
         sampleSet = options.sampleSet;
       }
@@ -189,6 +190,7 @@
       var jsonVersion = {
         "_id": this._id,
         "_type": "samp",
+        "_sampleSet" : this._sampleSet,
         "_params": params,
         "_graphOutputs": go,
         "_graphInputs": gi,

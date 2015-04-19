@@ -1384,15 +1384,41 @@
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
 
+    var instMap = [
+      [ "samp",  "Drums",       "drums1"     ],
+      [ "samp",  "Flute",       "tron_flute" ],
+      [ "mono",  "PolySynth",   undefined    ],
+      [ "am",    "AM Synth",    undefined    ],
+      [ "fm",    "FM Synth",    undefined    ],
+      [ "noise", "Noise Synth", undefined    ],
+      [ "duo",   "Duo Synth",   undefined    ]
+    ];
+
     r.instrumentTypes = function() {
-      return ["samp_drum", "samp_fl", "mono", "am", "fm", "noise", "duo"];
+      var types = [];
+      for (var i = 0; i < instMap.length; i++) {
+        types.push(instMap[i][0]);
+      }
+      return types;
     };
 
     r.instrumentDisplayNames = function() {
-      return ["Sampler (drums)", "Sampler (flute)", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
+      var names = [];
+      for (var i = 0; i < instMap.length; i++) {
+        names.push(instMap[i][1]);
+      }
+      return names;
     };
 
-    r.addInstrument = function(type, json, idx) {
+    r.sampleSets = function() {
+      var sets = [];
+      for (var i = 0; i < instMap.length; i++) {
+        sets.push(instMap[i][2]);
+      }
+      return sets;
+    };
+
+    r.addInstrument = function(type, json, idx, sampleSet) {
       var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
@@ -1413,12 +1439,25 @@
       }
 
       var instr;
-      // "samp" for backwards compatibility
-      if (type === "samp_drum" || type === "samp") {
+
+      // sampleSet determines the type of sampler....
+      if (type === "samp") {
+        if (notDefined(sampleSet)) {
+          instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
+        }
+        else {
+          instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
+        }
+      }
+
+      // TODO: possibly get rid of these specific constructors
+      else if (type === "samp_drum") {
         instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
-      } else if (type === "samp_fl") {
+      }
+      else if (type === "samp_fl") {
         instr = new this._Sampler(samplerOptionsFrom(options, "tron_flute"), id);
-      } else {
+      }
+      else {
         instr = new this._ToneInstrument(type, options, id);
       }
 
@@ -1712,8 +1751,9 @@
       this.samples = {};
       this._triggered = {};
       this._currentParams = {};
+      this._sampleSet = undefined;
 
-      var sampleSet = "drums1";
+      this._sampleSet = "drums1";
       if (isDefined(options) && isDefined(options.sampleSet)) {
         sampleSet = options.sampleSet;
       }
@@ -1848,6 +1888,7 @@
       var jsonVersion = {
         "_id": this._id,
         "_type": "samp",
+        "_sampleSet" : this._sampleSet,
         "_params": params,
         "_graphOutputs": go,
         "_graphInputs": gi,
@@ -3785,8 +3826,6 @@
           newPattern.setColor(pattern._color);
         }
 
-        // dumbing down Note (e.g., by removing methods from its
-        // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
           var note = new this.Note(+noteMap[noteId]._pitch,
                                    +noteMap[noteId]._start,
@@ -3840,7 +3879,11 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst, +instIdIdx);
+        console.log("[Rhomb.importSong] - adding instrument of type " + inst._type);
+        if (isDefined(inst._sampleSet)) {
+          console.log("[Rhomb.importSong] - sample set is: " + inst._sampleSet);
+        }
+        this.addInstrument(inst._type, inst, +instIdIdx, inst._sampleSet);
       }
 
       for (var effId in effects) {
@@ -3870,7 +3913,6 @@
 
     r.exportSong = function() {
       this._song._curId = this.getCurId();
-      //this._song._length = this._song.findSongLength();
       return JSON.stringify(this._song);
     };
 
