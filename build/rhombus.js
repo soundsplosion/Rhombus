@@ -98,7 +98,6 @@
     root.Rhombus._editSetup(this);
 
     this.initSong();
-    this.getMidiAccess();
   };
 
 })(this);
@@ -5355,6 +5354,10 @@
       if (typeof navigator.requestMIDIAccess !== "undefined") {
         navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
       }
+    };
+
+    r.enableMidi = function() {
+      this.getMidiAccess();
     };
   };
 })(this.Rhombus);

@@ -172,5 +172,9 @@
         navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
       }
     };
+
+    r.enableMidi = function() {
+      this.getMidiAccess();
+    };
   };
 })(this.Rhombus);

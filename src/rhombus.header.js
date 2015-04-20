@@ -98,7 +98,6 @@
     root.Rhombus._editSetup(this);
 
     this.initSong();
-    this.getMidiAccess();
   };
 
 })(this);
