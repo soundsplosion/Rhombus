@@ -5,15 +5,49 @@
 (function(Rhombus) {
   Rhombus._instrumentSetup = function(r) {
 
+    var instMap = [
+      [ "samp",  "Drums",       "drums1"         ],
+      [ "samp",  "Flute",       "tron_flute"     ],
+      [ "samp",  "Woodwinds",   "tron_woodwinds" ],
+      [ "samp",  "Brass 01",    "tron_brass_01"  ],
+      [ "samp",  "Guitar",      "tron_guitar"    ],
+      [ "samp",  "Choir",       "tron_choir"     ],
+      [ "samp",  "Cello",       "tron_cello"     ],
+      [ "samp",  "Strings",     "tron_strings"   ],
+      [ "samp",  "Violins",     "tron_violins"   ],
+      [ "samp",  "Violins 02",  "tron_16vlns"    ],
+      [ "mono",  "PolySynth",   undefined        ],
+      [ "am",    "AM Synth",    undefined        ],
+      [ "fm",    "FM Synth",    undefined        ],
+      [ "noise", "Noise Synth", undefined        ],
+      [ "duo",   "Duo Synth",   undefined        ]
+    ];
+
     r.instrumentTypes = function() {
-      return ["samp_drum", "samp_fl", "mono", "am", "fm", "noise", "duo"];
+      var types = [];
+      for (var i = 0; i < instMap.length; i++) {
+        types.push(instMap[i][0]);
+      }
+      return types;
     };
 
     r.instrumentDisplayNames = function() {
-      return ["Sampler (drums)", "Sampler (flute)", "Monophonic Synth", "AM Synth", "FM Synth", "Noise Synth", "DuoSynth"];
+      var names = [];
+      for (var i = 0; i < instMap.length; i++) {
+        names.push(instMap[i][1]);
+      }
+      return names;
     };
 
-    r.addInstrument = function(type, json, idx) {
+    r.sampleSets = function() {
+      var sets = [];
+      for (var i = 0; i < instMap.length; i++) {
+        sets.push(instMap[i][2]);
+      }
+      return sets;
+    };
+
+    r.addInstrument = function(type, json, idx, sampleSet) {
       var options, go, gi, id, graphX, graphY;
       if (isDefined(json)) {
         options = json._params;
@@ -34,12 +68,17 @@
       }
 
       var instr;
-      // "samp" for backwards compatibility
-      if (type === "samp_drum" || type === "samp") {
-        instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
-      } else if (type === "samp_fl") {
-        instr = new this._Sampler(samplerOptionsFrom(options, "tron_flute"), id);
-      } else {
+
+      // sampleSet determines the type of sampler....
+      if (type === "samp") {
+        if (notDefined(sampleSet)) {
+          instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
+        }
+        else {
+          instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
+        }
+      }
+      else {
         instr = new this._ToneInstrument(type, options, id);
       }
 
@@ -91,10 +130,22 @@
         return;
       }
 
+      // exercise the nuclear option
+      r.killAllNotes();
+
       var instr = r._song._instruments.getObjById(id);
       var slot = r._song._instruments.getSlotById(id);
       var go = instr.graphOutputs();
       var gi = instr.graphInputs();
+
+      // TODO: super hacky fix for import bug
+      for (var i = 0; i < gi.length; i++) {
+        var from = gi[i].from;
+        for (var j = 0; j < from.length; j++) {
+          var trk = from[j].node;
+          trk._internalDisconnectInstrument(instr);
+        }
+      }
 
       if (!internal) {
         r.Undo._addUndoAction(function() {
@@ -160,12 +211,29 @@
 
     // TODO: find a more suitable place for this stuff
 
+    isTargetTrackDefined = function(rhomb) {
+      var targetId  = rhomb._globalTarget;
+      var targetTrk = rhomb._song._tracks.getObjBySlot(targetId);
+
+      if (notDefined(targetTrk)) {
+        console.log("[Rhombus] - target track is not defined");
+        return false;
+      }
+      else {
+        return true;
+      }
+    };
+
     // Maintain an array of the currently sounding preview notes
     var previewNotes = new Array();
 
     r.startPreviewNote = function(pitch, velocity) {
+      var targetId  = this._globalTarget;
+      var targetTrk = this._song._tracks.getObjBySlot(targetId);
 
-      var targetId = this._globalTarget;
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
 
       if (notDefined(velocity) || velocity < 0 || velocity > 1) {
         velocity = 0.5;
@@ -200,6 +268,10 @@
     };
 
     r.stopPreviewNote = function(pitch) {
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
+
       var curTicks = Math.round(this.getPosTicks());
 
       var deadNoteIds = [];
@@ -239,6 +311,10 @@
     };
 
     r.killAllPreviewNotes = function() {
+      if (!isTargetTrackDefined(this)) {
+        return;
+      }
+
       var deadNoteIds = [];
       while (previewNotes.length > 0) {
         var rtNote = previewNotes.pop();

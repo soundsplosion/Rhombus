@@ -142,35 +142,27 @@
         if (notDefined(track)) {
           return undefined;
         }
-        else {
-          // TODO: find a more robust way to terminate playing notes
-          for (var rtNoteId in this._playingNotes) {
-            var note = this._playingNotes[rtNoteId];
 
-            var instrs = r._song._instruments;
-            for (var targetIdx = 0; targetIdx < track._targets.length; targetIdx++) {
-              instrs.getObjById(track._targets[targetIdx]).triggerRelease(rtNoteId, 0);
-            }
+        track.killAllNotes();
+        r.killAllPreviewNotes();
 
-            delete this._playingNotes[rtNoteId];
-          }
-
-          // Remove the track from the solo list, if it's soloed
-          var index = r._song._soloList.indexOf(track._id);
-          if (index > -1) {
-            r._song._soloList.splice(index, 1);
-          }
-
-          var slot = this._tracks.getSlotById(trkId);
-          var track = this._tracks.removeId(trkId);
-
-          var that = this;
-          r.Undo._addUndoAction(function() {
-            that._tracks.addObj(track, slot);
-          });
-
-          return trkId;
+        // Remove the track from the solo list, if it's soloed
+        var index = r._song._soloList.indexOf(track._id);
+        if (index > -1) {
+          r._song._soloList.splice(index, 1);
         }
+
+        var slot = this._tracks.getSlotById(trkId);
+        var track = this._tracks.removeId(trkId);
+
+        var that = this;
+        r.Undo._addUndoAction(function() {
+          that._tracks.addObj(track, slot);
+        });
+
+        track._removeConnections();
+
+        return trkId;
       },
 
       getTracks: function() {
@@ -247,8 +239,6 @@
           newPattern.setColor(pattern._color);
         }
 
-        // dumbing down Note (e.g., by removing methods from its
-        // prototype) might make deserializing much easier
         for (var noteId in noteMap) {
           var note = new this.Note(+noteMap[noteId]._pitch,
                                    +noteMap[noteId]._start,
@@ -302,7 +292,11 @@
       for (var instIdIdx in instruments._slots) {
         var instId = instruments._slots[instIdIdx];
         var inst = instruments._map[instId];
-        this.addInstrument(inst._type, inst, +instIdIdx);
+        console.log("[Rhomb.importSong] - adding instrument of type " + inst._type);
+        if (isDefined(inst._sampleSet)) {
+          console.log("[Rhomb.importSong] - sample set is: " + inst._sampleSet);
+        }
+        this.addInstrument(inst._type, inst, +instIdIdx, inst._sampleSet);
       }
 
       for (var effId in effects) {
@@ -332,7 +326,6 @@
 
     r.exportSong = function() {
       this._song._curId = this.getCurId();
-      //this._song._length = this._song.findSongLength();
       return JSON.stringify(this._song);
     };
 

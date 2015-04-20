@@ -280,6 +280,11 @@
       });
     };
 
+    r.panic = function() {
+      this.killAllNotes();
+      this.killAllPreviewNotes();
+    };
+
     r.startPlayback = function() {
       if (!this._active || playing) {
         return;

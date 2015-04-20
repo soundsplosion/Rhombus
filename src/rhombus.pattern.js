@@ -59,6 +59,41 @@
         return retNote;
       },
 
+      getNotesAtTick: function(tick, lowPitch, highPitch) {
+        if (notDefined(lowPitch) && notDefined(highPitch)) {
+          var lowPitch  = 0;
+          var highPitch = 127;
+        }
+        if (!isInteger(tick) || tick < 0) {
+          return undefined;
+        }
+
+        if (!isInteger(lowPitch) || lowPitch < 0 || lowPitch > 127) {
+          return undefined;
+        }
+
+        if (!isInteger(highPitch) || highPitch < 0 || highPitch > 127) {
+          return undefined;
+        }
+
+        var retNotes = new Array();
+        this._avl.executeOnEveryNode(function (node) {
+          for (var i = 0; i < node.data.length; i++) {
+            var note = node.data[i];
+            var noteStart = note._start;
+            var noteEnd   = noteStart + note._length;
+            var notePitch = note._pitch;
+
+            if ((noteStart <= tick) && (noteEnd >= tick) &&
+                (notePitch >= lowPitch && notePitch <= highPitch)) {
+              retNotes.push(note);
+            }
+          }
+        });
+
+        return retNotes;
+      },
+
       removeNote: function(noteId, note) {
         if (notDefined(note) || !(note instanceof r.Note)) {
           note = this.getNote(noteId);
@@ -189,12 +224,14 @@
 
       addNote: function(note) {
         this._noteMap.addNote(note);
+        this.clearSelectedNotes();
       },
 
       addNotes: function(notes) {
         for (var i = 0; i < notes.length; i++) {
           this.addNote(notes[i]);
         }
+        this.clearSelectedNotes();
       },
 
       getNote: function(noteId) {
@@ -236,6 +273,10 @@
         return this._noteMap._avl.betweenBounds({ $lt: end, $gte: start });
       },
 
+      getNotesAtTick: function(tick, lowPitch, highPitch) {
+        return this._noteMap.getNotesAtTick(tick, lowPitch, highPitch);
+      },
+
       getSelectedNotes: function() {
         var selected = new Array();
         this._noteMap._avl.executeOnEveryNode(function (node) {
@@ -262,10 +303,11 @@
 
       toJSON: function() {
         var jsonObj = {
-          _name    : this._name,
-          _color   : this._color,
-          _length  : this._length,
-          _noteMap : this._noteMap.toJSON()
+          "_id"      : this._id,
+          "_name"    : this._name,
+          "_color"   : this._color,
+          "_length"  : this._length,
+          "_noteMap" : this._noteMap.toJSON()
         };
         return jsonObj;
       }
@@ -345,6 +387,10 @@
         return (this._selected = false);
       },
 
+      toggleSelect: function() {
+        return (this._selected = !this._selected);
+      },
+
       getSelected: function() {
         return this._selected;
       },
@@ -355,10 +401,11 @@
 
       toJSON: function() {
         var jsonObj = {
-          _pitch    : this._pitch,
-          _start    : this._start,
-          _length   : this._length,
-          _velocity : this._velocity
+          "_id"       : this._id,
+          "_pitch"    : this._pitch,
+          "_start"    : this._start,
+          "_length"   : this._length,
+          "_velocity" : this._velocity
         };
         return jsonObj;
       }

@@ -31,8 +31,12 @@
 
     this.setGlobalTarget = function(target) {
       console.log("[Rhombus] - setting global target to " + target);
-      this._killAllPreviewNotes();
+      this.killAllPreviewNotes();
       this._globalTarget = +target;
+    };
+
+    this.getGlobalTarget = function() {
+      return this._globalTarget;
     };
 
     // This run-time ID is used for IDs that don't need to be exported/imported

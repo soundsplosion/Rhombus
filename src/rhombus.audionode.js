@@ -25,6 +25,7 @@
         // don't break all the outgoing connections every time we
         // disconnect from one thing. Put gain nodes in the middle
         // or something.
+        console.log("removing audio connection");
         this.disconnect();
         var that = this;
         this._graphOutputs[output].to.forEach(function(port) {
@@ -32,6 +33,10 @@
         });
       } else if (type === "control") {
         // TODO: implement control routing
+        console.log("removing control connection");
+      }
+      else {
+        console.log("removing unknown connection");
       }
     }
 
