@@ -159,14 +159,14 @@
     }
 
     return ("00" + val.toString(16)).substr(-2);
-  },
+  };
 
   window.intToBytes = function(val) {
     return [ (val >> 24) & 0xFF,
              (val >> 16) & 0xFF,
              (val >>  8) & 0xFF,
              (val      ) & 0xFF ];
-  }
+  };
 
   // Converts an integer value to a variable-length base-128 array
   window.intToVlv = function(val) {
@@ -287,6 +287,10 @@
 
   Rhombus.Util.clampMinMax = function(val, min, max) {
     return (val < min) ? min : (val > max) ? max : val;
+  }
+
+  Rhombus.Util.deepCopy = function(o) {
+    return JSON.parse(JSON.stringify(o));
   }
 
   function calculator(noteNum) {

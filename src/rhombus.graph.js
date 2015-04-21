@@ -246,16 +246,18 @@
       var go = this.graphOutputs();
       for (var outputIdx = 0; outputIdx < go.length; outputIdx++) {
         var output = go[outputIdx];
-        for (var portIdx = 0; portIdx < output.to.length; portIdx++) {
+        for (var portIdx = 0; portIdx < output.to.length;) {
           var port = output.to[portIdx];
+          // this removes an object from the output.to array, so we don't increment portIdx
           this.graphDisconnect(outputIdx, port.node, port.slot, true);
         }
       }
       var gi = this.graphInputs();
       for (var inputIdx = 0; inputIdx < gi.length; inputIdx++) {
         var input = gi[inputIdx];
-        for (var portIdx = 0; portIdx < input.from.length; portIdx++) {
+        for (var portIdx = 0; portIdx < input.from.length;) {
           var port = input.from[portIdx];
+          // this removes an object from the input.from array, so we don't increment portIdx
           port.node.graphDisconnect(port.slot, this, inputIdx, true);
         }
       }
@@ -334,19 +336,21 @@
     };
 
     r._importFixGraph = function() {
+      var trackIds = this._song._tracks.objIds();
       var instrIds = this._song._instruments.objIds();
       var effIds = Object.keys(this._song._effects);
-      var nodeIds = instrIds.concat(effIds);
+      var nodeIds = trackIds.concat(instrIds).concat(effIds);
       var nodes = nodeIds.map(graphLookup);
 
       nodes.forEach(function (node) {
         var go = node.graphOutputs();
-        go.forEach(function (slot) {
-          slot.to.forEach(function (port) {
-            // TODO: use the slots here too
-            node.connect(port.node);
-          });
-        });
+        for (var outIdx = 0; outIdx < go.length; outIdx++) {
+          var out = go[outIdx];
+          for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
+            var port = out.to[portIdx];
+            node._internalGraphConnect(outIdx, port.node, port.slot);
+          }
+        }
       });
     };
 
