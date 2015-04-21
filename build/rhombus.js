@@ -264,14 +264,14 @@
     }
 
     return ("00" + val.toString(16)).substr(-2);
-  },
+  };
 
   window.intToBytes = function(val) {
     return [ (val >> 24) & 0xFF,
              (val >> 16) & 0xFF,
              (val >>  8) & 0xFF,
              (val      ) & 0xFF ];
-  }
+  };
 
   // Converts an integer value to a variable-length base-128 array
   window.intToVlv = function(val) {
@@ -392,6 +392,10 @@
 
   Rhombus.Util.clampMinMax = function(val, min, max) {
     return (val < min) ? min : (val > max) ? max : val;
+  }
+
+  Rhombus.Util.deepCopy = function(o) {
+    return JSON.parse(JSON.stringify(o));
   }
 
   function calculator(noteNum) {
@@ -1007,6 +1011,17 @@
       return false;
     }
 
+    function backwardsConnectionExists(a, output, b, input) {
+      var ports = b._graphInputs[input].from;
+      for (var i = 0; i < ports.length; i++) {
+        var port = ports[i];
+        if (port.node === a._id && port.slot === output) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     function graphConnect(output, b, bInput, internal) {
       if (output < 0 || output >= this._graphOutputs.length) {
         return false;
@@ -1207,19 +1222,46 @@
     };
 
     r._importFixGraph = function() {
+      var trackIds = this._song._tracks.objIds();
       var instrIds = this._song._instruments.objIds();
       var effIds = Object.keys(this._song._effects);
-      var nodeIds = instrIds.concat(effIds);
+      var nodeIds = trackIds.concat(instrIds).concat(effIds);
       var nodes = nodeIds.map(graphLookup);
 
       nodes.forEach(function (node) {
+        var gi = node.graphInputs();
         var go = node.graphOutputs();
-        go.forEach(function (slot) {
-          slot.to.forEach(function (port) {
-            // TODO: use the slots here too
-            node.connect(port.node);
-          });
-        });
+
+        // First, verify the graph integrity.
+        // If any half-connections exist, get rid of them.
+        for (var outIdx = 0; outIdx < go.length; outIdx++) {
+          var out = go[outIdx];
+          for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
+            var port = out.to[portIdx];
+            if (!backwardsConnectionExists(node, outIdx, port.node, port.slot)) {
+              node._graphOutputs[outIdx].to.splice(portIdx, 1);
+            }
+          }
+        }
+
+        for (var inIdx = 0; inIdx < gi.length; inIdx++) {
+          var inp = gi[inIdx];
+          for (var portIdx = 0; portIdx < inp.from.length; portIdx++) {
+            var port = inp.from[portIdx];
+            if (!connectionExists(port.node, port.slot, node, inIdx)) {
+              node._graphInputs[inIdx].from.splice(portIdx, 1);
+            }
+          }
+        }
+
+        // Now, actually do the connecting.
+        for (var outIdx = 0; outIdx < go.length; outIdx++) {
+          var out = go[outIdx];
+          for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
+            var port = out.to[portIdx];
+            node._internalGraphConnect(outIdx, port.node, port.slot);
+          }
+        }
       });
     };
 
@@ -1519,17 +1561,9 @@
 
       var instr = r._song._instruments.getObjById(id);
       var slot = r._song._instruments.getSlotById(id);
-      var go = instr.graphOutputs();
-      var gi = instr.graphInputs();
 
-      // TODO: super hacky fix for import bug
-      for (var i = 0; i < gi.length; i++) {
-        var from = gi[i].from;
-        for (var j = 0; j < from.length; j++) {
-          var trk = from[j].node;
-          trk._internalDisconnectInstrument(instr);
-        }
-      }
+      var go = Rhombus.Util.deepCopy(instr.graphOutputs());
+      var gi = Rhombus.Util.deepCopy(instr.graphInputs());
 
       if (!internal) {
         r.Undo._addUndoAction(function() {
@@ -2430,8 +2464,8 @@
         return;
       }
 
-      var gi = effect.graphInputs();
-      var go = effect.graphOutputs();
+      var gi = Rhombus.Util.deepCopy(effect.graphInputs());
+      var go = Rhombus.Util.deepCopy(effect.graphOutputs());
       r.Undo._addUndoAction(function() {
         this._song._effects[id] = effect;
         effect._restoreConnections(go, gi);
@@ -2441,16 +2475,6 @@
 
       // exercise the nuclear option
       r.killAllNotes();
-
-      // TODO: super hacky fix for import bug
-      for (var i = 0; i < gi.length; i++) {
-        var from = gi[i].from;
-        for (var j = 0; j < from.length; j++) {
-          var trk = from[j].node;
-          trk._internalDisconnectEffect(effect);
-        }
-      }
-
     };
 
     function isMaster() { return false; }
@@ -3415,7 +3439,7 @@
           "_trkId"  : this._trkId,
           "_ptnId"  : this._ptnId,
           "_start"  : this._start,
-          "_length" : this._length
+          "_length" : this._length,
         };
         return jsonObj;
       }
@@ -3659,8 +3683,9 @@
       var toReturn = {};
       toReturn._id = this._id;
       toReturn._name = this._name;
-      toReturn._targets = this._targets;
       toReturn._playlist = this._playlist;
+      toReturn._graphOutputs = this._graphOutputs;
+      toReturn._graphInputs = this._graphInputs;
       return toReturn;
     };
 
@@ -3710,20 +3735,6 @@
       var idx = toSearch.indexOf(b._id);
       if (idx >= 0) {
         toSearch.splice(idx, 1);
-      }
-    };
-
-    Track.prototype._internalDisconnectInstrument = function(inst) {
-      var index = this._targets.indexOf(inst._id);
-      if (index >= 0) {
-        this._targets.splice(index, 1);
-      }
-    };
-
-    Track.prototype._internalDisconnectEffect = function(effect) {
-      var index = this._targets.indexOf(effect._id);
-      if (index >= 0) {
-        this._targets.splice(index, 1);
       }
     };
 
@@ -3994,11 +4005,15 @@
 
         newTrack._name = track._name;
 
-        if (isDefined(track._targets)) {
-          newTrack._targets = track._targets;
-          for (var targetIdx = 0; targetIdx < newTrack._targets.length; targetIdx++) {
-            newTrack._targets[targetIdx] = +(newTrack._targets[targetIdx]);
-          }
+        var go = track._graphOutputs;
+        var gi = track._graphInputs;
+        if (isDefined(go)) {
+          Rhombus.Util.numberifyOutputs(go);
+          newTrack._graphOutputs = go;
+        }
+        if (isDefined(gi)) {
+          Rhombus.Util.numberifyInputs(gi);
+          newTrack._graphInputs = gi;
         }
 
         for (var itemId in playlist) {

@@ -136,17 +136,9 @@
 
       var instr = r._song._instruments.getObjById(id);
       var slot = r._song._instruments.getSlotById(id);
-      var go = instr.graphOutputs();
-      var gi = instr.graphInputs();
 
-      // TODO: super hacky fix for import bug
-      for (var i = 0; i < gi.length; i++) {
-        var from = gi[i].from;
-        for (var j = 0; j < from.length; j++) {
-          var trk = from[j].node;
-          trk._internalDisconnectInstrument(instr);
-        }
-      }
+      var go = Rhombus.Util.deepCopy(instr.graphOutputs());
+      var gi = Rhombus.Util.deepCopy(instr.graphInputs());
 
       if (!internal) {
         r.Undo._addUndoAction(function() {

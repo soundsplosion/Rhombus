@@ -136,8 +136,8 @@
         return;
       }
 
-      var gi = effect.graphInputs();
-      var go = effect.graphOutputs();
+      var gi = Rhombus.Util.deepCopy(effect.graphInputs());
+      var go = Rhombus.Util.deepCopy(effect.graphOutputs());
       r.Undo._addUndoAction(function() {
         this._song._effects[id] = effect;
         effect._restoreConnections(go, gi);
@@ -147,16 +147,6 @@
 
       // exercise the nuclear option
       r.killAllNotes();
-
-      // TODO: super hacky fix for import bug
-      for (var i = 0; i < gi.length; i++) {
-        var from = gi[i].from;
-        for (var j = 0; j < from.length; j++) {
-          var trk = from[j].node;
-          trk._internalDisconnectEffect(effect);
-        }
-      }
-
     };
 
     function isMaster() { return false; }

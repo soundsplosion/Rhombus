@@ -103,7 +103,7 @@
           "_trkId"  : this._trkId,
           "_ptnId"  : this._ptnId,
           "_start"  : this._start,
-          "_length" : this._length
+          "_length" : this._length,
         };
         return jsonObj;
       }
@@ -347,8 +347,9 @@
       var toReturn = {};
       toReturn._id = this._id;
       toReturn._name = this._name;
-      toReturn._targets = this._targets;
       toReturn._playlist = this._playlist;
+      toReturn._graphOutputs = this._graphOutputs;
+      toReturn._graphInputs = this._graphInputs;
       return toReturn;
     };
 
@@ -398,20 +399,6 @@
       var idx = toSearch.indexOf(b._id);
       if (idx >= 0) {
         toSearch.splice(idx, 1);
-      }
-    };
-
-    Track.prototype._internalDisconnectInstrument = function(inst) {
-      var index = this._targets.indexOf(inst._id);
-      if (index >= 0) {
-        this._targets.splice(index, 1);
-      }
-    };
-
-    Track.prototype._internalDisconnectEffect = function(effect) {
-      var index = this._targets.indexOf(effect._id);
-      if (index >= 0) {
-        this._targets.splice(index, 1);
       }
     };
 

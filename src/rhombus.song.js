@@ -262,11 +262,15 @@
 
         newTrack._name = track._name;
 
-        if (isDefined(track._targets)) {
-          newTrack._targets = track._targets;
-          for (var targetIdx = 0; targetIdx < newTrack._targets.length; targetIdx++) {
-            newTrack._targets[targetIdx] = +(newTrack._targets[targetIdx]);
-          }
+        var go = track._graphOutputs;
+        var gi = track._graphInputs;
+        if (isDefined(go)) {
+          Rhombus.Util.numberifyOutputs(go);
+          newTrack._graphOutputs = go;
+        }
+        if (isDefined(gi)) {
+          Rhombus.Util.numberifyInputs(gi);
+          newTrack._graphInputs = gi;
         }
 
         for (var itemId in playlist) {
