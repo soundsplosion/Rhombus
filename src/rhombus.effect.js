@@ -18,11 +18,11 @@
     }
 
     r.effectTypes = function() {
-      return ["dist", "filt", "eq", "dely", "comp", "gain", "bitc", "revb", "chor"];
+      return ["dist", "filt", "eq", "dely", "comp", "gain", "bitc", "revb", "chor", "scpt"];
     };
 
     r.effectDisplayNames = function() {
-      return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher", "Reverb", "Chorus"];
+      return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher", "Reverb", "Chorus", "Script"];
     };
 
     r.addEffect = function(type, json) {
@@ -35,7 +35,8 @@
         "gain" : r._Gainer,
         "bitc" : r._BitCrusher,
         "revb" : r._Reverb,
-        "chor" : r._Chorus
+        "chor" : r._Chorus,
+        "scpt" : r._Script
       };
 
       var options, go, gi, id, graphX, graphY;
