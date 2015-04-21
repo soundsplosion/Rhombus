@@ -6,7 +6,9 @@
   Rhombus._instrumentSetup = function(r) {
 
     var instMap = [
+      [ "mono",  "PolySynth",   undefined        ],
       [ "samp",  "Drums",       "drums1"         ],
+      [ "samp",  "808",         "drums2"         ],
       [ "samp",  "Flute",       "tron_flute"     ],
       [ "samp",  "Woodwinds",   "tron_woodwinds" ],
       [ "samp",  "Brass 01",    "tron_brass_01"  ],
@@ -16,7 +18,6 @@
       [ "samp",  "Strings",     "tron_strings"   ],
       [ "samp",  "Violins",     "tron_violins"   ],
       [ "samp",  "Violins 02",  "tron_16vlns"    ],
-      [ "mono",  "PolySynth",   undefined        ],
       [ "am",    "AM Synth",    undefined        ],
       [ "fm",    "FM Synth",    undefined        ],
       [ "noise", "Noise Synth", undefined        ],
