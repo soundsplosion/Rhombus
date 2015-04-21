@@ -103,7 +103,7 @@
           "_trkId"  : this._trkId,
           "_ptnId"  : this._ptnId,
           "_start"  : this._start,
-          "_length" : this._length
+          "_length" : this._length,
         };
         return jsonObj;
       }
@@ -348,6 +348,8 @@
       toReturn._id = this._id;
       toReturn._name = this._name;
       toReturn._playlist = this._playlist;
+      toReturn._graphOutputs = this._graphOutputs;
+      toReturn._graphInputs = this._graphInputs;
       return toReturn;
     };
 

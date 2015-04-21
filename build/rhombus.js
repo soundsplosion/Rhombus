@@ -1011,6 +1011,17 @@
       return false;
     }
 
+    function backwardsConnectionExists(a, output, b, input) {
+      var ports = b._graphInputs[input].from;
+      for (var i = 0; i < ports.length; i++) {
+        var port = ports[i];
+        if (port.node === a._id && port.slot === output) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     function graphConnect(output, b, bInput, internal) {
       if (output < 0 || output >= this._graphOutputs.length) {
         return false;
@@ -1220,7 +1231,32 @@
       var nodes = nodeIds.map(graphLookup);
 
       nodes.forEach(function (node) {
+        var gi = node.graphInputs();
         var go = node.graphOutputs();
+
+        // First, verify the graph integrity.
+        // If any half-connections exist, get rid of them.
+        for (var outIdx = 0; outIdx < go.length; outIdx++) {
+          var out = go[outIdx];
+          for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
+            var port = out.to[portIdx];
+            if (!backwardsConnectionExists(node, outIdx, port.node, port.slot)) {
+              node._graphOutputs[outIdx].to.splice(portIdx, 1);
+            }
+          }
+        }
+
+        for (var inIdx = 0; inIdx < gi.length; inIdx++) {
+          var inp = gi[inIdx];
+          for (var portIdx = 0; portIdx < inp.from.length; portIdx++) {
+            var port = inp.from[portIdx];
+            if (!connectionExists(port.node, port.slot, node, inIdx)) {
+              node._graphInputs[inIdx].from.splice(portIdx, 1);
+            }
+          }
+        }
+
+        // Now, actually do the connecting.
         for (var outIdx = 0; outIdx < go.length; outIdx++) {
           var out = go[outIdx];
           for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
@@ -3405,7 +3441,7 @@
           "_trkId"  : this._trkId,
           "_ptnId"  : this._ptnId,
           "_start"  : this._start,
-          "_length" : this._length
+          "_length" : this._length,
         };
         return jsonObj;
       }
@@ -3650,6 +3686,8 @@
       toReturn._id = this._id;
       toReturn._name = this._name;
       toReturn._playlist = this._playlist;
+      toReturn._graphOutputs = this._graphOutputs;
+      toReturn._graphInputs = this._graphInputs;
       return toReturn;
     };
 
@@ -3969,11 +4007,15 @@
 
         newTrack._name = track._name;
 
-        if (isDefined(track._targets)) {
-          newTrack._targets = track._targets;
-          for (var targetIdx = 0; targetIdx < newTrack._targets.length; targetIdx++) {
-            newTrack._targets[targetIdx] = +(newTrack._targets[targetIdx]);
-          }
+        var go = track._graphOutputs;
+        var gi = track._graphInputs;
+        if (isDefined(go)) {
+          Rhombus.Util.numberifyOutputs(go);
+          newTrack._graphOutputs = go;
+        }
+        if (isDefined(gi)) {
+          Rhombus.Util.numberifyInputs(gi);
+          newTrack._graphInputs = gi;
         }
 
         for (var itemId in playlist) {

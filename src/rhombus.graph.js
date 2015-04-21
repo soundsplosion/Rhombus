@@ -134,6 +134,17 @@
       return false;
     }
 
+    function backwardsConnectionExists(a, output, b, input) {
+      var ports = b._graphInputs[input].from;
+      for (var i = 0; i < ports.length; i++) {
+        var port = ports[i];
+        if (port.node === a._id && port.slot === output) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     function graphConnect(output, b, bInput, internal) {
       if (output < 0 || output >= this._graphOutputs.length) {
         return false;
@@ -343,7 +354,32 @@
       var nodes = nodeIds.map(graphLookup);
 
       nodes.forEach(function (node) {
+        var gi = node.graphInputs();
         var go = node.graphOutputs();
+
+        // First, verify the graph integrity.
+        // If any half-connections exist, get rid of them.
+        for (var outIdx = 0; outIdx < go.length; outIdx++) {
+          var out = go[outIdx];
+          for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
+            var port = out.to[portIdx];
+            if (!backwardsConnectionExists(node, outIdx, port.node, port.slot)) {
+              node._graphOutputs[outIdx].to.splice(portIdx, 1);
+            }
+          }
+        }
+
+        for (var inIdx = 0; inIdx < gi.length; inIdx++) {
+          var inp = gi[inIdx];
+          for (var portIdx = 0; portIdx < inp.from.length; portIdx++) {
+            var port = inp.from[portIdx];
+            if (!connectionExists(port.node, port.slot, node, inIdx)) {
+              node._graphInputs[inIdx].from.splice(portIdx, 1);
+            }
+          }
+        }
+
+        // Now, actually do the connecting.
         for (var outIdx = 0; outIdx < go.length; outIdx++) {
           var out = go[outIdx];
           for (var portIdx = 0; portIdx < out.to.length; portIdx++) {
