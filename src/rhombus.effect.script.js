@@ -20,15 +20,21 @@
         that._processor = f;
       }
 
+      function log() {
+        console.log.apply(console, Array.prototype.slice.call(arguments, 0));
+      }
+
       this._M = {
         channelCount: 0,
         sampleCount: 0,
         input: input,
         output: output,
-        setProcessor: setProcessor
+        setProcessor: setProcessor,
+        log: log
       };
 
       this._tamedM = undefined;
+      this._processor = undefined;
 
       var that = this;
       this._processorNode = r._ctx.createScriptProcessor(4096, 1, 1);
@@ -36,8 +42,8 @@
         if (that._processor) {
           that._inp = ae.inputBuffer;
           that._out = ae.outputBuffer;
-          that._M.channelCount = s.inp.numberOfChannels;
-          that._M.sampleCount = s.inp.getChannelData(0).length;
+          that._M.channelCount = that._inp.numberOfChannels;
+          that._M.sampleCount = that._inp.getChannelData(0).length;
           that._processor();
         } else {
           // The default processor just zeros out the buffers.
@@ -51,7 +57,7 @@
         }
       };
 
-      this.connectEffect(processor);
+      this.connectEffect(this._processorNode);
     }
     Tone.extend(script, Tone.Effect);
     r._Script = script;
@@ -59,17 +65,18 @@
     script.prototype.setCode = function(str) {
       var that = this;
       caja.load(undefined, undefined, function(frame) {
-        if (that.tamedM) {
-          caja.markReadOnlyRecord(that.M);
-          caja.markFunction(that.M.input);
-          caja.markFunction(that.M.output);
-          caja.markFunction(that.M.setProcessor);
-          that.tamedM = caja.tame(that.M);
+        if (!that._tamedM) {
+          caja.markReadOnlyRecord(that._M);
+          caja.markFunction(that._M.input);
+          caja.markFunction(that._M.output);
+          caja.markFunction(that._M.setProcessor);
+          caja.markFunction(that._M.log);
+          that._tamedM = caja.tame(that._M);
         }
 
         frame.code(undefined, 'text/javascript', str)
         .api({
-          M: that.tamedM
+          M: that._tamedM
         })
         .run();
       });

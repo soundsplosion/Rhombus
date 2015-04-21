@@ -5,6 +5,7 @@
 <meta charset="UTF-8" />
 <script src="Tone.js"></script>
 <script src="AVL.js"></script>
+<script src="//caja.appspot.com/caja.js"></script>
 <script src="../build/rhombus.js"></script>
 <script>
 var constraints = {max_notes: 100};
@@ -64,10 +65,20 @@ var instr = rhomb.getSong().getInstruments().getObjById(instrId);
 instr.normalizedSetByName("volume", 0.6);
 instr.graphDisconnect(0, rhomb.getMaster(), 0);
 
-var effId = rhomb.addEffect("revb");
+var effId = rhomb.addEffect("scpt");
 var eff = rhomb.graphLookup(effId);
 instr.graphConnect(0, eff, 0);
 eff.graphConnect(0, rhomb.getMaster(), 0);
+eff.setCode('\n' +
+'M.setProcessor(function() {\n' +
+'  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
+'    for (var samp = 0; samp < M.sampleCount; samp++) {\n' +
+'      var inSamp = M.input(chan, samp);\n' +
+'      var outSamp = inSamp * Math.random();\n' +
+'      M.output(chan, samp, outSamp);\n' +
+'    }\n' +
+'  }\n' +
+'});\n');
 
 var trackId = rhomb._song.addTrack();
 var track = rhomb.getSong().getTracks().getObjById(trackId);
