@@ -93,6 +93,7 @@
     root.Rhombus._effectSetup(this);
     root.Rhombus._masterSetup(this);
     root.Rhombus._wrappedEffectSetup(this);
+    root.Rhombus._scriptEffectSetup(this);
 
     root.Rhombus._timeSetup(this);
     root.Rhombus._editSetup(this);

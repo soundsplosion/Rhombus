@@ -16,6 +16,7 @@ gulp.task("make", function() {
     "src/rhombus.effect.js",
     "src/rhombus.effect.tone.js",
     "src/rhombus.effect.master.js",
+    "src/rhombus.effect.script.js",
     "src/rhombus.pattern.js",
     "src/rhombus.track.js",
     "src/rhombus.song.js",
@@ -24,7 +25,7 @@ gulp.task("make", function() {
     "src/rhombus.undo.js",
     "src/rhombus.record.js",
     "src/rhombus.midi.js",
-    "src/rhombus.audionode.js",
+    "src/rhombus.audionode.js"
     ])
     .pipe(concat("rhombus.js"))
     .pipe(gulp.dest("build"))
