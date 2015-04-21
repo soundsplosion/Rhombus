@@ -257,18 +257,16 @@
       var go = this.graphOutputs();
       for (var outputIdx = 0; outputIdx < go.length; outputIdx++) {
         var output = go[outputIdx];
-        for (var portIdx = 0; portIdx < output.to.length;) {
+        for (var portIdx = 0; portIdx < output.to.length; portIdx++) {
           var port = output.to[portIdx];
-          // this removes an object from the output.to array, so we don't increment portIdx
           this.graphDisconnect(outputIdx, port.node, port.slot, true);
         }
       }
       var gi = this.graphInputs();
       for (var inputIdx = 0; inputIdx < gi.length; inputIdx++) {
         var input = gi[inputIdx];
-        for (var portIdx = 0; portIdx < input.from.length;) {
+        for (var portIdx = 0; portIdx < input.from.length; portIdx++) {
           var port = input.from[portIdx];
-          // this removes an object from the input.from array, so we don't increment portIdx
           port.node.graphDisconnect(port.slot, this, inputIdx, true);
         }
       }
