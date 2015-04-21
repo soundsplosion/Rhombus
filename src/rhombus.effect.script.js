@@ -46,12 +46,14 @@
           that._M.sampleCount = that._inp.getChannelData(0).length;
           that._processor();
         } else {
-          // The default processor just zeros out the buffers.
+          // The default processor is just a pass-through.
+          var inp = ae.inputBuffer;
           var out = ae.outputBuffer;
-          for (var chan = 0; chan < out.numberOfChannels; chan++) {
+          for (var chan = 0; chan < inp.numberOfChannels; chan++) {
+            var inpData = inp.getChannelData(chan);
             var outData = out.getChannelData(chan);
-            for (var samp = 0; samp < outData.length; samp++) {
-              outData[samp] = 0;
+            for (var samp = 0; samp < inpData.length; samp++) {
+              outData[samp] = inpData[samp];
             }
           }
         }
