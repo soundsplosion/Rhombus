@@ -5132,7 +5132,7 @@
       for (var i = notes.length - 1; i >= 0; i--) {
         var srcPitch = notes[i]._pitch;
         if (srcPitch > highNote || srcPitch < lowNote) {
-          notes.splice(i, i);
+          notes.splice(i, 1);
         }
       }
 
