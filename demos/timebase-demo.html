@@ -69,17 +69,20 @@ var effId = rhomb.addEffect("scpt");
 var eff = rhomb.graphLookup(effId);
 instr.graphConnect(0, eff, 0);
 eff.graphConnect(0, rhomb.getMaster(), 0);
-/*eff.setCode('\n' +
+eff.setCode('\n' +
 'M.setProcessor(function() {\n' +
+'  var toRet = [];\n' +
 '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
-'    for (var samp = 0; samp < M.sampleCount; samp++) {\n' +
-'      var inSamp = M.input(chan, samp);\n' +
-'      var outSamp = inSamp * Math.random();\n' +
-'      M.output(chan, samp, outSamp);\n' +
+'    var inpData = M.inputSamples(chan);\n' +
+'    var outData = [];\n' +
+'    outData[inpData.length-1] = undefined;\n' +
+'    for (var samp = 0; samp < inpData.length; samp++) {\n' +
+'      outData[samp] = Math.random() * inpData[samp];\n' +
 '    }\n' +
+'    toRet.push(outData);\n' +
 '  }\n' +
-'});\n');*/
-eff.setCode('function(ae) { var out = ae.outputBuffer; var inp = ae.inputBuffer;  for (var chan = 0; chan < out.numberOfChannels; chan++) {    var outData = out.getChannelData(chan);    var inpData = inp.getChannelData(chan);    for (var samp = 0; samp < outData.length; samp++) {      outData[samp] = inpData[samp] * Math.random();    }  }}');
+'  return toRet;\n' +
+'});\n');
 
 var trackId = rhomb._song.addTrack();
 var track = rhomb.getSong().getTracks().getObjById(trackId);
