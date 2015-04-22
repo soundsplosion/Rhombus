@@ -148,7 +148,7 @@
             }
 
             // Schedule notes
-            var notes = pattern.getNotesInRange(begin, end);
+            var notes = pattern.getNotesInRange(begin, end, true);
 
             for (var i = 0; i < notes.length; i++) {
               var note  = notes[i];
