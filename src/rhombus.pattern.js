@@ -274,7 +274,13 @@
         return notes;
       },
 
-      getNotesInRange: function(start, end) {
+      getNotesInRange: function(start, end, ignoreEnds) {
+        // only consider the start tick
+        if (isDefined(ignoreEnds) && ignoreEnds === true) {
+          return this._noteMap._avl.betweenBounds({ $lt: end, $gte: start });
+        }
+
+        // consider both start and end ticks
         var notes = new Array();
         this._noteMap._avl.executeOnEveryNode(function (node) {
           for (var i = 0; i < node.data.length; i++) {

@@ -31,6 +31,18 @@
       }
     };
 
+    r.Record.getNoteBuffer = function() {
+      var notes = new Array();
+      for (var i = 0; i < recordBuffer.length; i++) {
+        var rtNote = recordBuffer[i];
+        notes.push( {  _pitch  : rtNote._pitch,
+                       _start  : Math.round(rtNote._start),
+                       _length : Math.round(rtNote._end - rtNote._start) } );
+      }
+
+      return notes;
+    };
+
     // Dumps the buffer of recorded RtNotes as a Note array, most probably
     // to be inserted into a new or existing pattern
     r.Record.dumpBuffer = function() {
@@ -41,7 +53,7 @@
       var notes = new Array();
       for (var i = 0; i < recordBuffer.length; i++) {
         var rtNote = recordBuffer[i];
-        var note = new r.Note(+rtNote._pitch,
+        var note = new r.Note(rtNote._pitch,
                               Math.round(rtNote._start),
                               Math.round(rtNote._end - rtNote._start),
                               rtNote._velocity);

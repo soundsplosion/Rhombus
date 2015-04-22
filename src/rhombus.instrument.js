@@ -222,6 +222,11 @@
 
     r.startPreviewNote = function(pitch, velocity) {
 
+      if (notDefined(pitch) || !isInteger(pitch) || pitch < 0 || pitch > 127) {
+        console.log("[Rhombus] - invalid preview note pitch");
+        return;
+      }
+
       var targetId  = this._globalTarget;
       var targetTrk = this._song._tracks.getObjBySlot(targetId);
 

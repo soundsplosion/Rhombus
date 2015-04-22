@@ -572,7 +572,7 @@
       lowNote  = +lowNote  || 0;
       highNote = +highNote || 127;
 
-      var notes = srcPtn.getNotesInRange(start, end);
+      var notes = srcPtn.getNotesInRange(start, end, false);
       for (var i = notes.length - 1; i >= 0; i--) {
         var srcPitch = notes[i]._pitch;
         if (srcPitch > highNote || srcPitch < lowNote) {
