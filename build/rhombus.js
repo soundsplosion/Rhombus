@@ -1884,11 +1884,6 @@
         return;
       }
 
-      // TODO: remove this temporary kludge after the beta
-      if (this._type === "drums1") {
-        pitch = (pitch % 12) + 36;
-      }
-
       var sampler = this.samples[pitch];
       if (notDefined(sampler)) {
         return;
