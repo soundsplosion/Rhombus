@@ -2867,11 +2867,12 @@
       this._processorNode = r._ctx.createScriptProcessor(4096, 1, 1);
       this._processorNode.onaudioprocess = function(ae) {
         if (that._processor) {
-          that._inp = ae.inputBuffer;
+/*          that._inp = ae.inputBuffer;
           that._out = ae.outputBuffer;
           that._M.channelCount = that._inp.numberOfChannels;
           that._M.sampleCount = that._inp.getChannelData(0).length;
-          that._processor();
+          that._processor();*/
+          that._processor(ae);
         } else {
           // The default processor is just a pass-through.
           var inp = ae.inputBuffer;
@@ -2892,6 +2893,8 @@
     r._Script = script;
 
     script.prototype.setCode = function(str) {
+      eval('this._processor = ' + str);
+      /*
       var that = this;
       caja.load(undefined, undefined, function(frame) {
         if (!that._tamedM) {
@@ -2909,6 +2912,7 @@
         })
         .run();
       });
+      */
     };
     r._addEffectFunctions(script);
 
