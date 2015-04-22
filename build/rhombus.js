@@ -3205,12 +3205,12 @@
         this._noteMap._avl.executeOnEveryNode(function (node) {
           for (var i = 0; i < node.data.length; i++) {
             var srcStart = node.data[i]._start;
-            var srcEnd   = start + node.data[i]._length;
+            var srcEnd   = srcStart + node.data[i]._length;
 
-            if ((start < srcStart && end < srcStart) ||
-                (start > srcEnd   && end < srcEnd)) {
+            if ((start < srcStart && end < srcStart) || (start > srcEnd)) {
               continue;
             }
+
             notes.push(node.data[i]);
           }
         });
