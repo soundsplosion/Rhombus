@@ -221,6 +221,7 @@
     var previewNotes = new Array();
 
     r.startPreviewNote = function(pitch, velocity) {
+
       var targetId  = this._globalTarget;
       var targetTrk = this._song._tracks.getObjBySlot(targetId);
 
@@ -246,6 +247,11 @@
         if (isDefined(inst)) {
           inst.triggerAttack(rtNote._id, pitch, 0, velocity);
         }
+      }
+
+      if (!this.isPlaying() && this.getRecordEnabled()) {
+        this.startPlayback();
+        document.dispatchEvent(new CustomEvent("rhombus-start"));
       }
     };
 
