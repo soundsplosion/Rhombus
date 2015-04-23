@@ -3850,22 +3850,44 @@ Rhombus.Song = function(r) {
   this._noteCount = 0;
 };
 
+/**
+ * @returns {String} The title of this song.
+ */
 Rhombus.Song.prototype.getTitle = function() {
   return this._title;
 };
 
+/**
+ * @param {String} title The new title of this song.
+ */
 Rhombus.Song.prototype.setTitle = function(title) {
   this._title = title;
 };
 
+/**
+ * @returns {String} The artist of this song.
+ */
 Rhombus.Song.prototype.getArtist = function() {
   return this._artist;
-}
+};
 
+/**
+ * @param {String} artist The new artist of this song.
+ */
 Rhombus.Song.prototype.setArtist = function(artist) {
   this._artist = artist;
 };
 
+/**
+ * @returns {Number} The length of this Rhombus instance's current song, in ticks.
+ */
+Rhombus.Song.prototype.getLength = function() {
+  return this._length;
+};
+
+/**
+ * @param {Number} length The new length of the song, in ticks.
+ */
 Rhombus.Song.prototype.setLength = function(length) {
   if (isDefined(length) && length >= 480) {
     this._length = length;
@@ -3876,14 +3898,17 @@ Rhombus.Song.prototype.setLength = function(length) {
   }
 };
 
-Rhombus.Song.prototype.getLength = function() {
-  return this._length;
-};
-
+/**
+ * @returns {Object} A map from pattern ids to the {@link Rhombus.Pattern} objects in this song.
+ */
 Rhombus.Song.prototype.getPatterns = function() {
   return this._patterns;
 };
 
+/**
+ * Adds the given pattern to this song.
+ * @param {Rhombus.Pattern} pattern The pattern to add to this song.
+ */
 Rhombus.Song.prototype.addPattern = function(pattern) {
   if (notDefined(pattern)) {
     var pattern = new this._r.Pattern();
@@ -3898,12 +3923,17 @@ Rhombus.Song.prototype.addPattern = function(pattern) {
   return pattern._id;
 };
 
+/**
+ * Removes the pattern with the given id from this song.
+ * @param {Number} patternId The id of the pattern to delete.
+ * @returns {Boolean} false if no pattern with the given ID existed, true otherwise.
+ */
 Rhombus.Song.prototype.deletePattern = function(ptnId) {
   console.log("[Rhombus] - deleting ptnId " + ptnId);
   var pattern = this._patterns[ptnId];
 
   if (notDefined(pattern)) {
-    return undefined;
+    return false;
   }
 
   var that = this;
@@ -3925,10 +3955,18 @@ Rhombus.Song.prototype.deletePattern = function(ptnId) {
   });
 
   delete this._patterns[ptnId];
-  return ptnId;
+  return true;
 };
 
+/**
+ * Adds a new track to this song. May not succeed if you already have the maximum number of tracks.
+ * @returns {Number|undefined} If the insertion succeeded, returns the new track id. Otherwise, returns undefined.
+ */
 Rhombus.Song.prototype.addTrack = function() {
+  if (this._tracks.isFull()) {
+    return undefined;
+  }
+
   // Create a new Track object
   var track = new this._r.Track();
   this._tracks.addObj(track);
@@ -3942,12 +3980,17 @@ Rhombus.Song.prototype.addTrack = function() {
   return track._id;
 };
 
+/**
+ * Removes the track with the given ID from this song.
+ * @param {Number} trackID The ID of the track to delete.
+ * @returns {Boolean} false if no track with the given ID existed, true otherwise.
+ */
 Rhombus.Song.prototype.deleteTrack = function(trkId) {
   trkId = +trkId;
   var track = this._tracks.getObjById(trkId);
 
   if (notDefined(track)) {
-    return undefined;
+    return false;
   }
 
   track.killAllNotes();
@@ -3969,43 +4012,33 @@ Rhombus.Song.prototype.deleteTrack = function(trkId) {
 
   track._removeConnections();
 
-  return trkId;
+  return true;
 };
 
+/**
+ * @returns {Rhombus.Util.IdSlotContainer} A slot container that holds the @{link Rhombus.Track} objects in this song.
+ */
 Rhombus.Song.prototype.getTracks = function() {
   return this._tracks;
 };
 
+/**
+ * @returns {Rhombus.Util.IdSlotContainer} A slot container that holds the @{link Rhombus.Instrument} objects in this song.
+ */
 Rhombus.Song.prototype.getInstruments = function() {
   return this._instruments;
 };
 
+/**
+ * @returns {Object} A map from effect ids to the {@link Rhombus.Effect} objects in this song.
+ */
 Rhombus.Song.prototype.getEffects = function() {
   return this._effects;
 };
 
-// Song length here is defined as the end of the last
-// playlist item on any track
-Rhombus.Song.prototype.findSongLength = function() {
-  var length = 0;
-
-  var tracks = this._tracks;
-  tracks.objIds().forEach(function(trkId) {
-    var track = tracks.getObjById(trkId);
-
-    for (var itemId in track._playlist) {
-      var item = track._playlist[itemId];
-      var itemEnd = item._start + item._length;
-
-      if (itemEnd > length) {
-        length = itemEnd;
-      }
-    }
-  });
-
-  return length;
-};
-
+/**
+ * @returns {Number} The length of this Rhombus instance's current song, in seconds.
+ */
 Rhombus.prototype.getSongLengthSeconds = function() {
   return this.ticks2Seconds(this._song._length);
 };
@@ -4016,6 +4049,10 @@ Rhombus.prototype.initSong = function() {
   this.addEffect("mast");
 };
 
+/**
+ * Import a previously-exported song back into this Rhombus instance.
+ * @param {String} json The song to be imported. Should have been created with {@link Rhombus#exportSong}.
+ */
 Rhombus.prototype.importSong = function(json) {
   this._song = new Rhombus.Song(this);
   var parsed = JSON.parse(json);
@@ -4126,15 +4163,48 @@ Rhombus.prototype.importSong = function(json) {
   this.Undo._clearUndoStack();
 };
 
+/**
+ * An Array where the first entry is an AudioBuffer object for a sample, and the second is a String containing the name of the file the sample was loaded from.
+ * @typedef {Array} Rhombus~sampleMapInfo
+ */
+
+/**
+ * A callback used when resolving samples.
+ * @callback Rhombus~sampleResolverCallback
+ * @param {Object} sampleMap A map from MIDI pitches (0-127) to {@link Rhombus~sampleMapInfo} objects. Not all pitches must be mapped.
+ */
+
+/**
+ * @typedef {Function} Rhombus~SampleResolver
+ * @param {String} sampleSet The name of the sample set.
+ * @param {Rhombus~sampleResolverCallback} callback The callback to be executed with the samples.
+ */
+
+/**
+ * Provides a function responsible for loading sample sets in Rhombus.
+ *
+ * Whenever a sampler instrument is created, it has a sample set, represented as a String.
+ * A list of sample sets supported by the library is returned by {@link Rhombus#sampleSets}.
+ * The job of the sample resolver is to turn those strings into a map from MIDI pitches (0-127)
+ * to Web Audio AudioBuffer objects. See the demos folder in the [GitHub repo]{@link https://github.com/soundsplosion/Rhombus} for an example implementation.
+ *
+ * @param {Rhombus~SampleResolver} resolver The function used to resolve samples.
+ */
 Rhombus.prototype.setSampleResolver = function(resolver) {
   this._sampleResolver = resolver;
 };
 
+/**
+ * @returns {String} A JSON version of the song suitable for importing with {@link Rhombus#importSong}.
+ */
 Rhombus.prototype.exportSong = function() {
   this._song._curId = this.getCurId();
   return JSON.stringify(this._song);
 };
 
+/**
+ * @returns {Rhombus.Song} The current song of this Rhombus instance.
+ */
 Rhombus.prototype.getSong = function() {
   return this._song;
 };
@@ -5275,6 +5345,7 @@ Rhombus.Undo.prototype._clearUndoStack = function() {
 };
 
 /** Returns true if there are actions to undo. */
+/** @returns {Boolean} true if there are actions to undo. */
 Rhombus.Undo.prototype.canUndo = function() {
   return this._undoStack.length > 0;
 };

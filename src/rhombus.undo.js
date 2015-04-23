@@ -26,6 +26,7 @@ Rhombus.Undo.prototype._clearUndoStack = function() {
 };
 
 /** Returns true if there are actions to undo. */
+/** @returns {Boolean} true if there are actions to undo. */
 Rhombus.Undo.prototype.canUndo = function() {
   return this._undoStack.length > 0;
 };
