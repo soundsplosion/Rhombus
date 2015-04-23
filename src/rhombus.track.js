@@ -272,11 +272,6 @@
         return undefined;
       }
 
-      // Don't allow overlapping playlist items
-      if (this.checkOverlap(start, start+length)) {
-        return undefined;
-      }
-
       // ptnId myst belong to an existing pattern
       if (notDefined(r._song._patterns[ptnId])) {
         return undefined;
