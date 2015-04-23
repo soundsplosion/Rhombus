@@ -4251,13 +4251,11 @@
 
               track._targets.forEach(function(id) {
                 var instr = r.graphLookup(id);
-                // TODO: set the instrument stuff here
-                //instr.
+                instr._setAutomationValueAtTime(ev.getValue(), realTime);
               });
               track._effectTargets.forEach(function(id) {
-                // TODO: make this do proper routing, mapping, etc.
                 var eff = r.graphLookup(id);
-                eff.output.gain.setValueAtTime(ev.getValue(), realTime);
+                eff._setAutomationValueAtTime(ev.getValue(), realTime);
               });
             }
 
@@ -5564,9 +5562,18 @@
       }
     }
 
+    // The default implementation changes volume.
+    // Specific instruments and effects can handle this their own way.
+    function setAutomationValueAtTime(value, time) {
+      if (this.isInstrument() || this.isEffect()) {
+        this.output.gain.setValueAtTime(value, time);
+      }
+    }
+
     r._addAudioNodeFunctions = function(ctr) {
       ctr.prototype._internalGraphConnect = internalGraphConnect;
       ctr.prototype._internalGraphDisconnect = internalGraphDisconnect;
+      ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
     };
 
   };
