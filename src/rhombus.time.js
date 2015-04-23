@@ -284,7 +284,7 @@
     };
 
     r.startPlayback = function() {
-      if (!this._active || playing) {
+      if (this._disposed || playing) {
         return;
       }
 
@@ -308,7 +308,7 @@
     };
 
     r.stopPlayback = function() {
-      if (!this._active || !playing) {
+      if (this._disposed || !playing) {
         return;
       }
 
