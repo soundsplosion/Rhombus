@@ -72,7 +72,6 @@ function Rhombus(constraints) {
   Rhombus._samplerSetup(this);
 
   // Effects
-  Rhombus._effectSetup(this);
   Rhombus._masterSetup(this);
   Rhombus._wrappedEffectSetup(this);
   Rhombus._scriptEffectSetup(this);
