@@ -3220,8 +3220,21 @@ Rhombus.prototype.getGlobalTarget = function() {
         return notes;
       },
 
-      getNotesAtTick: function(tick, lowPitch, highPitch) {
-        return this._noteMap.getNotesAtTick(tick, lowPitch, highPitch);
+      getNotesAtTick: function(tick, lowPitch, highPitch, single) {
+        var selection = this._noteMap.getNotesAtTick(tick, lowPitch, highPitch);
+
+        if (notDefined(selection) || selection.length < 2 || notDefined(single) || !single) {
+          return selection;
+        }
+
+        var shortest = selection[0];
+
+        for (var i = 0; i < selection.length; i++) {
+          var note = selection[i];
+          shortest = (note._length < shortest._length) ? note : shortest;
+        }
+
+        return [shortest];
       },
 
       getSelectedNotes: function() {
