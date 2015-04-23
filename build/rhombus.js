@@ -2345,15 +2345,25 @@ Rhombus.prototype.getGlobalTarget = function() {
  * @implements {Rhombus.GraphNode}
  */
 
-/*** Prevent the above comment from sticking here. */
+/**
+ * @returns {Array} An array of all the possible effect strings that can be passed into {@link Rhombus#addEffect}.
+ */
 Rhombus.prototype.effectTypes = function() {
   return ["dist", "filt", "eq", "dely", "comp", "gain", "bitc", "revb", "chor", "scpt"];
 };
 
+/**
+ * @returns {Array} An array of the strings to display in the UI for each effect type, parallel with {@link Rhombus#effectTypes}.
+ */
 Rhombus.prototype.effectDisplayNames = function() {
   return ["Distortion", "Filter", "EQ", "Delay", "Compressor", "Gain", "Bitcrusher", "Reverb", "Chorus", "Script"];
 };
 
+/**
+ * Adds an effect of the given type to the current song.
+ * @param {String} type A type from the array returned from {@link Rhombus#effectTypes}.
+ * @returns {Number} The id of the newly added effect
+ */
 Rhombus.prototype.addEffect = function(type, json) {
   function masterAdded(song) {
     var effs = song.getEffects();
@@ -2457,6 +2467,13 @@ Rhombus.prototype.addEffect = function(type, json) {
   return eff._id;
 };
 
+/**
+ * Removes the effect with the given id from the current song.
+ * The master effect cannot be removed.
+ *
+ * @param {Rhombus.Effect|Number} effectOrId The effect to remove, or its id.
+ * @returns {Boolean} true if the effect was in the song, false otherwise
+ */
 Rhombus.prototype.removeEffect = function(effectOrId) {
   function inToId(effectOrId) {
     var id;
@@ -2516,6 +2533,10 @@ Rhombus.prototype._addEffectFunctions = function(ctr) {
     this.set(unnormalized);
   }
 
+  /**
+   * @returns {Boolean} true if this effect is the master effect, false otherwise.
+   * @memberof Rhombus.Effect.prototype
+   */
   function isMaster() {
     return false;
   }
