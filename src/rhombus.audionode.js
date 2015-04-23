@@ -40,9 +40,18 @@
       }
     }
 
+    // The default implementation changes volume.
+    // Specific instruments and effects can handle this their own way.
+    function setAutomationValueAtTime(value, time) {
+      if (this.isInstrument() || this.isEffect()) {
+        this.output.gain.setValueAtTime(value, time);
+      }
+    }
+
     r._addAudioNodeFunctions = function(ctr) {
       ctr.prototype._internalGraphConnect = internalGraphConnect;
       ctr.prototype._internalGraphDisconnect = internalGraphDisconnect;
+      ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
     };
 
   };

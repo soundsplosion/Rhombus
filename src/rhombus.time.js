@@ -137,13 +137,11 @@
 
               track._targets.forEach(function(id) {
                 var instr = r.graphLookup(id);
-                // TODO: set the instrument stuff here
-                //instr.
+                instr._setAutomationValueAtTime(ev.getValue(), realTime);
               });
               track._effectTargets.forEach(function(id) {
-                // TODO: make this do proper routing, mapping, etc.
                 var eff = r.graphLookup(id);
-                eff.output.gain.setValueAtTime(ev.getValue(), realTime);
+                eff._setAutomationValueAtTime(ev.getValue(), realTime);
               });
             }
 
@@ -286,7 +284,7 @@
     };
 
     r.startPlayback = function() {
-      if (!this._active || playing) {
+      if (this._disposed || playing) {
         return;
       }
 
@@ -310,7 +308,7 @@
     };
 
     r.stopPlayback = function() {
-      if (!this._active || !playing) {
+      if (this._disposed || !playing) {
         return;
       }
 
