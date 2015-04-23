@@ -53,7 +53,12 @@ function Rhombus(constraints) {
 
 
   Rhombus._midiSetup(this);
+
+  /**
+   * @member {Rhombus.Undo}
+   */
   this.Undo = new Rhombus.Undo();
+
   Rhombus._graphSetup(this);
   Rhombus._patternSetup(this);
   Rhombus._trackSetup(this);
