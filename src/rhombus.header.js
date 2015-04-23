@@ -51,8 +51,9 @@ function Rhombus(constraints) {
     return curId;
   };
 
+
   Rhombus._midiSetup(this);
-  Rhombus._undoSetup(this);
+  this.Undo = new Rhombus.Undo();
   Rhombus._graphSetup(this);
   Rhombus._patternSetup(this);
   Rhombus._trackSetup(this);

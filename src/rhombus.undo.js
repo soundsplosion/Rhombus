@@ -2,38 +2,42 @@
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-(function(Rhombus) {
-  Rhombus._undoSetup = function(r) {
+/**
+ * A class for managing undo functionality on a Rhombus instance.
+ * Don't create one yourself.
+ * @constructor
+ */
+Rhombus.Undo = function() {
+  this._stackSize = 20;
+  this._undoStack = [];
+};
 
-    var stackSize = 10;
-    var undoStack = [];
+Rhombus.Undo.prototype._addUndoAction = function(f) {
+  var insertIndex = this._undoStack.length;
+  if (this._undoStack.length == this._stackSize) {
+    this._undoStack.shift();
+    insertIndex -= 1;
+  }
+  this._undoStack[insertIndex] = f;
+};
 
-    r.Undo = {};
+Rhombus.Undo.prototype._clearUndoStack = function() {
+  this._undoStack = [];
+};
 
-    // TODO: add redo
-    r.Undo._addUndoAction = function(f) {
-      var insertIndex = undoStack.length;
-      if (undoStack.length >= stackSize) {
-        undoStack.shift();
-        insertIndex -= 1;
-      }
-      undoStack[insertIndex] = f;
-    };
+/** Returns true if there are actions to undo. */
+Rhombus.Undo.prototype.canUndo = function() {
+  return this._undoStack.length > 0;
+};
 
-    r.Undo._clearUndoStack = function() {
-      undoStack = [];
-    };
-
-    r.Undo.canUndo = function() {
-      return undoStack.length > 0;
-    };
-
-    r.Undo.doUndo = function() {
-      if (r.Undo.canUndo()) {
-        var action = undoStack.pop();
-        action();
-      }
-    };
-
-  };
-})(this.Rhombus);
+/**
+ * Executes the most recent undo action, changing Rhombus state.
+ * This call can drastically change the song state in Rhombus, so make sure
+ * to refresh any data you need to (i.e. everything).
+ */
+Rhombus.Undo.prototype.doUndo = function() {
+  if (this.canUndo()) {
+    var action = this._undoStack.pop();
+    action();
+  }
+};
