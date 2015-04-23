@@ -858,7 +858,6 @@
     "type" : [Rhombus._map.mapDiscrete("lowpass", "highpass", "bandpass", "lowshelf",
                          "highshelf", "peaking", "notch", "allpass"), rawDisplay, 0],
     "frequency" : [Rhombus._map.freqMapFn, hzDisplay, 1.0],
-    "rolloff" : [Rhombus._map.mapDiscrete(-12, -24, -48), dbDisplay, 0.5],
     // TODO: verify this is good
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     // TODO: verify this is good
@@ -2674,6 +2673,11 @@
 
     filter.prototype.displayName = function() {
       return "Filter";
+    };
+
+    filter.prototype.setAutomationValueAtTime = function(value, time) {
+      var toSet = this._unnormalizeMap["frequency"][0](value);
+      this._filter.frequency.setValueAtTime(toSet, time);
     };
 
     // EQ

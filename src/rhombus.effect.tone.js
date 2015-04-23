@@ -92,6 +92,11 @@
       return "Filter";
     };
 
+    filter.prototype.setAutomationValueAtTime = function(value, time) {
+      var toSet = this._unnormalizeMap["frequency"][0](value);
+      this._filter.frequency.setValueAtTime(toSet, time);
+    };
+
     // EQ
     function eq() {
       Tone.Effect.call(this);
