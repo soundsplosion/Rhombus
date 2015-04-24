@@ -108,7 +108,7 @@ Rhombus.Song.prototype.getPatterns = function() {
  */
 Rhombus.Song.prototype.addPattern = function(pattern) {
   if (notDefined(pattern)) {
-    var pattern = new this._r.Pattern();
+    var pattern = new Rhombus.Pattern();
   }
   this._patterns[pattern._id] = pattern;
 
@@ -288,7 +288,7 @@ Rhombus.prototype.importSong = function(json) {
     var pattern = patterns[ptnId];
     var noteMap = pattern._noteMap;
 
-    var newPattern = new this.Pattern(+ptnId);
+    var newPattern = new Rhombus.Pattern(+ptnId);
 
     newPattern._name = pattern._name;
     newPattern._length = pattern._length;
@@ -298,7 +298,7 @@ Rhombus.prototype.importSong = function(json) {
     }
 
     for (var noteId in noteMap) {
-      var note = new this.Note(+noteMap[noteId]._pitch,
+      var note = new Rhombus.Note(+noteMap[noteId]._pitch,
                                +noteMap[noteId]._start,
                                +noteMap[noteId]._length,
                                +noteMap[noteId]._velocity || 1,
@@ -350,9 +350,9 @@ Rhombus.prototype.importSong = function(json) {
   for (var instIdIdx in instruments._slots) {
     var instId = instruments._slots[instIdIdx];
     var inst = instruments._map[instId];
-    console.log("[Rhomb.importSong] - adding instrument of type " + inst._type);
+    console.log("[Rhombus.importSong] - adding instrument of type " + inst._type);
     if (isDefined(inst._sampleSet)) {
-      console.log("[Rhomb.importSong] - sample set is: " + inst._sampleSet);
+      console.log("[Rhombus.importSong] - sample set is: " + inst._sampleSet);
     }
     this.addInstrument(inst._type, inst, +instIdIdx, inst._sampleSet);
   }

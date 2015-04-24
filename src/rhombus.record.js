@@ -5,7 +5,7 @@
   Rhombus._recordSetup = function(r) {
     r.Record = {};
 
-    r._recordBuffer = new r.Pattern();
+    r._recordBuffer = new Rhombus.Pattern();
 
     r._recordEnabled = false;
 
@@ -23,7 +23,7 @@
     // Adds an RtNote with the given parameters to the record buffer
     r.Record.addToBuffer = function(rtNote) {
       if (isDefined(rtNote)) {
-        var note = new r.Note(rtNote._pitch,
+        var note = new Rhombus.Note(rtNote._pitch,
                               Math.round(rtNote._start),
                               Math.round(rtNote._end - rtNote._start),
                               rtNote._velocity);
