@@ -490,8 +490,12 @@
     return mapper;
   }
 
-  Rhombus._map.mergeInObject = function(base, toAdd) {
+  Rhombus._map.mergeInObject = function(base, toAdd, allowed) {
     if (typeof toAdd !== "object") {
+      return;
+    }
+
+    if (typeof allowed !== "object") {
       return;
     }
 
@@ -504,18 +508,23 @@
         continue;
       }
 
-      if (key in base) {
-        var oldValue = base[key];
-        if (typeof oldValue === "object" && typeof value === "object") {
-          Rhombus._map.mergeInObject(base[key], value);
-        } else {
-          base[key] = value;
+      if (!(key in allowed)) {
+        continue;
+      }
+
+      var allowedValue = allowed[key];
+      var newIsObj = typeof value === "object";
+      var allowedIsObj = typeof allowedValue === "object";
+      if (newIsObj && allowedIsObj) {
+        if (!(key in base)) {
+          base[key] = {};
         }
+        Rhombus._map.mergeInObject(base[key], value, allowedValue);
       } else {
         base[key] = value;
       }
     }
-  }
+  };
 
   Rhombus._map.subtreeCount = function(obj) {
     var count = 0;
@@ -598,7 +607,7 @@
           // We matched the first part of the name
           var newName = name.substring(key.length+1);
           var generated = Rhombus._map.getParameterValueByName(value, newName);
-          if (isUndefined(generated)) {
+          if (notDefined(generated)) {
             return;
           } else {
             return generated;

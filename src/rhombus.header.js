@@ -51,12 +51,17 @@ function Rhombus(constraints) {
     return curId;
   };
 
+
   Rhombus._midiSetup(this);
-  Rhombus._undoSetup(this);
+
+  /**
+   * @member {Rhombus.Undo}
+   */
+  this.Undo = new Rhombus.Undo();
+
   Rhombus._graphSetup(this);
   Rhombus._patternSetup(this);
   Rhombus._trackSetup(this);
-  Rhombus._songSetup(this);
   Rhombus._paramSetup(this);
   Rhombus._recordSetup(this);
   Rhombus._audioNodeSetup(this);
@@ -67,7 +72,6 @@ function Rhombus(constraints) {
   Rhombus._samplerSetup(this);
 
   // Effects
-  Rhombus._effectSetup(this);
   Rhombus._masterSetup(this);
   Rhombus._wrappedEffectSetup(this);
   Rhombus._scriptEffectSetup(this);

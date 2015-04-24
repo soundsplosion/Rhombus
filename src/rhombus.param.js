@@ -21,7 +21,7 @@
     };
 
     function trackParams(params) {
-      Rhombus._map.mergeInObject(this._currentParams, params);
+      Rhombus._map.mergeInObject(this._currentParams, params, this._unnormalizeMap);
     }
 
     function parameterCount() {
