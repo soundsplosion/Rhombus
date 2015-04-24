@@ -254,7 +254,7 @@
         "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
       },
       "envelope" : Rhombus._map.envelopeMap,
-      "filter" : Rhombus._map.filterMap,
+      "filter" : Rhombus._map.synthFilterMap,
       "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
       "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0.5]
     };

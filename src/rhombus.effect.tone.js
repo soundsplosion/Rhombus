@@ -27,7 +27,7 @@
     r._Distortion = dist;
 
     dist.prototype._unnormalizeMap = r._makeEffectMap({
-      "distortion" : [Rhombus._map.mapIdentity, rawDisplay, 0.4],
+      "distortion" : [Rhombus._map.mapLinear(0, 4), rawDisplay, 0.4],
       "oversample" : [Rhombus._map.mapDiscrete("none", "2x", "4x"), rawDisplay, 0.0]
     });
 
