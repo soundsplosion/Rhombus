@@ -299,10 +299,10 @@ Rhombus.prototype.importSong = function(json) {
 
     for (var noteId in noteMap) {
       var note = new Rhombus.Note(+noteMap[noteId]._pitch,
-                               +noteMap[noteId]._start,
-                               +noteMap[noteId]._length,
-                               +noteMap[noteId]._velocity || 1,
-                               +noteId);
+                                  +noteMap[noteId]._start,
+                                  +noteMap[noteId]._length,
+                                  +noteMap[noteId]._velocity || 1,
+                                  +noteId);
 
       newPattern.addNote(note);
     }

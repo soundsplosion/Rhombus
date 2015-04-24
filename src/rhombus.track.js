@@ -275,7 +275,7 @@ Rhombus.Track.prototype.addToPlaylist = function(ptnId, start, length) {
     return undefined;
   }
 
-  var newItem = new thisr.PlaylistItem(this._id, ptnId, start, length);
+  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, length);
   this._playlist[newItem._id] = newItem;
 
   var that = this;

@@ -387,12 +387,12 @@
         return false;
       }
 
-      pattern._automation.insert(time, new Rhomb.AutomationEvent(time, value));
+      pattern._automation.insert(time, new Rhombus.AutomationEvent(time, value));
 
       /*
-      r.Undo._addUndoAction(function() {
+        r.Undo._addUndoAction(function() {
         pattern._automation.delete(time);
-      });
+        });
       */
 
       return true;
@@ -418,11 +418,11 @@
       }
 
       /*
-      if (!internal) {
+        if (!internal) {
         r.Undo._addUndoAction(function() {
-          pattern._automation.insert(time, theEvent);
+        pattern._automation.insert(time, theEvent);
         });
-      }
+        }
       */
 
       pattern._automation.delete(theEvent.getTime());
@@ -438,12 +438,12 @@
       }
 
       /*
-      r.Undo._addUndoAction(function() {
+        r.Undo._addUndoAction(function() {
         for (var i = 0; i < events.length; i++) {
-          var ev = events[i];
-          pattern._automation.insert(ev.getTime(), ev);
+        var ev = events[i];
+        pattern._automation.insert(ev.getTime(), ev);
         }
-      });
+        });
       */
     }
 
@@ -458,9 +458,9 @@
       var oldValue = theEvent._value;
 
       /*
-      r.Undo._addUndoAction(function() {
+        r.Undo._addUndoAction(function() {
         theEvent._value = oldValue;
-      });
+        });
       */
 
       theEvent._value = value;
@@ -475,10 +475,10 @@
       }
 
       /*
-      var oldValue = theEvent._value;
-      r.Undo._addUndoAction(function() {
+        var oldValue = theEvent._value;
+        r.Undo._addUndoAction(function() {
         theEvent._value = oldValue;
-      });
+        });
       */
 
       theEvent._value = newValue;
@@ -493,15 +493,15 @@
         return undefined;
       }
 
-      var dstPtn = new Rhomb.Pattern();
+      var dstPtn = new Rhombus.Pattern();
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
           var srcNote = node.data[i];
-          var dstNote = new Rhomb.Note(srcNote._pitch,
-                                 srcNote._start,
-                                 srcNote._length,
-                                 srcNote._velocity);
+          var dstNote = new Rhombus.Note(srcNote._pitch,
+                                         srcNote._start,
+                                         srcNote._length,
+                                         srcNote._velocity);
 
           dstPtn.addNote(dstNote);
         }
@@ -530,8 +530,8 @@
         return undefined;
       }
 
-      var dstL = new Rhomb.Pattern();
-      var dstR = new Rhomb.Pattern();
+      var dstL = new Rhombus.Pattern();
+      var dstR = new Rhombus.Pattern();
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
@@ -558,7 +558,7 @@
           }
 
           // Create a new note and add it to the appropriate destination pattern
-          var dstNote = new Rhomb.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
+          var dstNote = new Rhombus.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
           dstPtn._noteMap[dstNote._id] = dstNote;
         }
       });

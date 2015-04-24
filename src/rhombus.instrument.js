@@ -238,7 +238,7 @@
         velocity = 0.5;
       }
 
-      var rtNote = new this.RtNote(pitch,
+      var rtNote = new Rhombus.RtNote(pitch,
                                    velocity,
                                    Math.round(this.getPosTicks()),
                                    0,

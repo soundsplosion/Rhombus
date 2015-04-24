@@ -1725,7 +1725,7 @@ Rhombus.prototype.getGlobalTarget = function() {
         velocity = 0.5;
       }
 
-      var rtNote = new this.RtNote(pitch,
+      var rtNote = new Rhombus.RtNote(pitch,
                                    velocity,
                                    Math.round(this.getPosTicks()),
                                    0,
@@ -2090,7 +2090,9 @@ Rhombus.prototype.getGlobalTarget = function() {
       }
 
       // just a hack to stop this control from showing up
-      options["dry/wet"] = undefined;
+      if (isDefined(options)) {
+        options["dry/wet"] = undefined;
+      }
 
       this._type = type;
       this._displayName = displayName;
@@ -2993,7 +2995,6 @@ Rhombus.NoteMap = function(id) {
   this._avl = new AVL();
 };
 
-
 Rhombus.NoteMap.prototype.addNote = function(note) {
   if (!(note instanceof Rhombus.Note)) {
     console.log("[Rhombus] - trying to add non-Note object to NoteMap");
@@ -3717,7 +3718,7 @@ Rhombus.Track.prototype.addToPlaylist = function(ptnId, start, length) {
     return undefined;
   }
 
-  var newItem = new thisr.PlaylistItem(this._id, ptnId, start, length);
+  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, length);
   this._playlist[newItem._id] = newItem;
 
   var that = this;
@@ -4136,10 +4137,10 @@ Rhombus.prototype.importSong = function(json) {
 
     for (var noteId in noteMap) {
       var note = new Rhombus.Note(+noteMap[noteId]._pitch,
-                               +noteMap[noteId]._start,
-                               +noteMap[noteId]._length,
-                               +noteMap[noteId]._velocity || 1,
-                               +noteId);
+                                  +noteMap[noteId]._start,
+                                  +noteMap[noteId]._length,
+                                  +noteMap[noteId]._velocity || 1,
+                                  +noteId);
 
       newPattern.addNote(note);
     }
@@ -5120,12 +5121,12 @@ Rhombus.prototype.getSong = function() {
         return false;
       }
 
-      pattern._automation.insert(time, new Rhomb.AutomationEvent(time, value));
+      pattern._automation.insert(time, new Rhombus.AutomationEvent(time, value));
 
       /*
-      r.Undo._addUndoAction(function() {
+        r.Undo._addUndoAction(function() {
         pattern._automation.delete(time);
-      });
+        });
       */
 
       return true;
@@ -5151,11 +5152,11 @@ Rhombus.prototype.getSong = function() {
       }
 
       /*
-      if (!internal) {
+        if (!internal) {
         r.Undo._addUndoAction(function() {
-          pattern._automation.insert(time, theEvent);
+        pattern._automation.insert(time, theEvent);
         });
-      }
+        }
       */
 
       pattern._automation.delete(theEvent.getTime());
@@ -5171,12 +5172,12 @@ Rhombus.prototype.getSong = function() {
       }
 
       /*
-      r.Undo._addUndoAction(function() {
+        r.Undo._addUndoAction(function() {
         for (var i = 0; i < events.length; i++) {
-          var ev = events[i];
-          pattern._automation.insert(ev.getTime(), ev);
+        var ev = events[i];
+        pattern._automation.insert(ev.getTime(), ev);
         }
-      });
+        });
       */
     }
 
@@ -5191,9 +5192,9 @@ Rhombus.prototype.getSong = function() {
       var oldValue = theEvent._value;
 
       /*
-      r.Undo._addUndoAction(function() {
+        r.Undo._addUndoAction(function() {
         theEvent._value = oldValue;
-      });
+        });
       */
 
       theEvent._value = value;
@@ -5208,10 +5209,10 @@ Rhombus.prototype.getSong = function() {
       }
 
       /*
-      var oldValue = theEvent._value;
-      r.Undo._addUndoAction(function() {
+        var oldValue = theEvent._value;
+        r.Undo._addUndoAction(function() {
         theEvent._value = oldValue;
-      });
+        });
       */
 
       theEvent._value = newValue;
@@ -5226,15 +5227,15 @@ Rhombus.prototype.getSong = function() {
         return undefined;
       }
 
-      var dstPtn = new Rhomb.Pattern();
+      var dstPtn = new Rhombus.Pattern();
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
           var srcNote = node.data[i];
-          var dstNote = new Rhomb.Note(srcNote._pitch,
-                                 srcNote._start,
-                                 srcNote._length,
-                                 srcNote._velocity);
+          var dstNote = new Rhombus.Note(srcNote._pitch,
+                                         srcNote._start,
+                                         srcNote._length,
+                                         srcNote._velocity);
 
           dstPtn.addNote(dstNote);
         }
@@ -5263,8 +5264,8 @@ Rhombus.prototype.getSong = function() {
         return undefined;
       }
 
-      var dstL = new Rhomb.Pattern();
-      var dstR = new Rhomb.Pattern();
+      var dstL = new Rhombus.Pattern();
+      var dstR = new Rhombus.Pattern();
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
@@ -5291,7 +5292,7 @@ Rhombus.prototype.getSong = function() {
           }
 
           // Create a new note and add it to the appropriate destination pattern
-          var dstNote = new Rhomb.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
+          var dstNote = new Rhombus.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
           dstPtn._noteMap[dstNote._id] = dstNote;
         }
       });
@@ -5442,61 +5443,65 @@ Rhombus.Undo.prototype.doUndo = function() {
 //! rhombus.record.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
-(function(Rhombus) {
-  Rhombus._recordSetup = function(r) {
-    r.Record = {};
 
-    r._recordBuffer = new Rhombus.Pattern();
+var thisr;
+Rhombus._recordSetup = function(r) {
+  thisr = r;
+  thisr.Record = {};
+  thisr._recordBuffer = new Rhombus.Pattern();
+  thisr._recordEnabled = false;
+  thisr.getRecordEnabled = getRecordEnabled;
+  thisr.setRecordEnabled = setRecordEnabled;
+  thisr.Record.addToBuffer = addToBuffer;
+  thisr.Record.dumpBuffer = dumpBuffer;
+  thisr.Record.clearBuffer = clearBuffer;
+}
 
-    r._recordEnabled = false;
+getRecordEnabled = function() {
+  return thisr._recordEnabled;
+};
 
-    r.getRecordEnabled = function() {
-      return this._recordEnabled;
-    };
+setRecordEnabled = function(enabled) {
+  if (typeof enabled === "boolean") {
+    document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": enabled}));
+    return thisr._recordEnabled = enabled;
+  }
+};
 
-    r.setRecordEnabled = function(enabled) {
-      if (typeof enabled === "boolean") {
-        document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": enabled}));
-        return this._recordEnabled = enabled;
-      }
-    };
+// Adds an RtNote with the given parameters to the record buffer
+addToBuffer = function(rtNote) {
+  if (isDefined(rtNote)) {
+    var note = new Rhombus.Note(rtNote._pitch,
+                                Math.round(rtNote._start),
+                                Math.round(rtNote._end - rtNote._start),
+                                rtNote._velocity);
 
-    // Adds an RtNote with the given parameters to the record buffer
-    r.Record.addToBuffer = function(rtNote) {
-      if (isDefined(rtNote)) {
-        var note = new Rhombus.Note(rtNote._pitch,
-                              Math.round(rtNote._start),
-                              Math.round(rtNote._end - rtNote._start),
-                              rtNote._velocity);
-
-        if (isDefined(note)) {
-          r._recordBuffer.addNote(note);
-          document.dispatchEvent(new CustomEvent("rhombus-newbuffernote", {"detail": note}));
-        }
-        else {
-          console.log("[Rhombus.Record] - note is undefined");
-        }
-      }
-      else {
-        console.log("[Rhombus.Record] - rtNote is undefined");
-      }
-    };
-
-    // Dumps the buffer of recorded RtNotes as a Note array, most probably
-    // to be inserted into a new or existing pattern
-    r.Record.dumpBuffer = function() {
-      if (r._recordBuffer.length < 1) {
-        return undefined;
-      }
-
-      return r._recordBuffer.getAllNotes();
+    if (isDefined(note)) {
+      thisr._recordBuffer.addNote(note);
+      document.dispatchEvent(new CustomEvent("rhombus-newbuffernote", {"detail": note}));
     }
+    else {
+      console.log("[Rhombus.Record] - note is undefined");
+    }
+  }
+  else {
+    console.log("[Rhombus.Record] - rtNote is undefined");
+  }
+};
 
-    r.Record.clearBuffer = function() {
-      r._recordBuffer.deleteNotes(r._recordBuffer.getAllNotes());
-    };
-  };
-})(this.Rhombus);
+// Dumps the buffer of recorded RtNotes as a Note array, most probably
+// to be inserted into a new or existing pattern
+dumpBuffer = function() {
+  if (thisr._recordBuffer.length < 1) {
+    return undefined;
+  }
+
+  return thisr._recordBuffer.getAllNotes();
+}
+
+clearBuffer = function() {
+  thisr._recordBuffer.deleteNotes(thisr._recordBuffer.getAllNotes());
+};
 
 //! rhombus.effect.midi.js
 //! authors: Spencer Phippen, Tim Grant

@@ -18,7 +18,6 @@ Rhombus.NoteMap = function(id) {
   this._avl = new AVL();
 };
 
-
 Rhombus.NoteMap.prototype.addNote = function(note) {
   if (!(note instanceof Rhombus.Note)) {
     console.log("[Rhombus] - trying to add non-Note object to NoteMap");
