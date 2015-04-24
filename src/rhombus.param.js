@@ -63,6 +63,11 @@
       }
 
       var displayValue = curValue;
+
+      if (isNumber(curValue)) {
+        displayValue = Math.round(curValue * 1000) / 1000;
+      }
+
       var disp = Rhombus._map.getDisplayFunctionByName(this._unnormalizeMap, paramName);
       return disp(displayValue);
     }
@@ -104,7 +109,7 @@
       for (var i = 0; i < this.parameterCount(); i++) {
         // paramter range and value stuff
         var value = this.normalizedGet(i);
-        
+
         // tokenize the parameter name
         var paramName = this.parameterName(i);
         var tokens = paramName.split(":");
@@ -121,8 +126,8 @@
 
             // style the label
             levelDiv.style.textAlign = "center";
-            levelDiv.appendChild(document.createElement("b"));            
-            
+            levelDiv.appendChild(document.createElement("b"));
+
             // append the elements
             levelDiv.appendChild(document.createElement("br"));
             levelDiv.appendChild(label);
@@ -145,6 +150,14 @@
         ctrl.setAttribute("value",  value);
 
         div.appendChild(ctrl);
+
+        var valueSpan = document.createElement("span");
+        valueSpan.setAttribute("class", "valueSpan");
+        valueSpan.setAttribute("name",  "paramValue_" + i);
+        valueSpan.setAttribute("id",    "paramValue_" + i);
+        valueSpan.innerHTML = this.parameterDisplayString(i);
+        div.appendChild(valueSpan);
+
         div.appendChild(document.createElement("br"));
       }
 
