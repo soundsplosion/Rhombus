@@ -169,10 +169,6 @@
       this.triggered = {};
     };
 
-    Sampler.prototype._trackParams = function(params) {
-      Rhombus._map.mergeInObject(this._currentParams, params);
-    };
-
     Sampler.prototype.toJSON = function() {
       var params = {
         "params": this._currentParams,

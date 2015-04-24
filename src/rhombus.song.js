@@ -233,6 +233,24 @@ Rhombus.Song.prototype.getEffects = function() {
   return this._effects;
 };
 
+Rhombus.Song.prototype.toJSON = function() {
+  return {
+    "_artist"      : this._artist,
+    "_bpm"         : this._bpm,
+    "_curId"       : this._curId,
+    "_effects"     : this._effects,
+    "_instruments" : this._instruments,
+    "_length"      : this._length,
+    "_loopEnd"     : this._loopEnd,
+    "_loopStart"   : this._loopStart,
+    "_noteCount"   : this._noteCount,
+    "_patterns"    : this._patterns,
+    "_soloList"    : this._soloList,
+    "_title"       : this._title,
+    "_tracks"      : this._tracks
+  };
+};
+
 /**
  * @returns {Number} The length of this Rhombus instance's current song, in seconds.
  */

@@ -596,8 +596,12 @@ Rhombus.prototype.getGlobalTarget = function() {
     return mapper;
   }
 
-  Rhombus._map.mergeInObject = function(base, toAdd) {
+  Rhombus._map.mergeInObject = function(base, toAdd, allowed) {
     if (typeof toAdd !== "object") {
+      return;
+    }
+
+    if (typeof allowed !== "object") {
       return;
     }
 
@@ -610,18 +614,23 @@ Rhombus.prototype.getGlobalTarget = function() {
         continue;
       }
 
-      if (key in base) {
-        var oldValue = base[key];
-        if (typeof oldValue === "object" && typeof value === "object") {
-          Rhombus._map.mergeInObject(base[key], value);
-        } else {
-          base[key] = value;
+      if (!(key in allowed)) {
+        continue;
+      }
+
+      var allowedValue = allowed[key];
+      var newIsObj = typeof value === "object";
+      var allowedIsObj = typeof allowedValue === "object";
+      if (newIsObj && allowedIsObj) {
+        if (!(key in base)) {
+          base[key] = {};
         }
+        Rhombus._map.mergeInObject(base[key], value, allowedValue);
       } else {
         base[key] = value;
       }
     }
-  }
+  };
 
   Rhombus._map.subtreeCount = function(obj) {
     var count = 0;
@@ -704,7 +713,7 @@ Rhombus.prototype.getGlobalTarget = function() {
           // We matched the first part of the name
           var newName = name.substring(key.length+1);
           var generated = Rhombus._map.getParameterValueByName(value, newName);
-          if (isUndefined(generated)) {
+          if (notDefined(generated)) {
             return;
           } else {
             return generated;
@@ -1294,7 +1303,7 @@ Rhombus.prototype.getGlobalTarget = function() {
     };
 
     function trackParams(params) {
-      Rhombus._map.mergeInObject(this._currentParams, params);
+      Rhombus._map.mergeInObject(this._currentParams, params, this._unnormalizeMap);
     }
 
     function parameterCount() {
@@ -1928,10 +1937,6 @@ Rhombus.prototype.getGlobalTarget = function() {
         sampler.triggerRelease();
       }
       this.triggered = {};
-    };
-
-    Sampler.prototype._trackParams = function(params) {
-      Rhombus._map.mergeInObject(this._currentParams, params);
     };
 
     Sampler.prototype.toJSON = function() {
@@ -4033,6 +4038,24 @@ Rhombus.Song.prototype.getInstruments = function() {
  */
 Rhombus.Song.prototype.getEffects = function() {
   return this._effects;
+};
+
+Rhombus.Song.prototype.toJSON = function() {
+  return {
+    "_artist"      : this._artist,
+    "_bpm"         : this._bpm,
+    "_curId"       : this._curId,
+    "_effects"     : this._effects,
+    "_instruments" : this._instruments,
+    "_length"      : this._length,
+    "_loopEnd"     : this._loopEnd,
+    "_loopStart"   : this._loopStart,
+    "_noteCount"   : this._noteCount,
+    "_patterns"    : this._patterns,
+    "_soloList"    : this._soloList,
+    "_title"       : this._title,
+    "_tracks"      : this._tracks
+  };
 };
 
 /**
