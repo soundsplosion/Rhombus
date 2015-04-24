@@ -165,7 +165,7 @@ Rhombus.Song.prototype.addTrack = function() {
   }
 
   // Create a new Track object
-  var track = new this._r.Track();
+  var track = new Rhombus.Track();
   this._tracks.addObj(track);
 
   var that = this;
@@ -316,7 +316,7 @@ Rhombus.prototype.importSong = function(json) {
     var playlist = track._playlist;
 
     // Create a new track and manually set its ID
-    var newTrack = new this.Track(trkId);
+    var newTrack = new Rhombus.Track(trkId);
 
     newTrack._name = track._name;
 
@@ -335,11 +335,11 @@ Rhombus.prototype.importSong = function(json) {
       var item = playlist[itemId];
       var parentId = trkId;
 
-      var newItem = new this.PlaylistItem(parentId,
-                                          item._ptnId,
-                                          item._start,
-                                          item._length,
-                                          item._id);
+      var newItem = new Rhombus.PlaylistItem(parentId,
+                                             item._ptnId,
+                                             item._start,
+                                             item._length,
+                                             item._id);
 
       newTrack._playlist[+itemId] = newItem;
     }

@@ -167,11 +167,11 @@
               var noteStartTime = curTime + delay;
               var endTime = noteStartTime + r.ticks2Seconds(note._length);
 
-              var rtNote = new r.RtNote(note.getPitch(),
-                                        note.getVelocity(),
-                                        noteStartTime,
-                                        endTime,
-                                        track._id);
+              var rtNote = new Rhombus.RtNote(note.getPitch(),
+                                              note.getVelocity(),
+                                              noteStartTime,
+                                              endTime,
+                                              track._id);
 
               playingNotes[rtNote._id] = rtNote;
 

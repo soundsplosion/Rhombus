@@ -62,6 +62,9 @@ function Rhombus(constraints) {
   Rhombus._graphSetup(this);
   Rhombus._patternSetup(this);
   Rhombus._trackSetup(this);
+
+  this._addGraphFunctions(Rhombus.Track);
+
   Rhombus._paramSetup(this);
   Rhombus._recordSetup(this);
   Rhombus._audioNodeSetup(this);
