@@ -5006,6 +5006,31 @@ Rhombus.prototype.getSong = function() {
       return true;
     };
 
+    r.Edit.applyNoteLengths = function(notes, lengths) {
+      var oldValues = new Array(notes.length);
+      for (var i = 0; i < notes.length; i++) {
+        oldValues[i] = notes[i]._length;
+      }
+
+      r.Undo._addUndoAction(function() {
+        for (var i = 0; i < notes.length; i++) {
+          notes[i]._length = oldValues[i];
+        }
+      });
+
+      // apply the changes
+      for (var i = 0; i < notes.length; i++) {
+        var length = lengths[i];
+        if (length < 1) {
+          r.Undo.doUndo();
+          return false;
+        }
+        notes[i]._length = lengths[i];
+      }
+
+      return true;
+    };
+
     r.Edit.setNoteLengths = function(ptnId, notes, length) {
       // make sure the new length is valid
       if (notDefined(length) || !isInteger(length) || length < 0) {
