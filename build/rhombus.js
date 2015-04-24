@@ -5391,6 +5391,8 @@ Rhombus.Undo.prototype.doUndo = function() {
   Rhombus._recordSetup = function(r) {
     r.Record = {};
 
+    r._recordBuffer = new r.Pattern();
+
     r._recordEnabled = false;
 
     r.getRecordEnabled = function() {
@@ -5404,9 +5406,6 @@ Rhombus.Undo.prototype.doUndo = function() {
       }
     };
 
-    // Temporary buffer for RtNotes which have been recorded
-    var recordBuffer = new Array();
-
     // Adds an RtNote with the given parameters to the record buffer
     r.Record.addToBuffer = function(rtNote) {
       if (isDefined(rtNote)) {
@@ -5417,7 +5416,7 @@ Rhombus.Undo.prototype.doUndo = function() {
                               rtNote._velocity);
 
         if (isDefined(note)) {
-          recordBuffer.push(note);
+          r._recordBuffer.addNote(note);
         }
         else {
           console.log("[Rhombus.Record] - note is undefined");
@@ -5431,15 +5430,15 @@ Rhombus.Undo.prototype.doUndo = function() {
     // Dumps the buffer of recorded RtNotes as a Note array, most probably
     // to be inserted into a new or existing pattern
     r.Record.dumpBuffer = function() {
-      if (recordBuffer.length < 1) {
+      if (r._recordBuffer.length < 1) {
         return undefined;
       }
 
-      return recordBuffer.slice();
+      return r._recordBuffer.getAllNotes();
     }
 
     r.Record.clearBuffer = function() {
-      recordBuffer.splice(0, recordBuffer.length);
+      r._recordBuffer.deleteNotes(r._recordBuffer.getAllNotes());
     };
   };
 })(this.Rhombus);
