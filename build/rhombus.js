@@ -65,7 +65,12 @@ function Rhombus(constraints) {
   this._addGraphFunctions(Rhombus.Track);
 
   Rhombus._paramSetup(this);
-  Rhombus._recordSetup(this);
+
+  /**
+   * @member {Rhombus.Record}
+   */
+  this.Record = new Rhombus.Record(this);
+
   Rhombus._audioNodeSetup(this);
 
   // Instruments
@@ -5439,41 +5444,34 @@ Rhombus.Undo.prototype.doUndo = function() {
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-var thisr;
-Rhombus._recordSetup = function(r) {
-  thisr = r;
-  thisr.Record = {};
-  thisr._recordBuffer = new Rhombus.Pattern(thisr);
-  thisr._recordEnabled = false;
-  thisr.getRecordEnabled = getRecordEnabled;
-  thisr.setRecordEnabled = setRecordEnabled;
-  thisr.Record.addToBuffer = addToBuffer;
-  thisr.Record.dumpBuffer = dumpBuffer;
-  thisr.Record.clearBuffer = clearBuffer;
-}
-
-getRecordEnabled = function() {
-  return thisr._recordEnabled;
+Rhombus.Record = function(r) {
+  this._r = r;
+  this._recordBuffer = new Rhombus.Pattern(r);
+  this._recordEnabled = false;
 };
 
-setRecordEnabled = function(enabled) {
+Rhombus.prototype.getRecordEnabled = function() {
+  return this.Record._recordEnabled;
+};
+
+Rhombus.prototype.setRecordEnabled = function(enabled) {
   if (typeof enabled === "boolean") {
     document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": enabled}));
-    return thisr._recordEnabled = enabled;
+    return this.Record._recordEnabled = enabled;
   }
 };
 
 // Adds an RtNote with the given parameters to the record buffer
-addToBuffer = function(rtNote) {
+Rhombus.Record.prototype.addToBuffer = function(rtNote) {
   if (isDefined(rtNote)) {
     var note = new Rhombus.Note(rtNote._pitch,
                                 Math.round(rtNote._start),
                                 Math.round(rtNote._end - rtNote._start),
                                 rtNote._velocity,
-                                thisr);
+                                this._r);
 
     if (isDefined(note)) {
-      thisr._recordBuffer.addNote(note);
+      this._recordBuffer.addNote(note);
       document.dispatchEvent(new CustomEvent("rhombus-newbuffernote", {"detail": note}));
     }
     else {
@@ -5487,16 +5485,16 @@ addToBuffer = function(rtNote) {
 
 // Dumps the buffer of recorded RtNotes as a Note array, most probably
 // to be inserted into a new or existing pattern
-dumpBuffer = function() {
-  if (thisr._recordBuffer.length < 1) {
+Rhombus.Record.prototype.dumpBuffer = function() {
+  if (this._recordBuffer.length < 1) {
     return undefined;
   }
 
-  return thisr._recordBuffer.getAllNotes();
-}
+  return this._recordBuffer.getAllNotes();
+};
 
-clearBuffer = function() {
-  thisr._recordBuffer.deleteNotes(thisr._recordBuffer.getAllNotes());
+Rhombus.Record.prototype.clearBuffer = function() {
+  this._recordBuffer.deleteNotes(this._recordBuffer.getAllNotes());
 };
 
 //! rhombus.effect.midi.js

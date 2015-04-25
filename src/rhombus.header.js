@@ -65,7 +65,12 @@ function Rhombus(constraints) {
   this._addGraphFunctions(Rhombus.Track);
 
   Rhombus._paramSetup(this);
-  Rhombus._recordSetup(this);
+
+  /**
+   * @member {Rhombus.Record}
+   */
+  this.Record = new Rhombus.Record(this);
+
   Rhombus._audioNodeSetup(this);
 
   // Instruments
