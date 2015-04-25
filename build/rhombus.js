@@ -1748,9 +1748,10 @@ Rhombus.prototype.stopPreviewNote = function(pitch) {
 
 // Maintain an array of the currently sounding preview notes
 Rhombus.prototype.killAllPreviewNotes = function() {
+  var that = this;
   function killRtNotes(noteIds, targets) {
     for (var i = 0; i < targets.length; i++) {
-      var inst = this._song._instruments.getObjById(targets[i]);
+      var inst = that._song._instruments.getObjById(targets[i]);
       if (isDefined(inst)) {
         for (var j = 0; j < noteIds.length; j++) {
           inst.triggerRelease(noteIds[j], 0);
