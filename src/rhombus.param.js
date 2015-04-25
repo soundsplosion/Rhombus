@@ -2,193 +2,186 @@
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-(function(Rhombus) {
-  Rhombus._paramSetup = function(r) {
+Rhombus._addParamFunctions = function(ctr) {
+  function trackParams(params) {
+    Rhombus._map.mergeInObject(this._currentParams, params, this._unnormalizeMap);
+  }
+  ctr.prototype._trackParams = trackParams;
 
-    r._addParamFunctions = function(ctr) {
-      ctr.prototype._trackParams = trackParams;
-      ctr.prototype.parameterCount = parameterCount;
-      ctr.prototype.parameterName = parameterName;
-      ctr.prototype.parameterDisplayString = parameterDisplayString;
-      ctr.prototype.parameterDisplayStringByName = parameterDisplayStringByName;
-      ctr.prototype.normalizedGet = normalizedGet;
-      ctr.prototype.normalizedGetByName = normalizedGetByName;
-      ctr.prototype.normalizedSet = normalizedSet;
-      ctr.prototype.normalizedSetByName = normalizedSetByName;
-      ctr.prototype.getInterface = getInterface;
-      ctr.prototype.getControls = getControls;
-      ctr.prototype.getParamMap = getParamMap;
-    };
+  function parameterCount() {
+    return Rhombus._map.subtreeCount(this._unnormalizeMap);
+  }
+  ctr.prototype.parameterCount = parameterCount;
 
-    function trackParams(params) {
-      Rhombus._map.mergeInObject(this._currentParams, params, this._unnormalizeMap);
+  function parameterName(paramIdx) {
+    var name = Rhombus._map.getParameterName(this._unnormalizeMap, paramIdx);
+    if (typeof name !== "string") {
+      return;
+    }
+    return name;
+  }
+  ctr.prototype.parameterName = parameterName;
+
+  function parameterDisplayString(paramIdx) {
+    return this.parameterDisplayStringByName(this.parameterName(paramIdx));
+  }
+  ctr.prototype.parameterDisplayString = parameterDisplayString;
+
+  function parameterDisplayStringByName(paramName) {
+    var pieces = paramName.split(":");
+
+    var curValue = this._currentParams;
+    for (var i = 0; i < pieces.length; i++) {
+      curValue = curValue[pieces[i]];
+    }
+    if (notDefined(curValue)) {
+      return;
     }
 
-    function parameterCount() {
-      return Rhombus._map.subtreeCount(this._unnormalizeMap);
+    var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, curValue);
+    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap);
+
+    curValue = realObj;
+    for (var i = 0; i < pieces.length; i++) {
+      curValue = curValue[pieces[i]];
+    }
+    if (notDefined(curValue)) {
+      return;
     }
 
-    function parameterName(paramIdx) {
-      var name = Rhombus._map.getParameterName(this._unnormalizeMap, paramIdx);
-      if (typeof name !== "string") {
-        return;
-      }
-      return name;
+    var displayValue = curValue;
+
+    if (isNumber(curValue)) {
+      displayValue = Math.round(curValue * 1000) / 1000;
     }
 
-    function parameterDisplayString(paramIdx) {
-      return this.parameterDisplayStringByName(this.parameterName(paramIdx));
+    var disp = Rhombus._map.getDisplayFunctionByName(this._unnormalizeMap, paramName);
+    return disp(displayValue);
+  }
+  ctr.prototype.parameterDisplayStringByName = parameterDisplayStringByName;
+
+  function normalizedGet(paramIdx) {
+    return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
+  }
+  ctr.prototype.normalizedGet = normalizedGet;
+
+  function normalizedGetByName(paramName) {
+    return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
+  }
+  ctr.prototype.normalizedGetByName = normalizedGetByName;
+
+  function normalizedSet(paramIdx, paramValue) {
+    paramValue = +paramValue;
+    var setObj = Rhombus._map.generateSetObject(this._unnormalizeMap, paramIdx, paramValue);
+    if (typeof setObj !== "object") {
+      return;
     }
+    this._normalizedObjectSet(setObj);
+  }
+  ctr.prototype.normalizedSet = normalizedSet;
 
-    function parameterDisplayStringByName(paramName) {
-      var pieces = paramName.split(":");
-
-      var curValue = this._currentParams;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, curValue);
-      var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap);
-
-      curValue = realObj;
-      for (var i = 0; i < pieces.length; i++) {
-        curValue = curValue[pieces[i]];
-      }
-      if (notDefined(curValue)) {
-        return;
-      }
-
-      var displayValue = curValue;
-
-      if (isNumber(curValue)) {
-        displayValue = Math.round(curValue * 1000) / 1000;
-      }
-
-      var disp = Rhombus._map.getDisplayFunctionByName(this._unnormalizeMap, paramName);
-      return disp(displayValue);
+  function normalizedSetByName(paramName, paramValue) {
+    paramValue = +paramValue;
+    var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, paramValue);
+    if (typeof setObj !== "object") {
+      return;
     }
+    this._normalizedObjectSet(setObj);
+  }
+  ctr.prototype.normalizedSetByName = normalizedSetByName;
 
-    function normalizedGet(paramIdx) {
-      return Rhombus._map.getParameterValue(this._currentParams, paramIdx);
-    }
+  function getInterface() {
+    // create a container for the controls
+    var div = document.createElement("div");
 
-    function normalizedGetByName(paramName) {
-      return Rhombus._map.getParameterValueByName(this._currentParams, paramName);
-    }
+    var newLevel = false;
+    var levelString = "";
 
-    function normalizedSet(paramIdx, paramValue) {
-      paramValue = +paramValue;
-      var setObj = Rhombus._map.generateSetObject(this._unnormalizeMap, paramIdx, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    }
+    // create controls for each of the node parameters
+    for (var i = 0; i < this.parameterCount(); i++) {
+      // paramter range and value stuff
+      var value = this.normalizedGet(i);
 
-    function normalizedSetByName(paramName, paramValue) {
-      paramValue = +paramValue;
-      var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, paramValue);
-      if (typeof setObj !== "object") {
-        return;
-      }
-      this._normalizedObjectSet(setObj);
-    }
+      // tokenize the parameter name
+      var paramName = this.parameterName(i);
+      var tokens = paramName.split(":");
 
-    function getInterface() {
-      // create a container for the controls
-      var div = document.createElement("div");
+      // create header labels for each parameter group
+      if (tokens.length > 1) {
+        if (levelString !== tokens[0]) {
+          // keep track of the top-level parameter group
+          levelString = tokens[0];
 
-      var newLevel = false;
-      var levelString = "";
+          // create a container for the group label
+          var levelDiv = document.createElement("div");
+          var label = document.createTextNode(tokens[0].toUpperCase());
 
-      // create controls for each of the node parameters
-      for (var i = 0; i < this.parameterCount(); i++) {
-        // paramter range and value stuff
-        var value = this.normalizedGet(i);
+          // style the label
+          levelDiv.style.textAlign = "center";
+          levelDiv.appendChild(document.createElement("b"));
 
-        // tokenize the parameter name
-        var paramName = this.parameterName(i);
-        var tokens = paramName.split(":");
-
-        // create header labels for each parameter group
-        if (tokens.length > 1) {
-          if (levelString !== tokens[0]) {
-            // keep track of the top-level parameter group
-            levelString = tokens[0];
-
-            // create a container for the group label
-            var levelDiv = document.createElement("div");
-            var label = document.createTextNode(tokens[0].toUpperCase());
-
-            // style the label
-            levelDiv.style.textAlign = "center";
-            levelDiv.appendChild(document.createElement("b"));
-
-            // append the elements
-            levelDiv.appendChild(document.createElement("br"));
-            levelDiv.appendChild(label);
-            levelDiv.appendChild(document.createElement("br"));
-            div.appendChild(levelDiv);
-          }
+          // append the elements
+          levelDiv.appendChild(document.createElement("br"));
+          levelDiv.appendChild(label);
+          levelDiv.appendChild(document.createElement("br"));
+          div.appendChild(levelDiv);
         }
-
-        // control label
-        div.appendChild(document.createTextNode(tokens[tokens.length - 1]));
-
-        var ctrl = document.createElement("input");
-        ctrl.setAttribute("id",     paramName);
-        ctrl.setAttribute("name",   paramName);
-        ctrl.setAttribute("class",  "newSlider");
-        ctrl.setAttribute("type",   "range");
-        ctrl.setAttribute("min",    0.0);
-        ctrl.setAttribute("max",    1.0);
-        ctrl.setAttribute("step",   0.01);
-        ctrl.setAttribute("value",  value);
-
-        div.appendChild(ctrl);
-
-        var valueSpan = document.createElement("span");
-        valueSpan.setAttribute("class", "valueSpan");
-        valueSpan.setAttribute("name",  "paramValue_" + i);
-        valueSpan.setAttribute("id",    "paramValue_" + i);
-        valueSpan.innerHTML = this.parameterDisplayString(i);
-        div.appendChild(valueSpan);
-
-        div.appendChild(document.createElement("br"));
       }
 
-      return div;
+      // control label
+      div.appendChild(document.createTextNode(tokens[tokens.length - 1]));
+
+      var ctrl = document.createElement("input");
+      ctrl.setAttribute("id",     paramName);
+      ctrl.setAttribute("name",   paramName);
+      ctrl.setAttribute("class",  "newSlider");
+      ctrl.setAttribute("type",   "range");
+      ctrl.setAttribute("min",    0.0);
+      ctrl.setAttribute("max",    1.0);
+      ctrl.setAttribute("step",   0.01);
+      ctrl.setAttribute("value",  value);
+
+      div.appendChild(ctrl);
+
+      var valueSpan = document.createElement("span");
+      valueSpan.setAttribute("class", "valueSpan");
+      valueSpan.setAttribute("name",  "paramValue_" + i);
+      valueSpan.setAttribute("id",    "paramValue_" + i);
+      valueSpan.innerHTML = this.parameterDisplayString(i);
+      div.appendChild(valueSpan);
+
+      div.appendChild(document.createElement("br"));
     }
 
-    function getControls(controlHandler) {
-      var controls = new Array();
-      for (var i = 0; i < this.parameterCount(); i++) {
-        controls.push( { id       : this.parameterName(i),
-                         target   : this,
-                         on       : "input",
-                         callback : controlHandler } );
-      }
+    return div;
+  }
+  ctr.prototype.getInterface = getInterface;
 
-      return controls;
+  function getControls(controlHandler) {
+    var controls = new Array();
+    for (var i = 0; i < this.parameterCount(); i++) {
+      controls.push( { id       : this.parameterName(i),
+                       target   : this,
+                       on       : "input",
+                       callback : controlHandler } );
     }
 
-    function getParamMap() {
-      var map = {};
-      for (var i = 0; i < this.parameterCount(); i++) {
-        var param = {
-          "name"   : this.parameterName(i),
-          "index"  : i,
-          "target" : this
-        };
-        map[this.parameterName(i)] = param;
-      }
+    return controls;
+  }
+  ctr.prototype.getControls = getControls;
 
-      return map;
-    };
+  function getParamMap() {
+    var map = {};
+    for (var i = 0; i < this.parameterCount(); i++) {
+      var param = {
+        "name"   : this.parameterName(i),
+        "index"  : i,
+        "target" : this
+      };
+      map[this.parameterName(i)] = param;
+    }
 
+    return map;
   };
-})(this.Rhombus);
+  ctr.prototype.getParamMap = getParamMap;
+};

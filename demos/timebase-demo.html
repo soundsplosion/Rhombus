@@ -56,7 +56,7 @@ var last = 960 - interval;
 
 var patId = rhomb._song.addPattern();
 function ins(a, b, c) {
-  rhomb.Edit.insertNote(new rhomb.Note(a, b, c, 1.0), patId);
+  rhomb.Edit.insertNote(new Rhombus.Note(a, b, c, 1.0, rhomb), patId);
 }
 var pat = rhomb.getSong().getPatterns()[patId];
 

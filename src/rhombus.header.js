@@ -13,7 +13,6 @@ function Rhombus(constraints) {
 
   this._constraints = constraints;
   this._disposed = false;
-  this._ctx = Tone.context;
   this._globalTarget = 0;
 
   // This run-time ID is used for IDs that don't need to be exported/imported
@@ -51,30 +50,20 @@ function Rhombus(constraints) {
     return curId;
   };
 
-
-  Rhombus._midiSetup(this);
+  /**
+   * @member {Rhombus.Midi}
+   */
+  this.Midi = new Rhombus.Midi(this);
 
   /**
    * @member {Rhombus.Undo}
    */
   this.Undo = new Rhombus.Undo();
 
-  Rhombus._graphSetup(this);
-  Rhombus._patternSetup(this);
-  Rhombus._trackSetup(this);
-  Rhombus._paramSetup(this);
-  Rhombus._recordSetup(this);
-  Rhombus._audioNodeSetup(this);
-
-  // Instruments
-  Rhombus._instrumentSetup(this);
-  Rhombus._wrappedInstrumentSetup(this);
-  Rhombus._samplerSetup(this);
-
-  // Effects
-  Rhombus._masterSetup(this);
-  Rhombus._wrappedEffectSetup(this);
-  Rhombus._scriptEffectSetup(this);
+  /**
+   * @member {Rhombus.Record}
+   */
+  this.Record = new Rhombus.Record(this);
 
   Rhombus._timeSetup(this);
   Rhombus._editSetup(this);
@@ -82,11 +71,15 @@ function Rhombus(constraints) {
   this.initSong();
 };
 
+Object.defineProperty(Rhombus, '_ctx', {
+  get: function() {
+    return Tone.context;
+  }
+});
+
 /** Makes this Rhombus instance unusable and releases references to resources. */
 Rhombus.prototype.dispose = function() {
-  this.setActive(false);
   this._disposed = true;
-  delete this._ctx;
   delete this._song;
 };
 

@@ -167,11 +167,12 @@
               var noteStartTime = curTime + delay;
               var endTime = noteStartTime + r.ticks2Seconds(note._length);
 
-              var rtNote = new r.RtNote(note.getPitch(),
-                                        note.getVelocity(),
-                                        noteStartTime,
-                                        endTime,
-                                        track._id);
+              var rtNote = new Rhombus.RtNote(note.getPitch(),
+                                              note.getVelocity(),
+                                              noteStartTime,
+                                              endTime,
+                                              track._id,
+                                              r);
 
               playingNotes[rtNote._id] = rtNote;
 
@@ -294,7 +295,7 @@
 
       playing = true;
       this.moveToPositionSeconds(time);
-      startTime = this._ctx.currentTime;
+      startTime = Rhombus._ctx.currentTime;
 
       if (this.seconds2Ticks(r.getPosition()) < this.getLoopStart()) {
         loopOverride = true;
@@ -344,7 +345,7 @@
 
     function getPosition(playing) {
       if (playing) {
-        return r._ctx.currentTime + time;
+        return Rhombus._ctx.currentTime + time;
       } else {
         return time;
       }
@@ -363,7 +364,7 @@
     };
 
     r.getElapsedTime = function() {
-      return this._ctx.currentTime - startTime;
+      return Rhombus._ctx.currentTime - startTime;
     };
 
     r.getElapsedTicks = function() {
@@ -388,7 +389,7 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        time = seconds - this._ctx.currentTime;
+        time = seconds - Rhombus._ctx.currentTime;
       } else {
         time = seconds;
       };

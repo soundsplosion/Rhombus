@@ -44,16 +44,16 @@ Rhombus.prototype.addEffect = function(type, json) {
   }
 
   var ctrMap = {
-    "dist" : this._Distortion,
-    "filt" : this._Filter,
-    "eq"   : this._EQ,
-    "dely" : this._Delay,
-    "comp" : this._Compressor,
-    "gain" : this._Gainer,
-    "bitc" : this._BitCrusher,
-    "revb" : this._Reverb,
-    "chor" : this._Chorus,
-    "scpt" : this._Script
+    "dist" : Rhombus._Distortion,
+    "filt" : Rhombus._Filter,
+    "eq"   : Rhombus._EQ,
+    "dely" : Rhombus._Delay,
+    "comp" : Rhombus._Compressor,
+    "gain" : Rhombus._Gainer,
+    "bitc" : Rhombus._BitCrusher,
+    "revb" : Rhombus._Reverb,
+    "chor" : Rhombus._Chorus,
+    "scpt" : Rhombus._Script
   };
 
   var options, go, gi, id, graphX, graphY;
@@ -71,7 +71,7 @@ Rhombus.prototype.addEffect = function(type, json) {
     if (masterAdded(this._song)) {
       return;
     }
-    ctr = this._Master;
+    ctr = Rhombus._Master;
   } else {
     ctr = ctrMap[type];
   }
@@ -86,6 +86,7 @@ Rhombus.prototype.addEffect = function(type, json) {
     return;
   }
 
+  eff._r = this;
   eff.setGraphX(graphX);
   eff.setGraphY(graphY);
 
@@ -103,7 +104,7 @@ Rhombus.prototype.addEffect = function(type, json) {
   eff._normalizedObjectSet(def, true);
   eff._normalizedObjectSet(options, true);
 
-  if (ctr === this._Master) {
+  if (ctr === Rhombus._Master) {
     eff._graphSetup(1, 1, 0, 0);
   } else {
     eff._graphSetup(1, 1, 1, 0);
@@ -173,14 +174,17 @@ Rhombus.prototype.removeEffect = function(effectOrId) {
   this.killAllNotes();
 };
 
-Rhombus.prototype._makeEffectMap = function(obj) {
-  obj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
-  obj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
-  return obj;
+Rhombus._makeEffectMap = function(obj) {
+  var newObj = {};
+  for (var key in obj) {
+    newObj[key] = obj[key];
+  }
+  newObj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
+  newObj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
+  return newObj;
 };
 
-Rhombus.prototype._addEffectFunctions = function(ctr) {
-  var rhombThis = this;
+Rhombus._addEffectFunctions = function(ctr) {
   function normalizedObjectSet(params, internal) {
     if (notObject(params)) {
       return;
@@ -189,7 +193,7 @@ Rhombus.prototype._addEffectFunctions = function(ctr) {
     if (!internal) {
       var that = this;
       var oldParams = this._currentParams;
-      rhombThis.Undo._addUndoAction(function() {
+      this._r.Undo._addUndoAction(function() {
         that._normalizedObjectSet(oldParams, true);
       });
     }
@@ -220,13 +224,13 @@ Rhombus.prototype._addEffectFunctions = function(ctr) {
   }
 
   ctr.prototype._normalizedObjectSet = normalizedObjectSet;
-  rhombThis._addParamFunctions(ctr);
-  rhombThis._addGraphFunctions(ctr);
-  rhombThis._addAudioNodeFunctions(ctr);
+  Rhombus._addParamFunctions(ctr);
+  Rhombus._addGraphFunctions(ctr);
+  Rhombus._addAudioNodeFunctions(ctr);
   ctr.prototype.toJSON = toJSON;
   ctr.prototype.isMaster = isMaster;
 
-  // Swizzle out the set method for one that does gain.
+  // Swizzle out the set method for one that does gain + dry/wet.
   var oldSet = ctr.prototype.set;
   ctr.prototype.set = function(options) {
     oldSet.apply(this, arguments);
