@@ -219,17 +219,6 @@ Rhombus._addGraphFunctions = function(ctr) {
   }
   ctr.prototype.connectionExists = connectionExists;
 
-  function backwardsConnectionExists(a, output, b, input) {
-    var ports = b._graphInputs[input].from;
-    for (var i = 0; i < ports.length; i++) {
-      var port = ports[i];
-      if (port.node === a._id && port.slot === output) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   function removeConnections() {
     var go = this.graphOutputs();
     for (var outputIdx = 0; outputIdx < go.length; outputIdx++) {
@@ -339,6 +328,17 @@ Rhombus.prototype._toMaster = function(node) {
 };
 
 Rhombus.prototype._importFixGraph = function() {
+  function backwardsConnectionExists(a, output, b, input) {
+    var ports = b._graphInputs[input].from;
+    for (var i = 0; i < ports.length; i++) {
+      var port = ports[i];
+      if (port.node === a._id && port.slot === output) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   var trackIds = this._song._tracks.objIds();
   var instrIds = this._song._instruments.objIds();
   var effIds = Object.keys(this._song._effects);

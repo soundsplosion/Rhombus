@@ -288,7 +288,7 @@ Rhombus.prototype.importSong = function(json) {
     var pattern = patterns[ptnId];
     var noteMap = pattern._noteMap;
 
-    var newPattern = new Rhombus.Pattern(this._r, +ptnId);
+    var newPattern = new Rhombus.Pattern(this, +ptnId);
 
     newPattern._name = pattern._name;
     newPattern._length = pattern._length;

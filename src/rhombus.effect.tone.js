@@ -69,7 +69,7 @@ Rhombus._BitCrusher.prototype.displayName = function() {
 // Filter
 Rhombus._Filter = function() {
   Tone.Effect.call(this);
-  this._filter = construct(Tone.Filter, arguments);
+  this._filter = Rhombus._construct(Tone.Filter, arguments);
   this.connectEffect(this._filter);
 };
 Tone.extend(Rhombus._Filter, Tone.Effect);
@@ -94,7 +94,7 @@ Rhombus._Filter.prototype.setAutomationValueAtTime = function(value, time) {
 // EQ
 Rhombus._EQ = function() {
   Tone.Effect.call(this);
-  this._eq = construct(Tone.EQ, arguments);
+  this._eq = Rhombus._construct(Tone.EQ, arguments);
   this.connectEffect(this._eq);
 };
 Tone.extend(Rhombus._EQ, Tone.Effect);
@@ -123,7 +123,7 @@ Rhombus._EQ.prototype.displayName = function() {
 // Compressor
 Rhombus._Compressor = function() {
   Tone.Effect.call(this);
-  this._comp = construct(Tone.Compressor, arguments);
+  this._comp = Rhombus._construct(Tone.Compressor, arguments);
   this.connectEffect(this._comp);
 };
 Tone.extend(Rhombus._Compressor, Tone.Effect);
