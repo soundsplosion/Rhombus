@@ -230,7 +230,7 @@ Rhombus.prototype.stopPreviewNote = function(pitch) {
 
       // handle wrap-around notes by clamping at the loop end
       if (curTicks < rtNote._start) {
-        rtNote._end = r.getLoopEnd();
+        rtNote._end = this.getLoopEnd();
       }
       else {
         rtNote._end = curTicks;
@@ -257,7 +257,7 @@ Rhombus.prototype.stopPreviewNote = function(pitch) {
 Rhombus.prototype.killAllPreviewNotes = function() {
   function killRtNotes(noteIds, targets) {
     for (var i = 0; i < targets.length; i++) {
-      var inst = r._song._instruments.getObjById(targets[i]);
+      var inst = this._song._instruments.getObjById(targets[i]);
       if (isDefined(inst)) {
         for (var j = 0; j < noteIds.length; j++) {
           inst.triggerRelease(noteIds[j], 0);
