@@ -112,7 +112,7 @@ Rhombus._addGraphFunctions = function(ctr) {
       return false;
     }
 
-    if (connectionExists(this, output, b, bInput)) {
+    if (this.connectionExists(this, output, b, bInput)) {
       return false;
     }
 
@@ -369,7 +369,7 @@ Rhombus.prototype._importFixGraph = function() {
       var inp = gi[inIdx];
       for (var portIdx = 0; portIdx < inp.from.length; portIdx++) {
         var port = inp.from[portIdx];
-        if (!connectionExists(port.node, port.slot, node, inIdx)) {
+        if (!port.node.connectionExists(port.node, port.slot, node, inIdx)) {
           node._graphInputs[inIdx].from.splice(portIdx, 1);
         }
       }
