@@ -52,7 +52,10 @@ function Rhombus(constraints) {
   };
 
 
-  Rhombus._midiSetup(this);
+  /**
+   * @member {Rhombus.Midi}
+   */
+  this.Midi = new Rhombus.Midi(this);
 
   /**
    * @member {Rhombus.Undo}

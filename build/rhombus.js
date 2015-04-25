@@ -52,7 +52,10 @@ function Rhombus(constraints) {
   };
 
 
-  Rhombus._midiSetup(this);
+  /**
+   * @member {Rhombus.Midi}
+   */
+  this.Midi = new Rhombus.Midi(this);
 
   /**
    * @member {Rhombus.Undo}
@@ -5497,30 +5500,18 @@ Rhombus.Record.prototype.clearBuffer = function() {
   this._recordBuffer.deleteNotes(this._recordBuffer.getAllNotes());
 };
 
-//! rhombus.effect.midi.js
+//! rhombus.midi.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-var thisr;
-Rhombus._midiSetup = function(r) {
-  thisr = r;
-  thisr.Midi = {};
-  
-  // MIDI access object
-  thisr._midi = null;
-  thisr._inputMap = {};
-
-  thisr.Midi.makeHeaderChunk = makeHeaderChunk;
-  thisr.Midi.getRawMidi = getRawMidi;
-  thisr.Midi.exportSong = exportSong;
-  thisr.Midi.eventsToMTrk = eventsToMTrk;
-
-  thisr.getMidiAccess = getMidiAccess;
-  thisr.enableMidi = enableMidi;
-}
+Rhombus.Midi = function(r) {
+  this._r = r;
+  this._midi = null;
+  this._inputMap = {};
+};
 
 // Returns a MIDI Type 1 header chunk based on the current song
-makeHeaderChunk = function() {
+Rhombus.Midi.prototype.makeHeaderChunk = function() {
   var arr = new Uint8Array(14);
 
   // ['M', 'T', 'r', 'k'] header
@@ -5533,7 +5524,7 @@ makeHeaderChunk = function() {
   arr.set(intToBytes(1).slice(2), 8);
 
   // specify the number of tracks
-  arr.set(intToBytes(thisr.getSong().getTracks().length()).slice(2), 10);
+  arr.set(intToBytes(this._r.getSong().getTracks().length()).slice(2), 10);
 
   // specify the timebase resolution
   arr.set(intToBytes(480).slice(2), 12);
@@ -5543,18 +5534,20 @@ makeHeaderChunk = function() {
 
 // Exports the current song structure to a raw byte array in Type 1 MIDI format
 // Only the note data is exported, no tempo or time signature information
-getRawMidi = function() {
+Rhombus.Midi.prototype.getRawMidi = function() {
   // render each Rhombus track to a MIDI track chunk
   var mTrks    = [];
   var numBytes = 0;
-  thisr._song._tracks.objIds().forEach(function(trkId) {
-    var track = thisr._song._tracks.getObjById(trkId);
-    var trkChunk = thisr.Midi.eventsToMTrk(track.exportEvents());
+  var r = this._r;
+  var that = this;
+  r._song._tracks.objIds().forEach(function(trkId) {
+    var track = r._song._tracks.getObjById(trkId);
+    var trkChunk = this.eventsToMTrk(track.exportEvents());
     mTrks.push(trkChunk);
     numBytes += trkChunk.length;
   });
 
-  var header = thisr.Midi.makeHeaderChunk();
+  var header = this.makeHeaderChunk();
 
   // allocate the byte array
   var rawMidi = new Uint8Array(header.length + numBytes);
@@ -5573,13 +5566,13 @@ getRawMidi = function() {
 };
 
 // Passes the raw MIDI dump to any interested parties (e.g., the front-end)
-exportSong = function() {
-  var rawMidi = thisr.Midi.getRawMidi();
+Rhombus.Midi.prototype.exportSong = function() {
+  var rawMidi = this.getRawMidi();
   document.dispatchEvent(new CustomEvent("rhombus-exportmidi", {"detail": rawMidi}));
 };
 
 // Converts a list of track events to a MIDI Track Chunk
-eventsToMTrk = function(events) {
+Rhombus.Midi.prototype.eventsToMTrk = function(events) {
   var header = [ 77, 84, 114, 107 ];  // 'M' 'T' 'r' 'k'
   var body   = [ ];
 
@@ -5613,68 +5606,72 @@ eventsToMTrk = function(events) {
   return trkChunk;
 };
 
-function onMidiMessage(event) {
-  // silently ignore active sense messages
-  if (event.data[0] === 0xFE) {
-    return;
+Rhombus.Midi.prototype.getMidiAccess = function() {
+  var that = this;
+
+  function onMidiMessage(event) {
+    // silently ignore active sense messages
+    if (event.data[0] === 0xFE) {
+      return;
+    }
+
+    // only handle well-formed notes for now (don't worry about running status, etc.)
+    if (event.data.length !== 3) {
+      console.log("[MidiIn] - ignoring MIDI message");
+      return;
+    }
+    // parse the message bytes
+    var cmd   = event.data[0] & 0xF0;
+    var chan  = event.data[0] & 0x0F;
+    var pitch = event.data[1];
+    var vel   = event.data[2];
+
+    // check for note-off messages
+    if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
+      console.log("[MidiIn] - Note-Off, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
+      that._r.stopPreviewNote(pitch);
+    }
+
+    // check for note-on messages
+    else if (cmd === 0x90 && vel > 0) {
+      vel /= 127;
+      console.log("[MidiIn] - Note-On, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
+      that._r.startPreviewNote(pitch, vel);
+    }
+
+    // don't worry about other message types for now
   }
 
-  // only handle well-formed notes for now (don't worry about running status, etc.)
-  if (event.data.length !== 3) {
-    console.log("[MidiIn] - ignoring MIDI message");
-    return;
-  }
-  // parse the message bytes
-  var cmd   = event.data[0] & 0xF0;
-  var chan  = event.data[0] & 0x0F;
-  var pitch = event.data[1];
-  var vel   = event.data[2];
 
-  // check for note-off messages
-  if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
-    console.log("[MidiIn] - Note-Off, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
-    thisr.stopPreviewNote(pitch);
+  function mapMidiInputs(midi) {
+    that._inputMap = {};
+    var it = midi.inputs.entries();
+    for (var entry = it.next(); !entry.done; entry = it.next()) {
+      var value = entry.value;
+      console.log("[MidiIn] - mapping entry " + value[0]);
+      that._inputMap[value[0]] = value[1];
+      value[1].onmidimessage = onMidiMessage;
+    }
   }
 
-  // check for note-on messages
-  else if (cmd === 0x90 && vel > 0) {
-    vel /= 127;
-    console.log("[MidiIn] - Note-On, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
-    thisr.startPreviewNote(pitch, vel);
+  function onMidiSuccess(midiAccess) {
+    console.log("[Rhombus] - MIDI Access Successful");
+    that._midi = midiAccess;
+    mapMidiInputs(that._midi);
   }
 
-  // don't worry about other message types for now
-}
-
-function mapMidiInputs(midi) {
-  thisr._inputMap = {};
-  var it = midi.inputs.entries();
-  for (var entry = it.next(); !entry.done; entry = it.next()) {
-    var value = entry.value;
-    console.log("[MidiIn] - mapping entry " + value[0]);
-    thisr._inputMap[value[0]] = value[1];
-    value[1].onmidimessage = onMidiMessage;
+  function onMidiFailure(msg) {
+    console.log("Failed to get MIDI access - " + msg );
   }
-}
 
-function onMidiSuccess(midiAccess) {
-  console.log("[Rhombus] - MIDI Access Successful");
-  thisr._midi = midiAccess;
-  mapMidiInputs(thisr._midi);
-}
 
-function onMidiFailure(msg) {
-  console.log( "Failed to get MIDI access - " + msg );
-}
-
-getMidiAccess = function() {
-  thisr._midi = null;
+  this._midi = null;
   if (typeof navigator.requestMIDIAccess !== "undefined") {
     navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
   }
 };
 
-enableMidi = function() {
+Rhombus.Midi.prototype.enableMidi = function() {
   this.getMidiAccess();
 };
 
