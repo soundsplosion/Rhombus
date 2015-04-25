@@ -2,17 +2,12 @@
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-
-var thisr;
-Rhombus._trackSetup = function(r) {
-  thisr = r;
-};
-
-Rhombus.PlaylistItem = function(trkId, ptnId, start, length, id) {
+Rhombus.PlaylistItem = function(trkId, ptnId, start, length, r, id) {
+  this._r = r;
   if (isDefined(id)) {
-    thisr._setId(this, id);
+    this._r._setId(this, id);
   } else {
-    thisr._newId(this);
+    this._r._newId(this);
   }
 
   this._trkId = trkId;
@@ -21,7 +16,6 @@ Rhombus.PlaylistItem = function(trkId, ptnId, start, length, id) {
   this._length = length;
   this._selected = false;
 };
-
 
 Rhombus.PlaylistItem.prototype.setStart = function(start) {
   if (notDefined(start)) {
@@ -35,7 +29,7 @@ Rhombus.PlaylistItem.prototype.setStart = function(start) {
 
   var oldStart = this._start;
   var that = this;
-  thisr.Undo._addUndoAction(function() {
+  this._r.Undo._addUndoAction(function() {
     that._start = oldStart;
   });
 
@@ -58,7 +52,7 @@ Rhombus.PlaylistItem.prototype.setLength = function(length) {
 
   var oldLength = this._length;
   var that = this;
-  thisr.Undo._addUndoAction(function() {
+  this._r.Undo._addUndoAction(function() {
     that._length = oldLength;
   });
 
@@ -70,7 +64,7 @@ Rhombus.PlaylistItem.prototype.getLength = function() {
 };
 
 Rhombus.PlaylistItem.prototype.getTrackIndex = function() {
-  return thisr._song._tracks.getSlotById(this._trkId);
+  return this._r._song._tracks.getSlotById(this._trkId);
 };
 
 Rhombus.PlaylistItem.prototype.getPatternId = function() {
@@ -110,7 +104,7 @@ Rhombus.PlaylistItem.prototype.toJSON = function() {
 };
 
 Rhombus.RtNote = function(pitch, velocity, start, end, target) {
-  thisr._newRtId(this);
+  this._r._newRtId(this);
   this._pitch    = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
   this._velocity = +velocity || 0.5;
   this._start    = start || 0;
@@ -120,11 +114,12 @@ Rhombus.RtNote = function(pitch, velocity, start, end, target) {
   return this;
 };
 
-Rhombus.Track = function(id) {
+Rhombus.Track = function(r, id) {
+  this._r = r;
   if (isDefined(id)) {
-    thisr._setId(this, id);
+    this._r._setId(this, id);
   } else {
-    thisr._newId(this);
+    this._r._newId(this);
   }
 
   // track metadata
@@ -143,10 +138,6 @@ Rhombus.Track = function(id) {
 
 Rhombus.Track.prototype._graphType = "track";
 
-Rhombus.Track.prototype.setId = function(id) {
-  this._id = id;
-};
-
 Rhombus.Track.prototype.getName = function() {
   return this._name;
 };
@@ -160,7 +151,7 @@ Rhombus.Track.prototype.setName = function(name) {
     this._name = name.toString();
 
     var that = this;
-    thisr.Undo._addUndoAction(function() {
+    this._r.Undo._addUndoAction(function() {
       that._name = oldValue;
     });
 
@@ -179,7 +170,7 @@ Rhombus.Track.prototype.setMute = function(mute) {
 
   var oldMute = this._mute;
   var that = this;
-  thisr.Undo._addUndoAction(function() {
+  this._r.Undo._addUndoAction(function() {
     that._mute = oldMute;
   });
 
@@ -205,14 +196,14 @@ Rhombus.Track.prototype.setSolo = function(solo) {
     return undefined;
   }
 
-  var soloList = thisr._song._soloList;
+  var soloList = this._r._song._soloList;
 
   var oldSolo = this._solo;
   var oldSoloList = soloList.slice(0);
   var that = this;
-  thisr.Undo._addUndoAction(function() {
+  this._r.Undo._addUndoAction(function() {
     that._solo = oldSolo;
-    thisr._song._soloList = oldSoloList;
+    that._r._song._soloList = oldSoloList;
   });
 
   // Get the index of the current track in the solo list
@@ -271,15 +262,15 @@ Rhombus.Track.prototype.addToPlaylist = function(ptnId, start, length) {
   }
 
   // ptnId must belong to an existing pattern
-  if (notDefined(thisr._song._patterns[ptnId])) {
+  if (notDefined(this._r._song._patterns[ptnId])) {
     return undefined;
   }
 
-  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, length);
+  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, this._r, length);
   this._playlist[newItem._id] = newItem;
 
   var that = this;
-  thisr.Undo._addUndoAction(function() {
+  this._r.Undo._addUndoAction(function() {
     delete that._playlist[newItem._id];
   });
 
@@ -313,7 +304,7 @@ Rhombus.Track.prototype.removeFromPlaylist = function(itemId) {
 
     var obj = this._playlist[itemId];
     var that = this;
-    thisr.Undo._addUndoAction(function() {
+    this._r.Undo._addUndoAction(function() {
       that._playlist[itemId] = obj;
     });
 
@@ -326,9 +317,10 @@ Rhombus.Track.prototype.removeFromPlaylist = function(itemId) {
 Rhombus.Track.prototype.killAllNotes = function() {
   var playingNotes = this._playingNotes;
 
+  var r = this._r;
   for (var rtNoteId in playingNotes) {
-    thisr._song._instruments.objIds().forEach(function(instId) {
-      thisr._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
+    r._song._instruments.objIds().forEach(function(instId) {
+      r._song._instruments.getObjById(instId).triggerRelease(rtNoteId, 0);
     });
     delete playingNotes[rtNoteId];
   }
@@ -348,7 +340,7 @@ Rhombus.Track.prototype.exportEvents = function() {
   var events = new AVL();
   var playlist = this._playlist;
   for (var itemId in playlist) {
-    var srcPtn = thisr.getSong().getPatterns()[playlist[itemId]._ptnId];
+    var srcPtn = this._r.getSong().getPatterns()[playlist[itemId]._ptnId];
     var notes = srcPtn.getAllNotes();
 
     for (var i = 0; i < notes.length; i++) {

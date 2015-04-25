@@ -61,8 +61,8 @@ function Rhombus(constraints) {
 
   Rhombus._graphSetup(this);
   Rhombus._patternSetup(this);
-  Rhombus._trackSetup(this);
 
+  // TODOr: fix this so that the addGraphFunctions isn't on a Rhombus instance, but Rhombus itself
   this._addGraphFunctions(Rhombus.Track);
 
   Rhombus._paramSetup(this);
