@@ -5606,7 +5606,7 @@ Rhombus.Midi.prototype.eventsToMTrk = function(events) {
   return trkChunk;
 };
 
-Rhombus.Midi.prototype.getMidiAccess = function() {
+Rhombus.prototype.getMidiAccess = function() {
   var that = this;
 
   function onMidiMessage(event) {
@@ -5629,14 +5629,14 @@ Rhombus.Midi.prototype.getMidiAccess = function() {
     // check for note-off messages
     if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
       console.log("[MidiIn] - Note-Off, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
-      that._r.stopPreviewNote(pitch);
+      that.stopPreviewNote(pitch);
     }
 
     // check for note-on messages
     else if (cmd === 0x90 && vel > 0) {
       vel /= 127;
       console.log("[MidiIn] - Note-On, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
-      that._r.startPreviewNote(pitch, vel);
+      that.startPreviewNote(pitch, vel);
     }
 
     // don't worry about other message types for now
@@ -5644,20 +5644,20 @@ Rhombus.Midi.prototype.getMidiAccess = function() {
 
 
   function mapMidiInputs(midi) {
-    that._inputMap = {};
+    that.Midi._inputMap = {};
     var it = midi.inputs.entries();
     for (var entry = it.next(); !entry.done; entry = it.next()) {
       var value = entry.value;
       console.log("[MidiIn] - mapping entry " + value[0]);
-      that._inputMap[value[0]] = value[1];
+      that.Midi._inputMap[value[0]] = value[1];
       value[1].onmidimessage = onMidiMessage;
     }
   }
 
   function onMidiSuccess(midiAccess) {
     console.log("[Rhombus] - MIDI Access Successful");
-    that._midi = midiAccess;
-    mapMidiInputs(that._midi);
+    that.Midi._midi = midiAccess;
+    mapMidiInputs(that.Midi._midi);
   }
 
   function onMidiFailure(msg) {
@@ -5665,13 +5665,13 @@ Rhombus.Midi.prototype.getMidiAccess = function() {
   }
 
 
-  this._midi = null;
+  this.Midi._midi = null;
   if (typeof navigator.requestMIDIAccess !== "undefined") {
     navigator.requestMIDIAccess().then(onMidiSuccess, onMidiFailure);
   }
 };
 
-Rhombus.Midi.prototype.enableMidi = function() {
+Rhombus.prototype.enableMidi = function() {
   this.getMidiAccess();
 };
 
