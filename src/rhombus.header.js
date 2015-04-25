@@ -60,7 +60,6 @@ function Rhombus(constraints) {
   this.Undo = new Rhombus.Undo();
 
   Rhombus._graphSetup(this);
-  Rhombus._patternSetup(this);
 
   // TODOr: fix this so that the addGraphFunctions isn't on a Rhombus instance, but Rhombus itself
   this._addGraphFunctions(Rhombus.Track);

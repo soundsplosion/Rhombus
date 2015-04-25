@@ -108,7 +108,7 @@ Rhombus.Song.prototype.getPatterns = function() {
  */
 Rhombus.Song.prototype.addPattern = function(pattern) {
   if (notDefined(pattern)) {
-    var pattern = new Rhombus.Pattern();
+    var pattern = new Rhombus.Pattern(this._r);
   }
   this._patterns[pattern._id] = pattern;
 
@@ -288,7 +288,7 @@ Rhombus.prototype.importSong = function(json) {
     var pattern = patterns[ptnId];
     var noteMap = pattern._noteMap;
 
-    var newPattern = new Rhombus.Pattern(+ptnId);
+    var newPattern = new Rhombus.Pattern(this._r, +ptnId);
 
     newPattern._name = pattern._name;
     newPattern._length = pattern._length;
@@ -302,6 +302,7 @@ Rhombus.prototype.importSong = function(json) {
                                   +noteMap[noteId]._start,
                                   +noteMap[noteId]._length,
                                   +noteMap[noteId]._velocity || 1,
+                                  this,
                                   +noteId);
 
       newPattern.addNote(note);

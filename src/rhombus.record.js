@@ -6,7 +6,7 @@ var thisr;
 Rhombus._recordSetup = function(r) {
   thisr = r;
   thisr.Record = {};
-  thisr._recordBuffer = new Rhombus.Pattern();
+  thisr._recordBuffer = new Rhombus.Pattern(thisr);
   thisr._recordEnabled = false;
   thisr.getRecordEnabled = getRecordEnabled;
   thisr.setRecordEnabled = setRecordEnabled;
@@ -32,7 +32,8 @@ addToBuffer = function(rtNote) {
     var note = new Rhombus.Note(rtNote._pitch,
                                 Math.round(rtNote._start),
                                 Math.round(rtNote._end - rtNote._start),
-                                rtNote._velocity);
+                                rtNote._velocity,
+                                thisr);
 
     if (isDefined(note)) {
       thisr._recordBuffer.addNote(note);

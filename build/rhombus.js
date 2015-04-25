@@ -60,7 +60,6 @@ function Rhombus(constraints) {
   this.Undo = new Rhombus.Undo();
 
   Rhombus._graphSetup(this);
-  Rhombus._patternSetup(this);
 
   // TODOr: fix this so that the addGraphFunctions isn't on a Rhombus instance, but Rhombus itself
   this._addGraphFunctions(Rhombus.Track);
@@ -1729,7 +1728,8 @@ Rhombus.prototype.getGlobalTarget = function() {
                                    velocity,
                                    Math.round(this.getPosTicks()),
                                    0,
-                                   targetId);
+                                   targetId,
+                                   r);
 
       previewNotes.push(rtNote);
 
@@ -2979,17 +2979,12 @@ Rhombus.prototype._addEffectFunctions = function(ctr) {
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-
-var thisr;
-Rhombus._patternSetup = function(r) {
-  thisr = r;
-};
-
-Rhombus.NoteMap = function(id) {
+Rhombus.NoteMap = function(r, id) {
+  this._r = r;
   if (isDefined(id)) {
-    thisr._setId(this, id);
+    this._r._setId(this, id);
   } else {
-    thisr._newId(this);
+    this._r._newId(this);
   }
 
   this._avl = new AVL();
@@ -3012,13 +3007,13 @@ Rhombus.NoteMap.prototype.addNote = function(note) {
     }
   }
 
-  if (isDefined(thisr._constraints.max_notes)) {
-    if (thisr._song._noteCount >= thisr._constraints.max_notes) {
+  if (isDefined(this._r._constraints.max_notes)) {
+    if (this._r._song._noteCount >= this._r._constraints.max_notes) {
       return false;
     }
   }
 
-  thisr._song._noteCount++;
+  this._r._song._noteCount++;
   this._avl.insert(key, note);
   return true;
 };
@@ -3085,7 +3080,7 @@ Rhombus.NoteMap.prototype.removeNote = function(noteId, note) {
 
   var atStart = this._avl.search(note.getStart()).length;
   if (atStart > 0) {
-    thisr._song._noteCount--;
+    this._r._song._noteCount--;
     this._avl.delete(note.getStart(), note);
   }
 
@@ -3103,11 +3098,12 @@ Rhombus.NoteMap.prototype.toJSON = function() {
   return jsonObj;
 };
 
-Rhombus.AutomationEvent = function(time, value, id) {
+Rhombus.AutomationEvent = function(time, value, r, id) {
+  this._r = r;
   if (isDefined(id)) {
-    thisr._setId(this, id);
+    this._r._setId(this, id);
   } else {
-    thisr._newId(this);
+    this._r._newId(this);
   }
 
   this._time = time;
@@ -3128,11 +3124,12 @@ Rhombus.AutomationEvent.prototype.getValue = function() {
   return this._value;
 }
 
-Rhombus.Pattern = function(id) {
+Rhombus.Pattern = function(r, id) {
+  this._r = r;
   if (isDefined(id)) {
-    thisr._setId(this, id);
+    this._r._setId(this, id);
   } else {
-    thisr._newId(this);
+    this._r._newId(this);
   }
 
   // pattern metadata
@@ -3142,7 +3139,7 @@ Rhombus.Pattern = function(id) {
 
   // pattern structure data
   this._length = 1920;
-  this._noteMap = new Rhombus.NoteMap();
+  this._noteMap = new Rhombus.NoteMap(this._r);
 
   this._automation = new AVL({ unique: true });
 };
@@ -3155,7 +3152,7 @@ Rhombus.Pattern.prototype.setLength = function(length) {
   if (isDefined(length) && length >= 0) {
     var oldLength = this._length;
     var that = this;
-    thisr.Undo._addUndoAction(function() {
+    this._r.Undo._addUndoAction(function() {
       that._length = oldLength;
     });
     this._length = length;
@@ -3174,7 +3171,7 @@ Rhombus.Pattern.prototype.setName = function(name) {
     this._name = name.toString();
 
     var that = this;
-    thisr.Undo._addUndoAction(function() {
+    this._r.Undo._addUndoAction(function() {
       that._name = oldName;
     });
 
@@ -3190,7 +3187,7 @@ Rhombus.Pattern.prototype.getColor = function() {
 Rhombus.Pattern.prototype.setColor = function(color) {
   var oldColor = this._color;
   var that = this;
-  thisr.Undo._addUndoAction(function() {
+  this._r.Undo._addUndoAction(function() {
     that._color = oldColor;
   });
   this._color = color;
@@ -3345,7 +3342,8 @@ Rhombus.Pattern.prototype.toJSON = function() {
 };
 
 // TODO: Note should probably have its own source file
-Rhombus.Note = function(pitch, start, length, velocity, id) {
+Rhombus.Note = function(pitch, start, length, velocity, r, id) {
+  this._r = r;
   if (!isInteger(pitch) || pitch < 0 || pitch > 127) {
     console.log("[Rhombus] - Note pitch invalid: " + pitch);
     return undefined;
@@ -3367,9 +3365,9 @@ Rhombus.Note = function(pitch, start, length, velocity, id) {
   }
 
   if (isDefined(id)) {
-    thisr._setId(this, id);
+    this._r._setId(this, id);
   } else {
-    thisr._newId(this);
+    this._r._newId(this);
   }
 
   this._pitch    = +pitch;
@@ -3546,7 +3544,8 @@ Rhombus.PlaylistItem.prototype.toJSON = function() {
   return jsonObj;
 };
 
-Rhombus.RtNote = function(pitch, velocity, start, end, target) {
+Rhombus.RtNote = function(pitch, velocity, start, end, target, r) {
+  this._r = r;
   this._r._newRtId(this);
   this._pitch    = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
   this._velocity = +velocity || 0.5;
@@ -3709,7 +3708,7 @@ Rhombus.Track.prototype.addToPlaylist = function(ptnId, start, length) {
     return undefined;
   }
 
-  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, this._r, length);
+  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, length, this._r);
   this._playlist[newItem._id] = newItem;
 
   var that = this;
@@ -3938,7 +3937,7 @@ Rhombus.Song.prototype.getPatterns = function() {
  */
 Rhombus.Song.prototype.addPattern = function(pattern) {
   if (notDefined(pattern)) {
-    var pattern = new Rhombus.Pattern();
+    var pattern = new Rhombus.Pattern(this._r);
   }
   this._patterns[pattern._id] = pattern;
 
@@ -4118,7 +4117,7 @@ Rhombus.prototype.importSong = function(json) {
     var pattern = patterns[ptnId];
     var noteMap = pattern._noteMap;
 
-    var newPattern = new Rhombus.Pattern(+ptnId);
+    var newPattern = new Rhombus.Pattern(this._r, +ptnId);
 
     newPattern._name = pattern._name;
     newPattern._length = pattern._length;
@@ -4132,6 +4131,7 @@ Rhombus.prototype.importSong = function(json) {
                                   +noteMap[noteId]._start,
                                   +noteMap[noteId]._length,
                                   +noteMap[noteId]._velocity || 1,
+                                  this,
                                   +noteId);
 
       newPattern.addNote(note);
@@ -4428,7 +4428,8 @@ Rhombus.prototype.getSong = function() {
                                               note.getVelocity(),
                                               noteStartTime,
                                               endTime,
-                                              track._id);
+                                              track._id,
+                                              r);
 
               playingNotes[rtNote._id] = rtNote;
 
@@ -5114,7 +5115,7 @@ Rhombus.prototype.getSong = function() {
         return false;
       }
 
-      pattern._automation.insert(time, new Rhombus.AutomationEvent(time, value));
+      pattern._automation.insert(time, new Rhombus.AutomationEvent(time, value, r));
 
       /*
         r.Undo._addUndoAction(function() {
@@ -5220,7 +5221,7 @@ Rhombus.prototype.getSong = function() {
         return undefined;
       }
 
-      var dstPtn = new Rhombus.Pattern();
+      var dstPtn = new Rhombus.Pattern(r);
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
@@ -5228,7 +5229,8 @@ Rhombus.prototype.getSong = function() {
           var dstNote = new Rhombus.Note(srcNote._pitch,
                                          srcNote._start,
                                          srcNote._length,
-                                         srcNote._velocity);
+                                         srcNote._velocity,
+                                         r);
 
           dstPtn.addNote(dstNote);
         }
@@ -5257,8 +5259,8 @@ Rhombus.prototype.getSong = function() {
         return undefined;
       }
 
-      var dstL = new Rhombus.Pattern();
-      var dstR = new Rhombus.Pattern();
+      var dstL = new Rhombus.Pattern(r);
+      var dstR = new Rhombus.Pattern(r);
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
@@ -5285,7 +5287,7 @@ Rhombus.prototype.getSong = function() {
           }
 
           // Create a new note and add it to the appropriate destination pattern
-          var dstNote = new Rhombus.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
+          var dstNote = new Rhombus.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity, r);
           dstPtn._noteMap[dstNote._id] = dstNote;
         }
       });
@@ -5441,7 +5443,7 @@ var thisr;
 Rhombus._recordSetup = function(r) {
   thisr = r;
   thisr.Record = {};
-  thisr._recordBuffer = new Rhombus.Pattern();
+  thisr._recordBuffer = new Rhombus.Pattern(thisr);
   thisr._recordEnabled = false;
   thisr.getRecordEnabled = getRecordEnabled;
   thisr.setRecordEnabled = setRecordEnabled;
@@ -5467,7 +5469,8 @@ addToBuffer = function(rtNote) {
     var note = new Rhombus.Note(rtNote._pitch,
                                 Math.round(rtNote._start),
                                 Math.round(rtNote._end - rtNote._start),
-                                rtNote._velocity);
+                                rtNote._velocity,
+                                thisr);
 
     if (isDefined(note)) {
       thisr._recordBuffer.addNote(note);

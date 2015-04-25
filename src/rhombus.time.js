@@ -171,7 +171,8 @@
                                               note.getVelocity(),
                                               noteStartTime,
                                               endTime,
-                                              track._id);
+                                              track._id,
+                                              r);
 
               playingNotes[rtNote._id] = rtNote;
 

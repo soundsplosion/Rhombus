@@ -387,7 +387,7 @@
         return false;
       }
 
-      pattern._automation.insert(time, new Rhombus.AutomationEvent(time, value));
+      pattern._automation.insert(time, new Rhombus.AutomationEvent(time, value, r));
 
       /*
         r.Undo._addUndoAction(function() {
@@ -493,7 +493,7 @@
         return undefined;
       }
 
-      var dstPtn = new Rhombus.Pattern();
+      var dstPtn = new Rhombus.Pattern(r);
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
@@ -501,7 +501,8 @@
           var dstNote = new Rhombus.Note(srcNote._pitch,
                                          srcNote._start,
                                          srcNote._length,
-                                         srcNote._velocity);
+                                         srcNote._velocity,
+                                         r);
 
           dstPtn.addNote(dstNote);
         }
@@ -530,8 +531,8 @@
         return undefined;
       }
 
-      var dstL = new Rhombus.Pattern();
-      var dstR = new Rhombus.Pattern();
+      var dstL = new Rhombus.Pattern(r);
+      var dstR = new Rhombus.Pattern(r);
 
       srcPtn._noteMap._avl.executeOnEveryNode(function (node) {
         for (var i = 0; i < node.data.length; i++) {
@@ -558,7 +559,7 @@
           }
 
           // Create a new note and add it to the appropriate destination pattern
-          var dstNote = new Rhombus.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity);
+          var dstNote = new Rhombus.Note(srcNote._pitch, dstStart, dstLength, srcNote._velocity, r);
           dstPtn._noteMap[dstNote._id] = dstNote;
         }
       });

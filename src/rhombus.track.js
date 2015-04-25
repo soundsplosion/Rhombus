@@ -103,7 +103,8 @@ Rhombus.PlaylistItem.prototype.toJSON = function() {
   return jsonObj;
 };
 
-Rhombus.RtNote = function(pitch, velocity, start, end, target) {
+Rhombus.RtNote = function(pitch, velocity, start, end, target, r) {
+  this._r = r;
   this._r._newRtId(this);
   this._pitch    = (isNaN(pitch) || notDefined(pitch)) ? 60 : pitch;
   this._velocity = +velocity || 0.5;
@@ -266,7 +267,7 @@ Rhombus.Track.prototype.addToPlaylist = function(ptnId, start, length) {
     return undefined;
   }
 
-  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, this._r, length);
+  var newItem = new Rhombus.PlaylistItem(this._id, ptnId, start, length, this._r);
   this._playlist[newItem._id] = newItem;
 
   var that = this;
