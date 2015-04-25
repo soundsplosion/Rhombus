@@ -136,6 +136,7 @@ Rhombus.Track = function(r, id) {
 
   this._graphSetup(0, 0, 0, 1);
 };
+Rhombus._addGraphFunctions(Rhombus.Track);
 
 Rhombus.Track.prototype._graphType = "track";
 

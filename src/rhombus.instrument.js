@@ -70,14 +70,14 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
   // sampleSet determines the type of sampler....
   if (type === "samp") {
     if (notDefined(sampleSet)) {
-      instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, id);
     }
     else {
-      instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, id);
     }
   }
   else {
-    instr = new this._ToneInstrument(type, options, id);
+    instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
 
   // TODO: get these slots right

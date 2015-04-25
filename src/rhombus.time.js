@@ -295,7 +295,7 @@
 
       playing = true;
       this.moveToPositionSeconds(time);
-      startTime = this._ctx.currentTime;
+      startTime = Rhombus._ctx.currentTime;
 
       if (this.seconds2Ticks(r.getPosition()) < this.getLoopStart()) {
         loopOverride = true;
@@ -345,7 +345,7 @@
 
     function getPosition(playing) {
       if (playing) {
-        return r._ctx.currentTime + time;
+        return Rhombus._ctx.currentTime + time;
       } else {
         return time;
       }
@@ -364,7 +364,7 @@
     };
 
     r.getElapsedTime = function() {
-      return this._ctx.currentTime - startTime;
+      return Rhombus._ctx.currentTime - startTime;
     };
 
     r.getElapsedTicks = function() {
@@ -389,7 +389,7 @@
 
     r.moveToPositionSeconds = function(seconds) {
       if (playing) {
-        time = seconds - this._ctx.currentTime;
+        time = seconds - Rhombus._ctx.currentTime;
       } else {
         time = seconds;
       };

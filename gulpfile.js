@@ -7,6 +7,7 @@ var rename = require("gulp-rename");
 gulp.task("make", function() {
   return gulp.src([
     "src/rhombus.header.js",
+    "src/rhombus.audionode.js",
     "src/rhombus.util.js",
     "src/rhombus.graph.js",
     "src/rhombus.param.js",
@@ -24,8 +25,7 @@ gulp.task("make", function() {
     "src/rhombus.edit.js",
     "src/rhombus.undo.js",
     "src/rhombus.record.js",
-    "src/rhombus.midi.js",
-    "src/rhombus.audionode.js"
+    "src/rhombus.midi.js"
     ])
     .pipe(concat("rhombus.js"))
     .pipe(gulp.dest("build"))
