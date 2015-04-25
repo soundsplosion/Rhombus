@@ -2,334 +2,282 @@
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-(function(Rhombus) {
-  Rhombus._instrumentSetup = function(r) {
+Rhombus._instMap = [
+  [ "mono",  "PolySynth",   undefined        ],
+  [ "samp",  "Drums",       "drums1"         ],
+  [ "samp",  "808",         "drums2"         ],
+  [ "samp",  "Flute",       "tron_flute"     ],
+  [ "samp",  "Woodwinds",   "tron_woodwinds" ],
+  [ "samp",  "Brass 01",    "tron_brass_01"  ],
+  [ "samp",  "Guitar",      "tron_guitar"    ],
+  [ "samp",  "Choir",       "tron_choir"     ],
+  [ "samp",  "Cello",       "tron_cello"     ],
+  [ "samp",  "Strings",     "tron_strings"   ],
+  [ "samp",  "Violins",     "tron_violins"   ],
+  [ "samp",  "Violins 02",  "tron_16vlns"    ],
+  [ "am",    "AM Synth",    undefined        ],
+  [ "fm",    "FM Synth",    undefined        ],
+  [ "noise", "Noise Synth", undefined        ],
+  [ "duo",   "Duo Synth",   undefined        ]
+];
 
-    var instMap = [
-      [ "mono",  "PolySynth",   undefined        ],
-      [ "samp",  "Drums",       "drums1"         ],
-      [ "samp",  "808",         "drums2"         ],
-      [ "samp",  "Flute",       "tron_flute"     ],
-      [ "samp",  "Woodwinds",   "tron_woodwinds" ],
-      [ "samp",  "Brass 01",    "tron_brass_01"  ],
-      [ "samp",  "Guitar",      "tron_guitar"    ],
-      [ "samp",  "Choir",       "tron_choir"     ],
-      [ "samp",  "Cello",       "tron_cello"     ],
-      [ "samp",  "Strings",     "tron_strings"   ],
-      [ "samp",  "Violins",     "tron_violins"   ],
-      [ "samp",  "Violins 02",  "tron_16vlns"    ],
-      [ "am",    "AM Synth",    undefined        ],
-      [ "fm",    "FM Synth",    undefined        ],
-      [ "noise", "Noise Synth", undefined        ],
-      [ "duo",   "Duo Synth",   undefined        ]
-    ];
+Rhombus.prototype.instrumentTypes = function() {
+  var types = [];
+  for (var i = 0; i < Rhombus._instMap.length; i++) {
+    types.push(Rhombus._instMap[i][0]);
+  }
+  return types;
+};
 
-    r.instrumentTypes = function() {
-      var types = [];
-      for (var i = 0; i < instMap.length; i++) {
-        types.push(instMap[i][0]);
-      }
-      return types;
-    };
+Rhombus.prototype.instrumentDisplayNames = function() {
+  var names = [];
+  for (var i = 0; i < Rhombus._instMap.length; i++) {
+    names.push(Rhombus._instMap[i][1]);
+  }
+  return names;
+};
 
-    r.instrumentDisplayNames = function() {
-      var names = [];
-      for (var i = 0; i < instMap.length; i++) {
-        names.push(instMap[i][1]);
-      }
-      return names;
-    };
+Rhombus.prototype.sampleSets = function() {
+  var sets = [];
+  for (var i = 0; i < Rhombus._instMap.length; i++) {
+    sets.push(Rhombus._instMap[i][2]);
+  }
+  return sets;
+};
 
-    r.sampleSets = function() {
-      var sets = [];
-      for (var i = 0; i < instMap.length; i++) {
-        sets.push(instMap[i][2]);
-      }
-      return sets;
-    };
+Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
+  var options, go, gi, id, graphX, graphY;
+  if (isDefined(json)) {
+    options = json._params;
+    go = json._graphOutputs;
+    gi = json._graphInputs;
+    id = json._id;
+    graphX = json._graphX;
+    graphY = json._graphY;
+  }
 
-    r.addInstrument = function(type, json, idx, sampleSet) {
-      var options, go, gi, id, graphX, graphY;
-      if (isDefined(json)) {
-        options = json._params;
-        go = json._graphOutputs;
-        gi = json._graphInputs;
-        id = json._id;
-        graphX = json._graphX;
-        graphY = json._graphY;
-      }
+  function samplerOptionsFrom(options, set) {
+    if (isDefined(options)) {
+      options.sampleSet = set;
+      return options;
+    } else {
+      return { sampleSet: set };
+    }
+  }
 
-      function samplerOptionsFrom(options, set) {
-        if (isDefined(options)) {
-          options.sampleSet = set;
-          return options;
-        } else {
-          return { sampleSet: set };
-        }
-      }
+  var instr;
 
-      var instr;
+  // sampleSet determines the type of sampler....
+  if (type === "samp") {
+    if (notDefined(sampleSet)) {
+      instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
+    }
+    else {
+      instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
+    }
+  }
+  else {
+    instr = new this._ToneInstrument(type, options, id);
+  }
 
-      // sampleSet determines the type of sampler....
-      if (type === "samp") {
-        if (notDefined(sampleSet)) {
-          instr = new this._Sampler(samplerOptionsFrom(options, "drums1"), id);
-        }
-        else {
-          instr = new this._Sampler(samplerOptionsFrom(options, sampleSet), id);
-        }
+  // TODO: get these slots right
+  instr._graphSetup(0, 1, 1, 0);
+  if (isNull(instr) || notDefined(instr)) {
+    return;
+  }
+
+  instr.setGraphX(graphX);
+  instr.setGraphY(graphY);
+
+  if (isDefined(go)) {
+    Rhombus.Util.numberifyOutputs(go);
+    instr._graphOutputs = go;
+  } else {
+    this._toMaster(instr);
+  }
+
+  if (isDefined(gi)) {
+    Rhombus.Util.numberifyInputs(gi);
+    instr._graphInputs = gi;
+  }
+
+  var idToRemove = instr._id;
+  var that = this;
+  this.Undo._addUndoAction(function() {
+    that.removeInstrument(idToRemove, true);
+  });
+  this._song._instruments.addObj(instr, idx);
+
+  instr._graphType = "instrument";
+
+  return instr._id;
+};
+
+Rhombus.prototype.removeInstrument = function(instrOrId, internal) {
+  function inToId(instrOrId) {
+    var id;
+    if (typeof instrOrId === "object") {
+      id = instrOrId._id;
+    } else {
+      id = +instrOrId;
+    }
+    return id;
+  }
+
+  var id = inToId(instrOrId);
+  if (id < 0) {
+    return;
+  }
+
+  // exercise the nuclear option
+  this.killAllNotes();
+
+  var instr = this._song._instruments.getObjById(id);
+  var slot = this._song._instruments.getSlotById(id);
+
+  var go = Rhombus.Util.deepCopy(instr.graphOutputs());
+  var gi = Rhombus.Util.deepCopy(instr.graphInputs());
+
+  if (!internal) {
+    var that = this;
+    this.Undo._addUndoAction(function() {
+      that._song._instruments.addObj(instr, slot);
+      instr._restoreConnections(go, gi);
+    });
+  }
+
+  instr._removeConnections();
+  this._song._instruments.removeId(id);
+};
+
+Rhombus.prototype._initPreviewNotes = function() {
+  if (notDefined(this._previewNotes)) {
+    this._previewNotes = [];
+  }
+};
+
+Rhombus.prototype._isTargetTrackDefined = function(rhomb) {
+  var targetId  = this._globalTarget;
+  var targetTrk = this._song._tracks.getObjBySlot(targetId);
+
+  if (notDefined(targetTrk)) {
+    console.log("[Rhombus] - target track is not defined");
+    return false;
+  } else {
+    return true;
+  }
+};
+
+Rhombus.prototype.startPreviewNote = function(pitch, velocity) {
+  if (notDefined(pitch) || !isInteger(pitch) || pitch < 0 || pitch > 127) {
+    console.log("[Rhombus] - invalid preview note pitch");
+    return;
+  }
+
+  this._initPreviewNotes();
+  var targetId  = this._globalTarget;
+  var targetTrk = this._song._tracks.getObjBySlot(targetId);
+
+  if (!this._isTargetTrackDefined(this)) {
+    return;
+  }
+
+  if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+    velocity = 0.5;
+  }
+
+  var rtNote = new Rhombus.RtNote(pitch,
+                               velocity,
+                               Math.round(this.getPosTicks()),
+                               0,
+                               targetId,
+                               r);
+
+  this._previewNotes.push(rtNote);
+
+  var targets = this._song._tracks.getObjBySlot(targetId)._targets;
+  for (var i = 0; i < targets.length; i++) {
+    var inst = this._song._instruments.getObjById(targets[i]);
+    if (isDefined(inst)) {
+      inst.triggerAttack(rtNote._id, pitch, 0, velocity);
+    }
+  }
+
+  if (!this.isPlaying() && this.getRecordEnabled()) {
+    this.startPlayback();
+    document.dispatchEvent(new CustomEvent("rhombus-start"));
+  }
+};
+
+Rhombus.prototype.stopPreviewNote = function(pitch) {
+  if (!this._isTargetTrackDefined(this)) {
+    return;
+  }
+
+  this._initPreviewNotes();
+  var curTicks = Math.round(this.getPosTicks());
+
+  var deadNoteIds = [];
+
+  // Kill all preview notes with the same pitch as the input pitch, since
+  // there is no way to distinguish between them
+  //
+  // If record is enabled, add the finished notes to the record buffer
+  for (var i = this._previewNotes.length - 1; i >=0; i--) {
+    var rtNote = this._previewNotes[i];
+    if (rtNote._pitch === pitch) {
+      deadNoteIds.push(rtNote._id);
+
+      // handle wrap-around notes by clamping at the loop end
+      if (curTicks < rtNote._start) {
+        rtNote._end = r.getLoopEnd();
       }
       else {
-        instr = new this._ToneInstrument(type, options, id);
+        rtNote._end = curTicks;
       }
 
-      // TODO: get these slots right
-      instr._graphSetup(0, 1, 1, 0);
-      if (isNull(instr) || notDefined(instr)) {
-        return;
+      // enforce a minimum length of 15 ticks
+      if (rtNote._end - rtNote._start < 15) {
+        rtNote._end = rtNote._start + 15;
       }
 
-      instr.setGraphX(graphX);
-      instr.setGraphY(graphY);
-
-      if (isDefined(go)) {
-        Rhombus.Util.numberifyOutputs(go);
-        instr._graphOutputs = go;
-      } else {
-        r._toMaster(instr);
+      if (this.isPlaying() && this.getRecordEnabled()) {
+        this.Record.addToBuffer(rtNote);
       }
 
-      if (isDefined(gi)) {
-        Rhombus.Util.numberifyInputs(gi);
-        instr._graphInputs = gi;
-      }
-
-      var idToRemove = instr._id;
-      r.Undo._addUndoAction(function() {
-        r.removeInstrument(idToRemove, true);
-      });
-      this._song._instruments.addObj(instr, idx);
-
-      instr._graphType = "instrument";
-
-      return instr._id;
-    };
-
-    function inToId(instrOrId) {
-      var id;
-      if (typeof instrOrId === "object") {
-        id = instrOrId._id;
-      } else {
-        id = +instrOrId;
-      }
-      return id;
+      this._previewNotes.splice(i, 1);
     }
+  }
 
-    r.removeInstrument = function(instrOrId, internal) {
-      var id = inToId(instrOrId);
-      if (id < 0) {
-        return;
-      }
+  var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
+  killRtNotes(deadNoteIds, targets);
+};
 
-      // exercise the nuclear option
-      r.killAllNotes();
-
-      var instr = r._song._instruments.getObjById(id);
-      var slot = r._song._instruments.getSlotById(id);
-
-      var go = Rhombus.Util.deepCopy(instr.graphOutputs());
-      var gi = Rhombus.Util.deepCopy(instr.graphInputs());
-
-      if (!internal) {
-        r.Undo._addUndoAction(function() {
-          r._song._instruments.addObj(instr, slot);
-          instr._restoreConnections(go, gi);
-        });
-      }
-
-      instr._removeConnections();
-      r._song._instruments.removeId(id);
-    };
-
-    function getInstIdByIndex(instrIdx) {
-      return r._song._instruments.objIds()[instrIdx];
-    }
-
-    function getGlobalTarget() {
-      var inst = r._song._instruments.getObjById(getInstIdByIndex(r._globalTarget));
-      if (notDefined(inst)) {
-        console.log("[Rhombus] - Trying to set parameter on undefined instrument -- dame dayo!");
-        return undefined;
-      }
-      return inst;
-    }
-
-    r.getParameter = function(paramIdx) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      return inst.normalizedGet(paramIdx);
-    };
-
-    r.getParameterByName = function(paramName) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      return inst.normalizedGetByName(paramName);
-    }
-
-    r.setParameter = function(paramIdx, value) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      inst.normalizedSet(paramIdx, value);
-      return value;
-    };
-
-    r.setParameterByName = function(paramName, value) {
-      var inst = getGlobalTarget();
-      if (notDefined(inst)) {
-        return undefined;
-      }
-      inst.normalizedSetByName(paramName, value);
-      return value;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Preview Note Stuff
-    ////////////////////////////////////////////////////////////////////////////
-
-    // TODO: find a more suitable place for this stuff
-
-    isTargetTrackDefined = function(rhomb) {
-      var targetId  = rhomb._globalTarget;
-      var targetTrk = rhomb._song._tracks.getObjBySlot(targetId);
-
-      if (notDefined(targetTrk)) {
-        console.log("[Rhombus] - target track is not defined");
-        return false;
-      }
-      else {
-        return true;
-      }
-    };
-
-    // Maintain an array of the currently sounding preview notes
-    var previewNotes = new Array();
-
-    r.startPreviewNote = function(pitch, velocity) {
-
-      if (notDefined(pitch) || !isInteger(pitch) || pitch < 0 || pitch > 127) {
-        console.log("[Rhombus] - invalid preview note pitch");
-        return;
-      }
-
-      var targetId  = this._globalTarget;
-      var targetTrk = this._song._tracks.getObjBySlot(targetId);
-
-      if (!isTargetTrackDefined(this)) {
-        return;
-      }
-
-      if (notDefined(velocity) || velocity < 0 || velocity > 1) {
-        velocity = 0.5;
-      }
-
-      var rtNote = new Rhombus.RtNote(pitch,
-                                   velocity,
-                                   Math.round(this.getPosTicks()),
-                                   0,
-                                   targetId,
-                                   r);
-
-      previewNotes.push(rtNote);
-
-      var targets = this._song._tracks.getObjBySlot(targetId)._targets;
-      for (var i = 0; i < targets.length; i++) {
-        var inst = this._song._instruments.getObjById(targets[i]);
-        if (isDefined(inst)) {
-          inst.triggerAttack(rtNote._id, pitch, 0, velocity);
+// Maintain an array of the currently sounding preview notes
+Rhombus.prototype.killAllPreviewNotes = function() {
+  function killRtNotes(noteIds, targets) {
+    for (var i = 0; i < targets.length; i++) {
+      var inst = r._song._instruments.getObjById(targets[i]);
+      if (isDefined(inst)) {
+        for (var j = 0; j < noteIds.length; j++) {
+          inst.triggerRelease(noteIds[j], 0);
         }
       }
-
-      if (!this.isPlaying() && this.getRecordEnabled()) {
-        this.startPlayback();
-        document.dispatchEvent(new CustomEvent("rhombus-start"));
-      }
-    };
-
-    killRtNotes = function(noteIds, targets) {
-      for (var i = 0; i < targets.length; i++) {
-        var inst = r._song._instruments.getObjById(targets[i]);
-        if (isDefined(inst)) {
-          for (var j = 0; j < noteIds.length; j++) {
-            inst.triggerRelease(noteIds[j], 0);
-          }
-        }
-      }
-    };
-
-    r.stopPreviewNote = function(pitch) {
-      if (!isTargetTrackDefined(this)) {
-        return;
-      }
-
-      var curTicks = Math.round(this.getPosTicks());
-
-      var deadNoteIds = [];
-
-      // Kill all preview notes with the same pitch as the input pitch, since
-      // there is no way to distinguish between them
-      //
-      // If record is enabled, add the finished notes to the record buffer
-      for (var i = previewNotes.length - 1; i >=0; i--) {
-        var rtNote = previewNotes[i];
-        if (rtNote._pitch === pitch) {
-          deadNoteIds.push(rtNote._id);
-
-          // handle wrap-around notes by clamping at the loop end
-          if (curTicks < rtNote._start) {
-            rtNote._end = r.getLoopEnd();
-          }
-          else {
-            rtNote._end = curTicks;
-          }
-
-          // enforce a minimum length of 15 ticks
-          if (rtNote._end - rtNote._start < 15) {
-            rtNote._end = rtNote._start + 15;
-          }
-
-          if (this.isPlaying() && this.getRecordEnabled()) {
-            this.Record.addToBuffer(rtNote);
-          }
-
-          previewNotes.splice(i, 1);
-        }
-      }
-
-      var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
-      killRtNotes(deadNoteIds, targets);
-    };
-
-    r.killAllPreviewNotes = function() {
-      if (!isTargetTrackDefined(this)) {
-        return;
-      }
-
-      var deadNoteIds = [];
-      while (previewNotes.length > 0) {
-        var rtNote = previewNotes.pop();
-        deadNoteIds.push(rtNote._id);
-      }
-
-      var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
-      killRtNotes(deadNoteIds, targets);
-
-      console.log("[Rhombus] - killed all preview notes");
-    };
+    }
   };
-})(this.Rhombus);
+
+  if (!this._isTargetTrackDefined(this)) {
+    return;
+  }
+
+  var deadNoteIds = [];
+  while (this._previewNotes.length > 0) {
+    var rtNote = this._previewNotes.pop();
+    deadNoteIds.push(rtNote._id);
+  }
+
+  var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
+  killRtNotes(deadNoteIds, targets);
+
+  console.log("[Rhombus] - killed all preview notes");
+};

@@ -77,7 +77,6 @@ function Rhombus(constraints) {
   Rhombus._audioNodeSetup(this);
 
   // Instruments
-  Rhombus._instrumentSetup(this);
   Rhombus._wrappedInstrumentSetup(this);
   Rhombus._samplerSetup(this);
 
