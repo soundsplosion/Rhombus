@@ -270,6 +270,8 @@ Rhombus.prototype.killAllPreviewNotes = function() {
     return;
   }
 
+  this._initPreviewNotes();
+
   var deadNoteIds = [];
   while (this._previewNotes.length > 0) {
     var rtNote = this._previewNotes.pop();
