@@ -36,6 +36,11 @@
         r._setId(this, id);
       }
 
+      // just a hack to stop this control from showing up
+      if (isDefined(options)) {
+        options["dry/wet"] = undefined;
+      }
+
       this._type = type;
       this._displayName = displayName;
       this._unnormalizeMap = unnormalizeMaps[this._type];
@@ -222,15 +227,6 @@
         ctrl.setAttribute("step",   step);
         ctrl.setAttribute("value",  value);
 
-        //var output = document.createElement("output");
-        //output.setAttribute("id",    param[0] + "Val");
-        //output.setAttribute("name",  param[0] + "Val");
-        //output.setAttribute("value", value);
-
-        //form.appendChild(output);
-        //form.appendChild(ctrl);
-        //div.appendChild(form);
-
         div.appendChild(ctrl);
         div.appendChild(document.createElement("br"));
       }
@@ -254,7 +250,7 @@
         "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
       },
       "envelope" : Rhombus._map.envelopeMap,
-      "filter" : Rhombus._map.filterMap,
+      "filter" : Rhombus._map.synthFilterMap,
       "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
       "detune" : [Rhombus._map.harmMapFn, rawDisplay, 0.5]
     };

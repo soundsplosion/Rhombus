@@ -297,9 +297,9 @@
             rtNote._end = curTicks;
           }
 
-          // enforce a minimum length of 5 ticks
-          if (rtNote._end - rtNote._start < 5) {
-            rtNote._end = rtNote._start + 5;
+          // enforce a minimum length of 15 ticks
+          if (rtNote._end - rtNote._start < 15) {
+            rtNote._end = rtNote._start + 15;
           }
 
           if (this.isPlaying() && this.getRecordEnabled()) {

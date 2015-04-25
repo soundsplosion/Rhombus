@@ -23,7 +23,6 @@
     // Adds an RtNote with the given parameters to the record buffer
     r.Record.addToBuffer = function(rtNote) {
       if (isDefined(rtNote)) {
-
         var note = new r.Note(rtNote._pitch,
                               Math.round(rtNote._start),
                               Math.round(rtNote._end - rtNote._start),
@@ -31,6 +30,7 @@
 
         if (isDefined(note)) {
           r._recordBuffer.addNote(note);
+          document.dispatchEvent(new CustomEvent("rhombus-newbuffernote", {"detail": note}));
         }
         else {
           console.log("[Rhombus.Record] - note is undefined");
