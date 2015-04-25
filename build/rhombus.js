@@ -1482,6 +1482,17 @@ Rhombus._addParamFunctions = function(ctr) {
       div.appendChild(document.createElement("br"));
     }
 
+    if (this._type === "scpt") {
+      var button = document.createElement("input");
+      button.setAttribute("id", "codeButton");
+      button.setAttribute("name", "codeButton");
+      button.setAttribute("class", "codeButton");
+      button.setAttribute("type", "button");
+      button.setAttribute("value", "Change Code");
+      div.appendChild(button);
+      div.appendChild(document.createElement("br"));
+    }
+
     return div;
   }
   ctr.prototype.getInterface = getInterface;
@@ -1493,6 +1504,48 @@ Rhombus._addParamFunctions = function(ctr) {
                        target   : this,
                        on       : "input",
                        callback : controlHandler } );
+    }
+
+    function scriptHandler() {
+      function okClicked() {
+        console.log('ok clicked');
+      }
+
+      function cancelClicked() {
+        console.log('cancel clicked');
+      }
+
+      var editorDiv = document.createElement("div");
+      editorDiv.id = "scriptEditor";
+
+      setTimeout(function() {
+        var editor = ace.edit(editorDiv);
+        editor.setTheme("ace/theme/xcode");
+        editor.getSession().setMode("ace/mode/javascript");
+        editor.getSession().setTabSize(2);
+        editor.resize();
+      }, 2000);
+
+      var params = {};
+      params.detail = {};
+      params.detail.type = 'okcancel';
+      params.detail.caption = 'Edit Code';
+      params.detail.message = 'message';
+      params.detail.okButton = 'Save Changes';
+      params.detail.okHandler = okClicked;
+      params.detail.cancelButton = 'Discard Changes';
+      params.detail.cancelHandler = cancelClicked;
+      params.detail.inescapable = true;
+      params.detail.htmlNode = editorDiv;
+      var dialogEvent = new CustomEvent("denoto-dialogbox", params);
+      document.dispatchEvent(dialogEvent);
+    }
+
+    if (this._type === "scpt") {
+      controls.push( { id       : "code",
+                       target   : this,
+                       on       : "click",
+                       callback : scriptHandler } );
     }
 
     return controls;
