@@ -191,7 +191,7 @@ Rhombus.prototype.startPreviewNote = function(pitch, velocity) {
                                Math.round(this.getPosTicks()),
                                0,
                                targetId,
-                               r);
+                               this);
 
   this._previewNotes.push(rtNote);
 
@@ -206,6 +206,17 @@ Rhombus.prototype.startPreviewNote = function(pitch, velocity) {
   if (!this.isPlaying() && this.getRecordEnabled()) {
     this.startPlayback();
     document.dispatchEvent(new CustomEvent("rhombus-start"));
+  }
+};
+
+Rhombus.prototype._killRtNotes = function(noteIds, targets) {
+  for (var i = 0; i < targets.length; i++) {
+    var inst = this._song._instruments.getObjById(targets[i]);
+    if (isDefined(inst)) {
+      for (var j = 0; j < noteIds.length; j++) {
+        inst.triggerRelease(noteIds[j], 0);
+      }
+    }
   }
 };
 
@@ -250,23 +261,12 @@ Rhombus.prototype.stopPreviewNote = function(pitch) {
   }
 
   var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
-  killRtNotes(deadNoteIds, targets);
+  this._killRtNotes(deadNoteIds, targets);
 };
 
 // Maintain an array of the currently sounding preview notes
 Rhombus.prototype.killAllPreviewNotes = function() {
   var that = this;
-  function killRtNotes(noteIds, targets) {
-    for (var i = 0; i < targets.length; i++) {
-      var inst = that._song._instruments.getObjById(targets[i]);
-      if (isDefined(inst)) {
-        for (var j = 0; j < noteIds.length; j++) {
-          inst.triggerRelease(noteIds[j], 0);
-        }
-      }
-    }
-  };
-
   if (!this._isTargetTrackDefined(this)) {
     return;
   }
@@ -280,7 +280,7 @@ Rhombus.prototype.killAllPreviewNotes = function() {
   }
 
   var targets = this._song._tracks.getObjBySlot(this._globalTarget)._targets;
-  killRtNotes(deadNoteIds, targets);
+  this._killRtNotes(deadNoteIds, targets);
 
   console.log("[Rhombus] - killed all preview notes");
 };
