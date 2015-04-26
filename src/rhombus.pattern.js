@@ -310,7 +310,7 @@ Rhombus.Pattern.prototype.getNotesAtTick = function(tick, lowPitch, highPitch, s
 
     // ignore already-selected notes
     if (note._selected) {
-      continue;
+      return [note];
     }
 
     // find the shortest note
