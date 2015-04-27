@@ -1892,7 +1892,7 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
 
 Rhombus._Sampler = function(options, r, id) {
   var samplerUnnormalizeMap = {
-    "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.1],
+    "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.56],
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
     "envelope" : Rhombus._map.envelopeMap,
     "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
