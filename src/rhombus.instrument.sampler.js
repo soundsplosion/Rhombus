@@ -36,7 +36,7 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
   Tone.Sampler.prototype.set.call(this, params);
 };
 
-Rhombus._Sampler = function(options, r, id) {
+Rhombus._Sampler = function(options, r, sampleCallback, id) {
   var samplerUnnormalizeMap = {
     "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.56],
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
@@ -74,6 +74,9 @@ Rhombus._Sampler = function(options, r, id) {
     thisSampler._normalizedObjectSet(def, true);
     if (isDefined(options) && isDefined(options.params)) {
       thisSampler._normalizedObjectSet(options.params, true);
+    }
+    if (isDefined(sampleCallback)) {
+      sampleCallback();
     }
   };
 
@@ -220,5 +223,5 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
 };
 
 Rhombus._Sampler.prototype.displayName = function() {
-  return "Sampler";
+  return Rhombus._sampleNameMap[this._sampleSet];
 };

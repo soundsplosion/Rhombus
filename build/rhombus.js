@@ -79,6 +79,7 @@ Object.defineProperty(Rhombus, '_ctx', {
 
 /** Makes this Rhombus instance unusable and releases references to resources. */
 Rhombus.prototype.dispose = function() {
+  this.disconnectFromCtxOut();
   this._disposed = true;
   delete this._song;
 };
@@ -95,6 +96,11 @@ Rhombus.prototype.setGlobalTarget = function(target) {
 /** Returns the id of the global target track. */
 Rhombus.prototype.getGlobalTarget = function() {
   return this._globalTarget;
+};
+
+Rhombus.prototype.disconnectFromCtxOut = function() {
+  var master = this.getMaster();
+  master.disconnect(Rhombus._ctx.destination);
 };
 
 //! rhombus.audionode.js
@@ -1011,6 +1017,17 @@ Rhombus._addGraphFunctions = function(ctr) {
       newInput.from = input.from.map(function (port) {
         return Rhombus._makePort(that._r.graphLookup(port.node), port.slot);
       });
+
+      // Remove any connections where the node doesn't actually exist.
+      for (var i = 0; i < newInput.from.length;) {
+        var realNode = newInput.from[i].node;
+        if (notDefined(realNode)) {
+          input.from.splice(i, 1);
+          newInput.from.splice(i, 1);
+        } else {
+          i++;
+        }
+      }
       return newInput;
     }
 
@@ -1026,6 +1043,17 @@ Rhombus._addGraphFunctions = function(ctr) {
       newOutput.to = output.to.map(function (port) {
         return Rhombus._makePort(that._r.graphLookup(port.node), port.slot);
       });
+
+      // Remove any connections where the node doesn't actually exist.
+      for (var i = 0; i < newOutput.to.length;) {
+        var realNode = newOutput.to[i].node;
+        if (notDefined(realNode)) {
+          output.to.splice(i, 1);
+          newOutput.to.splice(i, 1);
+        } else {
+          i++;
+        }
+      }
       return newOutput;
     }
 
@@ -1570,24 +1598,46 @@ Rhombus._addParamFunctions = function(ctr) {
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-Rhombus._instMap = [
-  [ "mono",  "PolySynth",   undefined        ],
-  [ "samp",  "Drums",       "drums1"         ],
-  [ "samp",  "808",         "drums2"         ],
-  [ "samp",  "Flute",       "tron_flute"     ],
-  [ "samp",  "Woodwinds",   "tron_woodwinds" ],
-  [ "samp",  "Brass 01",    "tron_brass_01"  ],
-  [ "samp",  "Guitar",      "tron_guitar"    ],
-  [ "samp",  "Choir",       "tron_choir"     ],
-  [ "samp",  "Cello",       "tron_cello"     ],
-  [ "samp",  "Strings",     "tron_strings"   ],
-  [ "samp",  "Violins",     "tron_violins"   ],
-  [ "samp",  "Violins 02",  "tron_16vlns"    ],
-  [ "am",    "AM Synth",    undefined        ],
-  [ "fm",    "FM Synth",    undefined        ],
-  [ "noise", "Noise Synth", undefined        ],
-  [ "duo",   "Duo Synth",   undefined        ]
+Rhombus._instMap = [];
+
+Rhombus._synthNameList = [
+  ["mono",  "PolySynth"],
+  ["noise", "Noise Synth"]
 ];
+
+Rhombus._synthNameMap = {};
+
+(function() {
+  for (var i = 0; i < Rhombus._synthNameList.length; i++) {
+    var entry = Rhombus._synthNameList[i];
+    Rhombus._synthNameMap[entry[0]] = entry[1];
+    Rhombus._instMap.push([entry[0], entry[1], undefined]);
+  }
+})();
+
+Rhombus._sampleNameList = [
+  ["drums1",         "Drums"],
+  ["drums2",         "808"],
+  ["tron_flute",     "Flute"],
+  ["tron_woodwinds", "Woodwinds"],
+  ["tron_brass_01",  "Brass 01"],
+  ["tron_guitar",    "Guitar"],
+  ["tron_choir",     "Choir"],
+  ["tron_cello",     "Cello"],
+  ["tron_strings",   "Strings"],
+  ["tron_violins",   "Violins"],
+  ["tron_16vlns",    "Violins 02"]
+];
+
+Rhombus._sampleNameMap = {};
+
+(function() {
+  for (var i = 0; i < Rhombus._sampleNameList.length; i++) {
+    var entry = Rhombus._sampleNameList[i];
+    Rhombus._sampleNameMap[entry[0]] = entry[1];
+    Rhombus._instMap.push(["samp", entry[1], entry[0]]);
+  }
+})();
 
 Rhombus.prototype.instrumentTypes = function() {
   var types = [];
@@ -1613,7 +1663,7 @@ Rhombus.prototype.sampleSets = function() {
   return sets;
 };
 
-Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
+Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallback) {
   var options, go, gi, id, graphX, graphY;
   if (isDefined(json)) {
     options = json._params;
@@ -1638,17 +1688,16 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
   // sampleSet determines the type of sampler....
   if (type === "samp") {
     if (notDefined(sampleSet)) {
-      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, addCallback, id);
     }
     else {
-      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, addCallback, id);
     }
   }
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
 
-  // TODO: get these slots right
   instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
     return;
@@ -1891,7 +1940,7 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
   Tone.Sampler.prototype.set.call(this, params);
 };
 
-Rhombus._Sampler = function(options, r, id) {
+Rhombus._Sampler = function(options, r, sampleCallback, id) {
   var samplerUnnormalizeMap = {
     "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.56],
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
@@ -1929,6 +1978,9 @@ Rhombus._Sampler = function(options, r, id) {
     thisSampler._normalizedObjectSet(def, true);
     if (isDefined(options) && isDefined(options.params)) {
       thisSampler._normalizedObjectSet(options.params, true);
+    }
+    if (isDefined(sampleCallback)) {
+      sampleCallback();
     }
   };
 
@@ -2075,7 +2127,7 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
 };
 
 Rhombus._Sampler.prototype.displayName = function() {
-  return "Sampler";
+  return Rhombus._sampleNameMap[this._sampleSet];
 };
 
 //! rhombus.instrument.tone.js
@@ -2086,16 +2138,10 @@ Rhombus._Sampler.prototype.displayName = function() {
 //! license: MIT
 Rhombus._ToneInstrument = function(type, options, r, id) {
   var mono = Tone.MonoSynth;
-  var am = Tone.AMSynth;
-  var fm = Tone.FMSynth;
   var noise = Tone.NoiseSynth;
-  var duo = Tone.DuoSynth;
   var typeMap = {
-    "mono" : [mono, "Monophonic Synth"],
-    "am"   : [am, "AM Synth"],
-    "fm"   : [fm, "FM Synth"],
-    "noise": [noise, "Noise Synth"],
-    "duo"  : [duo, "DuoSynth"]
+    "mono" : mono,
+    "noise": noise
   };
 
   var secondsDisplay = Rhombus._map.secondsDisplay;
@@ -2167,12 +2213,10 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
 
 
   this._r = r;
-  var ctr = typeMap[type][0];
-  var displayName = typeMap[type][1];
+  var ctr = typeMap[type];
   if (isNull(ctr) || notDefined(ctr)) {
     type = "mono";
     ctr = mono;
-    displayName = "Monophonic Synth";
   }
 
   if (notDefined(id)) {
@@ -2187,7 +2231,6 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   }
 
   this._type = type;
-  this._displayName = displayName;
   this._unnormalizeMap = unnormalizeMaps[this._type];
   this._currentParams = {};
   this._triggered = {};
@@ -2275,7 +2318,7 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
 };
 
 Rhombus._ToneInstrument.prototype.displayName = function() {
-  return this._displayName;
+  return Rhombus._synthNameMap[this._type];
 };
 
 //! rhombus.effect.js
@@ -4004,8 +4047,24 @@ Rhombus.prototype.initSong = function() {
 /**
  * Import a previously-exported song back into this Rhombus instance.
  * @param {String} json The song to be imported. Should have been created with {@link Rhombus#exportSong}.
+ * @param {Function} readyToPlayCallback A function called when the samplers have loaded their samples.
  */
-Rhombus.prototype.importSong = function(json) {
+Rhombus.prototype.importSong = function(json, readyToPlayCallback) {
+  // THIS LINE IS NEEDED FOR GARBAGE COLLECTION TO HAPPEN
+  // VERY IMPORTANT FOR STABILITY WHEN IMPORTING SONGS MULTIPLE TIMES DURING THE SAME PAGE LIFETIME
+  this.disconnectFromCtxOut();
+
+  var samplerCount = 0;
+  var samplersDone = -1;
+  function samplerCallback() {
+    samplersDone += 1;
+    if (samplersDone === samplerCount) {
+      if (isDefined(readyToPlayCallback)) {
+        readyToPlayCallback();
+      }
+    }
+  }
+
   this._song = new Rhombus.Song(this);
   var parsed = JSON.parse(json);
   this._song.setTitle(parsed._title);
@@ -4093,7 +4152,12 @@ Rhombus.prototype.importSong = function(json) {
     if (isDefined(inst._sampleSet)) {
       console.log("[Rhombus.importSong] - sample set is: " + inst._sampleSet);
     }
-    this.addInstrument(inst._type, inst, +instIdIdx, inst._sampleSet);
+
+    if (inst._type === "samp") {
+      samplerCount += 1;
+    }
+
+    this.addInstrument(inst._type, inst, +instIdIdx, inst._sampleSet, samplerCallback);
   }
 
   for (var effId in effects) {
@@ -4115,6 +4179,8 @@ Rhombus.prototype.importSong = function(json) {
   // Undo actions generated by the import or from
   // before the song import should not be used.
   this.Undo._clearUndoStack();
+
+  samplerCallback();
 };
 
 /**

@@ -6,16 +6,10 @@
 //! license: MIT
 Rhombus._ToneInstrument = function(type, options, r, id) {
   var mono = Tone.MonoSynth;
-  var am = Tone.AMSynth;
-  var fm = Tone.FMSynth;
   var noise = Tone.NoiseSynth;
-  var duo = Tone.DuoSynth;
   var typeMap = {
-    "mono" : [mono, "Monophonic Synth"],
-    "am"   : [am, "AM Synth"],
-    "fm"   : [fm, "FM Synth"],
-    "noise": [noise, "Noise Synth"],
-    "duo"  : [duo, "DuoSynth"]
+    "mono" : mono,
+    "noise": noise
   };
 
   var secondsDisplay = Rhombus._map.secondsDisplay;
@@ -87,12 +81,10 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
 
 
   this._r = r;
-  var ctr = typeMap[type][0];
-  var displayName = typeMap[type][1];
+  var ctr = typeMap[type];
   if (isNull(ctr) || notDefined(ctr)) {
     type = "mono";
     ctr = mono;
-    displayName = "Monophonic Synth";
   }
 
   if (notDefined(id)) {
@@ -107,7 +99,6 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   }
 
   this._type = type;
-  this._displayName = displayName;
   this._unnormalizeMap = unnormalizeMaps[this._type];
   this._currentParams = {};
   this._triggered = {};
@@ -195,5 +186,5 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
 };
 
 Rhombus._ToneInstrument.prototype.displayName = function() {
-  return this._displayName;
+  return Rhombus._synthNameMap[this._type];
 };

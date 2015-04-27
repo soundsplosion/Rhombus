@@ -2,24 +2,46 @@
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-Rhombus._instMap = [
-  [ "mono",  "PolySynth",   undefined        ],
-  [ "samp",  "Drums",       "drums1"         ],
-  [ "samp",  "808",         "drums2"         ],
-  [ "samp",  "Flute",       "tron_flute"     ],
-  [ "samp",  "Woodwinds",   "tron_woodwinds" ],
-  [ "samp",  "Brass 01",    "tron_brass_01"  ],
-  [ "samp",  "Guitar",      "tron_guitar"    ],
-  [ "samp",  "Choir",       "tron_choir"     ],
-  [ "samp",  "Cello",       "tron_cello"     ],
-  [ "samp",  "Strings",     "tron_strings"   ],
-  [ "samp",  "Violins",     "tron_violins"   ],
-  [ "samp",  "Violins 02",  "tron_16vlns"    ],
-  [ "am",    "AM Synth",    undefined        ],
-  [ "fm",    "FM Synth",    undefined        ],
-  [ "noise", "Noise Synth", undefined        ],
-  [ "duo",   "Duo Synth",   undefined        ]
+Rhombus._instMap = [];
+
+Rhombus._synthNameList = [
+  ["mono",  "PolySynth"],
+  ["noise", "Noise Synth"]
 ];
+
+Rhombus._synthNameMap = {};
+
+(function() {
+  for (var i = 0; i < Rhombus._synthNameList.length; i++) {
+    var entry = Rhombus._synthNameList[i];
+    Rhombus._synthNameMap[entry[0]] = entry[1];
+    Rhombus._instMap.push([entry[0], entry[1], undefined]);
+  }
+})();
+
+Rhombus._sampleNameList = [
+  ["drums1",         "Drums"],
+  ["drums2",         "808"],
+  ["tron_flute",     "Flute"],
+  ["tron_woodwinds", "Woodwinds"],
+  ["tron_brass_01",  "Brass 01"],
+  ["tron_guitar",    "Guitar"],
+  ["tron_choir",     "Choir"],
+  ["tron_cello",     "Cello"],
+  ["tron_strings",   "Strings"],
+  ["tron_violins",   "Violins"],
+  ["tron_16vlns",    "Violins 02"]
+];
+
+Rhombus._sampleNameMap = {};
+
+(function() {
+  for (var i = 0; i < Rhombus._sampleNameList.length; i++) {
+    var entry = Rhombus._sampleNameList[i];
+    Rhombus._sampleNameMap[entry[0]] = entry[1];
+    Rhombus._instMap.push(["samp", entry[1], entry[0]]);
+  }
+})();
 
 Rhombus.prototype.instrumentTypes = function() {
   var types = [];
@@ -45,7 +67,7 @@ Rhombus.prototype.sampleSets = function() {
   return sets;
 };
 
-Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
+Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallback) {
   var options, go, gi, id, graphX, graphY;
   if (isDefined(json)) {
     options = json._params;
@@ -70,17 +92,16 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
   // sampleSet determines the type of sampler....
   if (type === "samp") {
     if (notDefined(sampleSet)) {
-      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, addCallback, id);
     }
     else {
-      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, addCallback, id);
     }
   }
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
 
-  // TODO: get these slots right
   instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
     return;
