@@ -220,5 +220,5 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
 };
 
 Rhombus._Sampler.prototype.displayName = function() {
-  return "Sampler";
+  return Rhombus._sampleNameMap[this._sampleSet];
 };
