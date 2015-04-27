@@ -135,8 +135,8 @@ Rhombus.prototype.removeInstrument = function(instrOrId, internal) {
   var instr = this._song._instruments.getObjById(id);
   var slot = this._song._instruments.getSlotById(id);
 
-  var go = Rhombus.Util.deepCopy(instr.graphOutputs());
-  var gi = Rhombus.Util.deepCopy(instr.graphInputs());
+  var go = instr.graphOutputs();
+  var gi = instr.graphInputs();
 
   if (!internal) {
     var that = this;
