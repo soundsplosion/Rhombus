@@ -153,17 +153,67 @@ Rhombus._addParamFunctions = function(ctr) {
       div.appendChild(document.createElement("br"));
     }
 
+    if (this._type === "scpt") {
+      var button = document.createElement("input");
+      button.setAttribute("id", "codeButton");
+      button.setAttribute("name", "codeButton");
+      button.setAttribute("class", "codeButton");
+      button.setAttribute("type", "button");
+      button.setAttribute("value", "Change Code");
+      div.appendChild(button);
+      div.appendChild(document.createElement("br"));
+    }
+
     return div;
   }
   ctr.prototype.getInterface = getInterface;
 
   function getControls(controlHandler) {
+    var that = this;
     var controls = new Array();
     for (var i = 0; i < this.parameterCount(); i++) {
       controls.push( { id       : this.parameterName(i),
                        target   : this,
                        on       : "input",
                        callback : controlHandler } );
+    }
+
+    function scriptHandler() {
+      var editorArea = document.createElement("textarea");
+      editorArea.id = "scriptEditor";
+      editorArea.value = that.getCode();
+      editorArea.cols = 60;
+      editorArea.rows = 20;
+
+      function okClicked() {
+        var code = editorArea.value;
+        that.setCode(code);
+      }
+
+      function cancelClicked() {
+        // Do nothing
+      }
+
+      var params = {};
+      params.detail = {};
+      params.detail.type = 'okcancel';
+      params.detail.caption = 'Edit Code';
+      params.detail.message = 'message';
+      params.detail.okButton = 'Save Changes';
+      params.detail.okHandler = okClicked;
+      params.detail.cancelButton = 'Discard Changes';
+      params.detail.cancelHandler = cancelClicked;
+      params.detail.inescapable = true;
+      params.detail.htmlNode = editorArea;
+      var dialogEvent = new CustomEvent("denoto-dialogbox", params);
+      document.dispatchEvent(dialogEvent);
+    }
+
+    if (this._type === "scpt") {
+      controls.push( { id       : "codeButton",
+                       target   : this,
+                       on       : "click",
+                       callback : scriptHandler } );
     }
 
     return controls;
