@@ -57,7 +57,7 @@
           note._start = note._start + offset;
           if (note._start < 0) {
             note._start = 0;
-          }          
+          }
           ptn.addNote(note);
         }
       }
