@@ -35,10 +35,6 @@ Rhombus.Record.prototype.addToBuffer = function(rtNote) {
     var noteStart  = Math.round(rtNote._start);
     var noteLength = Math.round(rtNote._end - rtNote._start);
 
-    // force the values into a safe range
-    noteStart = (noteStart > 0) ? noteStart : 0;
-    noteLength = (noteLength >= 15) ? noteLength : 15;
-
     var note = new Rhombus.Note(rtNote._pitch,
                                 noteStart,
                                 noteLength,
