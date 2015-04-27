@@ -17,6 +17,10 @@
     }
 
     r.Edit.insertNote = function(note, ptnId) {
+      if (notDefined(note)) {
+        return;
+      }
+
       r.Undo._addUndoAction(function() {
         r._song._patterns[ptnId].deleteNote(note._id);
       });
@@ -31,6 +35,10 @@
     // the offset would typically be a negative value (since all patterns start
     // at tick 0 internally)
     r.Edit.insertNotes = function(notes, ptnId, offset) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+
       offset = (isDefined(offset)) ? offset : 0;
       var ptn = r._song._patterns[ptnId];
 
@@ -53,8 +61,11 @@
     };
 
     r.Edit.deleteNote = function(noteId, ptnId) {
-      // TODO: put checks on the input arguments
       var note = r._song._patterns[ptnId].deleteNote(noteId);
+
+      if (notDefined(note)) {
+        return;
+      }
 
       r.Undo._addUndoAction(function() {
         r._song._patterns[ptnId].addNote(note);
@@ -62,6 +73,10 @@
     };
 
     r.Edit.deleteNotes = function(notes, ptnId) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+
       r._song._patterns[ptnId].deleteNotes(notes);
       r.Undo._addUndoAction(function() {
         r._song._patterns[ptnId].addNotes(notes);
@@ -99,7 +114,6 @@
     };
 
     r.Edit.changeNotePitch = function(noteId, pitch, ptnId) {
-      // TODO: put checks on the input arguments
       var note = r._song._patterns[ptnId].getNote(noteId);
 
       if (notDefined(note)) {
@@ -119,7 +133,6 @@
         note._pitch = pitch;
       }
 
-      // Could return anything here...
       return noteId;
     };
 
@@ -160,6 +173,10 @@
     };
 
     r.Edit.updateVelocities = function(notes, velocity, onlySelected) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+      
       if (notDefined(velocity) || !isNumber(velocity) || velocity < 0 || velocity > 1) {
         console.log("[Rhombus.Edit] - invalid velocity");
         return false;
@@ -204,6 +221,10 @@
     };
 
     r.Edit.translateNotes = function(ptnId, notes, pitchOffset, timeOffset) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+
       var ptn = r._song._patterns[ptnId];
       if (notDefined(ptn)) {
         console.log("[Rhombus.Edit] - pattern is not defined");
@@ -264,6 +285,10 @@
     };
 
     r.Edit.offsetNoteLengths = function(ptnId, notes, lengthOffset, minLength) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+
       var ptn = r._song._patterns[ptnId];
       if (notDefined(ptn)) {
         console.log("[Rhombus.Edit.offsetNoteLengths] - pattern is not defined");
@@ -304,6 +329,10 @@
     };
 
     r.Edit.applyNoteLengths = function(notes, lengths) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+
       var oldValues = new Array(notes.length);
       for (var i = 0; i < notes.length; i++) {
         oldValues[i] = notes[i]._length;
@@ -329,6 +358,10 @@
     };
 
     r.Edit.setNoteLengths = function(ptnId, notes, length) {
+      if (notDefined(notes) || notes.length < 1) {
+        return;
+      }
+
       // make sure the new length is valid
       if (notDefined(length) || !isInteger(length) || length < 0) {
         console.log("[Rhombus.Edit.setNoteLengths] - length is not valid");
