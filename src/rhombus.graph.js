@@ -72,6 +72,17 @@ Rhombus._addGraphFunctions = function(ctr) {
       newInput.from = input.from.map(function (port) {
         return Rhombus._makePort(that._r.graphLookup(port.node), port.slot);
       });
+
+      // Remove any connections where the node doesn't actually exist.
+      for (var i = 0; i < newInput.from.length;) {
+        var realNode = newInput.from[i].node;
+        if (notDefined(realNode)) {
+          input.from.splice(i, 1);
+          newInput.from.splice(i, 1);
+        } else {
+          i++;
+        }
+      }
       return newInput;
     }
 
@@ -87,6 +98,17 @@ Rhombus._addGraphFunctions = function(ctr) {
       newOutput.to = output.to.map(function (port) {
         return Rhombus._makePort(that._r.graphLookup(port.node), port.slot);
       });
+
+      // Remove any connections where the node doesn't actually exist.
+      for (var i = 0; i < newOutput.to.length;) {
+        var realNode = newOutput.to[i].node;
+        if (notDefined(realNode)) {
+          output.to.splice(i, 1);
+          newOutput.to.splice(i, 1);
+        } else {
+          i++;
+        }
+      }
       return newOutput;
     }
 
