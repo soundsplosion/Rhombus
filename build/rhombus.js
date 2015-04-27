@@ -5393,7 +5393,9 @@ Rhombus.prototype.getRecordEnabled = function() {
 Rhombus.prototype.setRecordEnabled = function(enabled, item) {
   if (typeof enabled === "boolean") {
     if (isDefined(item) && enabled === true) {
-      this.stopPlayback();
+      if (this.isPlaying()) {
+        this.stopPlayback();
+      }
       this.moveToPositionTicks(item._start);
     }
     document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": enabled}));
