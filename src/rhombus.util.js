@@ -724,8 +724,8 @@
   };
 
   // Frequently used mappings.
-  // TODO: fix envelope function mappings
   Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.001, 10);
+  Rhombus._map.shortTimeMapFn = Rhombus._map.mapExp(0.05, 1);
   Rhombus._map.freqMapFn = Rhombus._map.mapExp(1, 22100);
   Rhombus._map.cutoffMapFn = Rhombus._map.mapExp(25, 22100);
   Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);

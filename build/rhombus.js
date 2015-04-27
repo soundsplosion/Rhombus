@@ -875,8 +875,8 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   };
 
   // Frequently used mappings.
-  // TODO: fix envelope function mappings
   Rhombus._map.timeMapFn = Rhombus._map.mapExp(0.001, 10);
+  Rhombus._map.shortTimeMapFn = Rhombus._map.mapExp(0.05, 1);
   Rhombus._map.freqMapFn = Rhombus._map.mapExp(1, 22100);
   Rhombus._map.cutoffMapFn = Rhombus._map.mapExp(25, 22100);
   Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);
@@ -2707,11 +2707,11 @@ Tone.extend(Rhombus._Chorus, Tone.Chorus);
 Rhombus._addEffectFunctions(Rhombus._Chorus);
 
 Rhombus._Chorus.prototype._unnormalizeMap = Rhombus._makeEffectMap({
-  "rate" : [Rhombus._map.mapLinear(0, 20), Rhombus._map.hzDisplay, 2.0],
-  "delayTime" : [Rhombus._map.timeMapFn, Rhombus._map.secondsDisplay, 0.1],
+  "rate" : [Rhombus._map.mapLinear(0.1, 10), Rhombus._map.hzDisplay, 2.0],
+  "delayTime" : [Rhombus._map.shortTimeMapFn, Rhombus._map.secondsDisplay, 0.25],
   "depth" : [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 0.35],
   "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), Rhombus._map.rawDisplay, 0.0],
-  "feedback" : [Rhombus._map.mapLinear(-0.2, 0.2), Rhombus._map.rawDisplay, 0.5]
+  "feedback" : [Rhombus._map.mapLinear(-0.25, 0.25), Rhombus._map.rawDisplay, 0.5]
 });
 
 Rhombus._Chorus.prototype.displayName = function() {

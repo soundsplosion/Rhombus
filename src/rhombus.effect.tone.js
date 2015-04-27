@@ -171,11 +171,11 @@ Tone.extend(Rhombus._Chorus, Tone.Chorus);
 Rhombus._addEffectFunctions(Rhombus._Chorus);
 
 Rhombus._Chorus.prototype._unnormalizeMap = Rhombus._makeEffectMap({
-  "rate" : [Rhombus._map.mapLinear(0, 20), Rhombus._map.hzDisplay, 2.0],
-  "delayTime" : [Rhombus._map.timeMapFn, Rhombus._map.secondsDisplay, 0.1],
+  "rate" : [Rhombus._map.mapLinear(0.1, 10), Rhombus._map.hzDisplay, 2.0],
+  "delayTime" : [Rhombus._map.shortTimeMapFn, Rhombus._map.secondsDisplay, 0.25],
   "depth" : [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 0.35],
   "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), Rhombus._map.rawDisplay, 0.0],
-  "feedback" : [Rhombus._map.mapLinear(-0.2, 0.2), Rhombus._map.rawDisplay, 0.5]
+  "feedback" : [Rhombus._map.mapLinear(-0.25, 0.25), Rhombus._map.rawDisplay, 0.5]
 });
 
 Rhombus._Chorus.prototype.displayName = function() {
