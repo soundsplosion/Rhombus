@@ -176,7 +176,7 @@
       if (notDefined(notes) || notes.length < 1) {
         return;
       }
-      
+
       if (notDefined(velocity) || !isNumber(velocity) || velocity < 0 || velocity > 1) {
         console.log("[Rhombus.Edit] - invalid velocity");
         return false;
