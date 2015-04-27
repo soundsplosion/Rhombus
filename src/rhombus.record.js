@@ -12,10 +12,18 @@ Rhombus.prototype.getRecordEnabled = function() {
   return this.Record._recordEnabled;
 };
 
-Rhombus.prototype.setRecordEnabled = function(enabled) {
+Rhombus.prototype.setRecordEnabled = function(enabled, item) {
   if (typeof enabled === "boolean") {
+    if (isDefined(item) && enabled === true) {
+      this.stopPlayback();
+      this.moveToPositionTicks(item._start);
+    }
     document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": enabled}));
     return this.Record._recordEnabled = enabled;
+  }
+  else {
+    document.dispatchEvent(new CustomEvent("rhombus-recordenable", {"detail": false}));
+    return this.Record._recordEnabled = false;
   }
 };
 
