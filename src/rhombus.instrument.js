@@ -67,7 +67,7 @@ Rhombus.prototype.sampleSets = function() {
   return sets;
 };
 
-Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
+Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallback) {
   var options, go, gi, id, graphX, graphY;
   if (isDefined(json)) {
     options = json._params;
@@ -92,10 +92,10 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
   // sampleSet determines the type of sampler....
   if (type === "samp") {
     if (notDefined(sampleSet)) {
-      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, "drums1"), this, addCallback, id);
     }
     else {
-      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, id);
+      instr = new Rhombus._Sampler(samplerOptionsFrom(options, sampleSet), this, addCallback, id);
     }
   }
   else {

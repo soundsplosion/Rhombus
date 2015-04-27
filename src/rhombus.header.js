@@ -79,6 +79,7 @@ Object.defineProperty(Rhombus, '_ctx', {
 
 /** Makes this Rhombus instance unusable and releases references to resources. */
 Rhombus.prototype.dispose = function() {
+  this.disconnectFromCtxOut();
   this._disposed = true;
   delete this._song;
 };
@@ -95,4 +96,9 @@ Rhombus.prototype.setGlobalTarget = function(target) {
 /** Returns the id of the global target track. */
 Rhombus.prototype.getGlobalTarget = function() {
   return this._globalTarget;
+};
+
+Rhombus.prototype.disconnectFromCtxOut = function() {
+  var master = this.getMaster();
+  master.disconnect(Rhombus._ctx.destination);
 };
