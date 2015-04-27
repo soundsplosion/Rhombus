@@ -2335,7 +2335,7 @@ Rhombus.prototype.addEffect = function(type, json) {
     "scpt" : Rhombus._Script
   };
 
-  var options, go, gi, id, graphX, graphY;
+  var options, go, gi, id, graphX, graphY, code;
   if (isDefined(json)) {
     options = json._params;
     go = json._graphOutputs;
@@ -2343,6 +2343,7 @@ Rhombus.prototype.addEffect = function(type, json) {
     id = json._id;
     graphX = json._graphX;
     graphY = json._graphY;
+    code = json._code;
   }
 
   var ctr;
@@ -2359,7 +2360,12 @@ Rhombus.prototype.addEffect = function(type, json) {
     ctr = ctrMap["dist"];
   }
 
-  var eff = new ctr();
+  var eff;
+  if (isDefined(code)) {
+    eff = new ctr(code);
+  } else {
+    eff = new ctr();
+  }
 
   if (isNull(eff) || notDefined(eff)) {
     return;
@@ -2499,6 +2505,9 @@ Rhombus._addEffectFunctions = function(ctr) {
       "_graphX": this._graphX,
       "_graphY": this._graphY
     };
+    if (isDefined(this._code)) {
+      jsonVersion._code = this._code;
+    }
     return jsonVersion;
   }
 
