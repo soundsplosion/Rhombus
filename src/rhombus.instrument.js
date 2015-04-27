@@ -2,21 +2,44 @@
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
 
-Rhombus._instMap = [
-  [ "mono",  "PolySynth",   undefined        ],
-  [ "samp",  "Drums",       "drums1"         ],
-  [ "samp",  "808",         "drums2"         ],
-  [ "samp",  "Flute",       "tron_flute"     ],
-  [ "samp",  "Woodwinds",   "tron_woodwinds" ],
-  [ "samp",  "Brass 01",    "tron_brass_01"  ],
-  [ "samp",  "Guitar",      "tron_guitar"    ],
-  [ "samp",  "Choir",       "tron_choir"     ],
-  [ "samp",  "Cello",       "tron_cello"     ],
-  [ "samp",  "Strings",     "tron_strings"   ],
-  [ "samp",  "Violins",     "tron_violins"   ],
-  [ "samp",  "Violins 02",  "tron_16vlns"    ],
-  [ "noise", "Noise Synth", undefined        ],
+Rhombus._instMap = [];
+
+Rhombus._synthNameList = [
+  ["mono",  "PolySynth"],
+  ["noise", "Noise Synth"]
 ];
+
+Rhombus._synthNameMap = {};
+
+(function() {
+  for (var i = 0; i < Rhombus._synthNameList.length; i++) {
+    var entry = Rhombus._synthNameList[i];
+    Rhombus._synthNameMap[entry[0]] = entry[1];
+    Rhombus._instMap.push([entry[0], entry[1], undefined]);
+  }
+})();
+
+Rhombus._sampleNameList = [
+  ["tron_flute",     "Flute"],
+  ["tron_woodwinds", "Woodwinds"],
+  ["tron_brass_01",  "Brass 01"],
+  ["tron_guitar",    "Guitar"],
+  ["tron_choir",     "Choir"],
+  ["tron_cello",     "Cello"],
+  ["tron_strings",   "Strings"],
+  ["tron_violins",   "Violins"],
+  ["tron_16vlns",    "Violins 02"]
+];
+
+Rhombus._sampleNameMap = {};
+
+(function() {
+  for (var i = 0; i < Rhombus._sampleNameList.length; i++) {
+    var entry = Rhombus._sampleNameList[i];
+    Rhombus._sampleNameMap[entry[0]] = entry[1];
+    Rhombus._instMap.push(["samp", entry[1], entry[0]]);
+  }
+})();
 
 Rhombus.prototype.instrumentTypes = function() {
   var types = [];
@@ -77,7 +100,6 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet) {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
 
-  // TODO: get these slots right
   instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
     return;
