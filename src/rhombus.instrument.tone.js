@@ -6,16 +6,10 @@
 //! license: MIT
 Rhombus._ToneInstrument = function(type, options, r, id) {
   var mono = Tone.MonoSynth;
-  var am = Tone.AMSynth;
-  var fm = Tone.FMSynth;
   var noise = Tone.NoiseSynth;
-  var duo = Tone.DuoSynth;
   var typeMap = {
     "mono" : [mono, "Monophonic Synth"],
-    "am"   : [am, "AM Synth"],
-    "fm"   : [fm, "FM Synth"],
     "noise": [noise, "Noise Synth"],
-    "duo"  : [duo, "DuoSynth"]
   };
 
   var secondsDisplay = Rhombus._map.secondsDisplay;

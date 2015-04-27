@@ -15,10 +15,7 @@ Rhombus._instMap = [
   [ "samp",  "Strings",     "tron_strings"   ],
   [ "samp",  "Violins",     "tron_violins"   ],
   [ "samp",  "Violins 02",  "tron_16vlns"    ],
-  [ "am",    "AM Synth",    undefined        ],
-  [ "fm",    "FM Synth",    undefined        ],
   [ "noise", "Noise Synth", undefined        ],
-  [ "duo",   "Duo Synth",   undefined        ]
 ];
 
 Rhombus.prototype.instrumentTypes = function() {
