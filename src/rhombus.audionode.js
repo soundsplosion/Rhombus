@@ -28,7 +28,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
       this.disconnect();
       var that = this;
       this._graphOutputs[output].to.forEach(function(port) {
-        that.connect(this._r.graphLookup(port.node));
+        that.connect(that._r.graphLookup(port.node));
       });
     } else if (type === "control") {
       // TODO: implement control routing

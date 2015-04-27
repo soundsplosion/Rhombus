@@ -1,7 +1,7 @@
 //! rhombus.effect.script.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
-Rhombus._Script = function() {
+Rhombus._Script = function(code) {
   Tone.Effect.call(this);
 
   var that = this;
@@ -56,12 +56,32 @@ Rhombus._Script = function() {
     }
   };
 
+  if (isDefined(code)) {
+    this.setCode(code);
+  } else {
+    this.setCode('\n' +
+    'function() {\n' +
+    '  var toRet = [];\n' +
+    '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
+    '    var inpData = M.inputSamples(chan);\n' +
+    '    var outData = [];\n' +
+    '    outData[inpData.length-1] = undefined;\n' +
+    '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
+    '      outData[samp] = Math.random() * inpData[samp];\n' +
+    '    }\n' +
+    '    toRet.push(outData);\n' +
+    '  }\n' +
+    '  return toRet;\n' +
+    '}\n');
+  }
+
   this.connectEffect(this._processorNode);
 };
 Tone.extend(Rhombus._Script, Tone.Effect);
 
 Rhombus._Script.prototype.setCode = function(str) {
   var that = this;
+  this._code = str;
   caja.load(undefined, undefined, function(frame) {
     if (!that._tamedM) {
       caja.markReadOnlyRecord(that._M);
@@ -71,12 +91,16 @@ Rhombus._Script.prototype.setCode = function(str) {
       that._tamedM = caja.tame(that._M);
     }
 
-    frame.code(undefined, 'text/javascript', str)
+    frame.code(undefined, 'text/javascript', 'M.setProcessor(' + str + ');\n')
     .api({
       M: that._tamedM
     })
     .run();
   });
+};
+
+Rhombus._Script.prototype.getCode = function() {
+  return this._code;
 };
 Rhombus._addEffectFunctions(Rhombus._Script);
 

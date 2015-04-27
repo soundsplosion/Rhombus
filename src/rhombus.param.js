@@ -169,6 +169,7 @@ Rhombus._addParamFunctions = function(ctr) {
   ctr.prototype.getInterface = getInterface;
 
   function getControls(controlHandler) {
+    var that = this;
     var controls = new Array();
     for (var i = 0; i < this.parameterCount(); i++) {
       controls.push( { id       : this.parameterName(i),
@@ -178,24 +179,20 @@ Rhombus._addParamFunctions = function(ctr) {
     }
 
     function scriptHandler() {
+      var editorArea = document.createElement("textarea");
+      editorArea.id = "scriptEditor";
+      editorArea.value = that.getCode();
+      editorArea.cols = 60;
+      editorArea.rows = 20;
+
       function okClicked() {
-        console.log('ok clicked');
+        var code = editorArea.value;
+        that.setCode(code);
       }
 
       function cancelClicked() {
-        console.log('cancel clicked');
+        // Do nothing
       }
-
-      var editorDiv = document.createElement("div");
-      editorDiv.id = "scriptEditor";
-
-      setTimeout(function() {
-        var editor = ace.edit(editorDiv);
-        editor.setTheme("ace/theme/xcode");
-        editor.getSession().setMode("ace/mode/javascript");
-        editor.getSession().setTabSize(2);
-        editor.resize();
-      }, 2000);
 
       var params = {};
       params.detail = {};
@@ -207,13 +204,13 @@ Rhombus._addParamFunctions = function(ctr) {
       params.detail.cancelButton = 'Discard Changes';
       params.detail.cancelHandler = cancelClicked;
       params.detail.inescapable = true;
-      params.detail.htmlNode = editorDiv;
+      params.detail.htmlNode = editorArea;
       var dialogEvent = new CustomEvent("denoto-dialogbox", params);
       document.dispatchEvent(dialogEvent);
     }
 
     if (this._type === "scpt") {
-      controls.push( { id       : "code",
+      controls.push( { id       : "codeButton",
                        target   : this,
                        on       : "click",
                        callback : scriptHandler } );

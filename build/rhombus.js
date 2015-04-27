@@ -127,7 +127,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
       this.disconnect();
       var that = this;
       this._graphOutputs[output].to.forEach(function(port) {
-        that.connect(this._r.graphLookup(port.node));
+        that.connect(that._r.graphLookup(port.node));
       });
     } else if (type === "control") {
       // TODO: implement control routing
@@ -1498,6 +1498,7 @@ Rhombus._addParamFunctions = function(ctr) {
   ctr.prototype.getInterface = getInterface;
 
   function getControls(controlHandler) {
+    var that = this;
     var controls = new Array();
     for (var i = 0; i < this.parameterCount(); i++) {
       controls.push( { id       : this.parameterName(i),
@@ -1507,24 +1508,20 @@ Rhombus._addParamFunctions = function(ctr) {
     }
 
     function scriptHandler() {
+      var editorArea = document.createElement("textarea");
+      editorArea.id = "scriptEditor";
+      editorArea.value = that.getCode();
+      editorArea.cols = 60;
+      editorArea.rows = 20;
+
       function okClicked() {
-        console.log('ok clicked');
+        var code = editorArea.value;
+        that.setCode(code);
       }
 
       function cancelClicked() {
-        console.log('cancel clicked');
+        // Do nothing
       }
-
-      var editorDiv = document.createElement("div");
-      editorDiv.id = "scriptEditor";
-
-      setTimeout(function() {
-        var editor = ace.edit(editorDiv);
-        editor.setTheme("ace/theme/xcode");
-        editor.getSession().setMode("ace/mode/javascript");
-        editor.getSession().setTabSize(2);
-        editor.resize();
-      }, 2000);
 
       var params = {};
       params.detail = {};
@@ -1536,13 +1533,13 @@ Rhombus._addParamFunctions = function(ctr) {
       params.detail.cancelButton = 'Discard Changes';
       params.detail.cancelHandler = cancelClicked;
       params.detail.inescapable = true;
-      params.detail.htmlNode = editorDiv;
+      params.detail.htmlNode = editorArea;
       var dialogEvent = new CustomEvent("denoto-dialogbox", params);
       document.dispatchEvent(dialogEvent);
     }
 
     if (this._type === "scpt") {
-      controls.push( { id       : "code",
+      controls.push( { id       : "codeButton",
                        target   : this,
                        on       : "click",
                        callback : scriptHandler } );
@@ -2766,7 +2763,7 @@ Rhombus._Master.prototype.displayName = function() {
 //! rhombus.effect.script.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
-Rhombus._Script = function() {
+Rhombus._Script = function(code) {
   Tone.Effect.call(this);
 
   var that = this;
@@ -2821,12 +2818,32 @@ Rhombus._Script = function() {
     }
   };
 
+  if (isDefined(code)) {
+    this.setCode(code);
+  } else {
+    this.setCode('\n' +
+    'function() {\n' +
+    '  var toRet = [];\n' +
+    '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
+    '    var inpData = M.inputSamples(chan);\n' +
+    '    var outData = [];\n' +
+    '    outData[inpData.length-1] = undefined;\n' +
+    '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
+    '      outData[samp] = Math.random() * inpData[samp];\n' +
+    '    }\n' +
+    '    toRet.push(outData);\n' +
+    '  }\n' +
+    '  return toRet;\n' +
+    '}\n');
+  }
+
   this.connectEffect(this._processorNode);
 };
 Tone.extend(Rhombus._Script, Tone.Effect);
 
 Rhombus._Script.prototype.setCode = function(str) {
   var that = this;
+  this._code = str;
   caja.load(undefined, undefined, function(frame) {
     if (!that._tamedM) {
       caja.markReadOnlyRecord(that._M);
@@ -2836,12 +2853,16 @@ Rhombus._Script.prototype.setCode = function(str) {
       that._tamedM = caja.tame(that._M);
     }
 
-    frame.code(undefined, 'text/javascript', str)
+    frame.code(undefined, 'text/javascript', 'M.setProcessor(' + str + ');\n')
     .api({
       M: that._tamedM
     })
     .run();
   });
+};
+
+Rhombus._Script.prototype.getCode = function() {
+  return this._code;
 };
 Rhombus._addEffectFunctions(Rhombus._Script);
 

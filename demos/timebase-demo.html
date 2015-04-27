@@ -74,20 +74,6 @@ var effId = rhomb.addEffect("scpt");
 var eff = rhomb.graphLookup(effId);
 instr.graphConnect(0, eff, 0);
 eff.graphConnect(0, rhomb.getMaster(), 0);
-eff.setCode('\n' +
-'M.setProcessor(function() {\n' +
-'  var toRet = [];\n' +
-'  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
-'    var inpData = M.inputSamples(chan);\n' +
-'    var outData = [];\n' +
-'    outData[inpData.length-1] = undefined;\n' +
-'    for (var samp = 0; samp < inpData.length; samp++) {\n' +
-'      outData[samp] = Math.random() * inpData[samp];\n' +
-'    }\n' +
-'    toRet.push(outData);\n' +
-'  }\n' +
-'  return toRet;\n' +
-'});\n');
 
 var trackId = rhomb._song.addTrack();
 var track = rhomb.getSong().getTracks().getObjById(trackId);
