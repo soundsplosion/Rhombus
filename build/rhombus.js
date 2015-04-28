@@ -3083,7 +3083,7 @@ Rhombus.Pattern = function(r, id) {
   }
 
   // pattern metadata
-  this._name = "Default Pattern Name";
+  this._name = "Pattern ID " + this._id;
   this._color = getRandomColor();
   this._selected = false;
 
@@ -3515,7 +3515,7 @@ Rhombus.Track = function(r, id) {
   }
 
   // track metadata
-  this._name = "Default Track Name";
+  this._name = "Track ID " + this._id;
   this._mute = false;
   this._solo = false;
 
@@ -3705,6 +3705,17 @@ Rhombus.Track.prototype.removeFromPlaylist = function(itemId) {
   }
 
   return itemId;
+};
+
+Rhombus.Track.prototype.getSelectedItems = function() {
+  var items = new Array();
+  for (var itemId in this._playlist) {
+    var item = this._playlist[itemId];
+    if (item._selected) {
+      items.push(item);
+    }
+  }
+  return items;
 };
 
 Rhombus.Track.prototype.killAllNotes = function() {
@@ -5246,7 +5257,12 @@ Rhombus.prototype.getSong = function() {
         }
       });
 
-      dstPtn.setName(srcPtn.getName() + "-copy");
+      if (srcPtn.getName().lastIndexOf("-copy") < 0) {
+        dstPtn.setName(srcPtn.getName() + "-copy");
+      }
+      else {
+        dstPtn.setName(srcPtn.getName());
+      }
 
       r.Undo._addUndoAction(function() {
         delete r._song._patterns[dstPtn._id];

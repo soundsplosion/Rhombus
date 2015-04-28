@@ -156,7 +156,7 @@ Rhombus.Pattern = function(r, id) {
   }
 
   // pattern metadata
-  this._name = "Default Pattern Name";
+  this._name = "Pattern ID " + this._id;
   this._color = getRandomColor();
   this._selected = false;
 

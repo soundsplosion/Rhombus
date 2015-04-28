@@ -544,7 +544,12 @@
         }
       });
 
-      dstPtn.setName(srcPtn.getName() + "-copy");
+      if (srcPtn.getName().lastIndexOf("-copy") < 0) {
+        dstPtn.setName(srcPtn.getName() + "-copy");
+      }
+      else {
+        dstPtn.setName(srcPtn.getName());
+      }
 
       r.Undo._addUndoAction(function() {
         delete r._song._patterns[dstPtn._id];
