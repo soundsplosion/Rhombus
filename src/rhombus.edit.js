@@ -55,6 +55,9 @@
         var note = notes[i];
         if (isDefined(note)) {
           note._start = note._start + offset;
+          if (note._start < 0) {
+            note._start = 0;
+          }
           ptn.addNote(note);
         }
       }
@@ -176,7 +179,7 @@
       if (notDefined(notes) || notes.length < 1) {
         return;
       }
-      
+
       if (notDefined(velocity) || !isNumber(velocity) || velocity < 0 || velocity > 1) {
         console.log("[Rhombus.Edit] - invalid velocity");
         return false;
@@ -187,21 +190,12 @@
         return false;
       }
 
-      var oldVelocities = new Array(notes.length);
-
       for (var i = 0; i < notes.length; i++) {
-        oldVelocities[i] = notes[i]._velocity;
         if (onlySelected && !notes[i]._selected) {
           continue;
         }
         notes[i]._velocity = velocity;
       }
-
-      r.Undo._addUndoAction(function() {
-        for (var i = 0; i < notes.length; i++) {
-          notes[i]._velocity = oldVelocities[i];
-        }
-      });
 
       return true;
     };
@@ -588,7 +582,12 @@
         }
       });
 
-      dstPtn.setName(srcPtn.getName() + "-copy");
+      if (srcPtn.getName().lastIndexOf("-copy") < 0) {
+        dstPtn.setName(srcPtn.getName() + "-copy");
+      }
+      else {
+        dstPtn.setName(srcPtn.getName());
+      }
 
       r.Undo._addUndoAction(function() {
         delete r._song._patterns[dstPtn._id];
