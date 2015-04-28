@@ -313,15 +313,9 @@ Rhombus.prototype.importSong = function(json, readyToPlayCallback) {
       newPattern.setColor(pattern._color);
     }
 
-    for (var noteId in noteMap) {
-      var note = new Rhombus.Note(+noteMap[noteId]._pitch,
-                                  +noteMap[noteId]._start,
-                                  +noteMap[noteId]._length,
-                                  +noteMap[noteId]._velocity || 1,
-                                  this,
-                                  +noteId);
-
-      newPattern.addNote(note);
+    var notes = this._noteArrayFromJSONNoteMap(noteMap);
+    for (var noteIdx = 0; noteIdx < notes.length; noteIdx++) {
+      newPattern.addNote(notes[noteIdx]);
     }
 
     this._song._patterns[+ptnId] = newPattern;

@@ -364,6 +364,20 @@ Rhombus.Pattern.prototype.toJSON = function() {
   return jsonObj;
 };
 
+Rhombus.prototype._noteArrayFromJSONNoteMap = function(noteMap) {
+  var notes = [];
+  for (var noteId in noteMap) {
+    var note = new Rhombus.Note(+noteMap[noteId]._pitch,
+                                +noteMap[noteId]._start,
+                                +noteMap[noteId]._length,
+                                +noteMap[noteId]._velocity || 1,
+                                this,
+                                +noteId);
+    notes.push(note);
+  }
+  return notes;
+};
+
 // TODO: Note should probably have its own source file
 Rhombus.Note = function(pitch, start, length, velocity, r, id) {
   this._r = r;
