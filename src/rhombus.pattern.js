@@ -396,7 +396,7 @@ Rhombus.Note = function(pitch, start, length, velocity, r, id) {
   this._pitch    = +pitch;
   this._start    = +start    || 0;
   this._length   = +length   || 0;
-  this._velocity = +velocity || 0.5;
+  this._velocity = +velocity;
   this._selected = false;
 
   return this;

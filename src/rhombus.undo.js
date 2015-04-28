@@ -8,7 +8,7 @@
  * @constructor
  */
 Rhombus.Undo = function() {
-  this._stackSize = 20;
+  this._stackSize = 1024;
   this._undoStack = [];
 };
 

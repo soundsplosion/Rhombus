@@ -314,10 +314,14 @@ Rhombus.prototype.importSong = function(json, readyToPlayCallback) {
     }
 
     for (var noteId in noteMap) {
+      var velocity = +noteMap[noteId]._velocity;
+      if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+        velocity = 0.5;
+      }
       var note = new Rhombus.Note(+noteMap[noteId]._pitch,
                                   +noteMap[noteId]._start,
                                   +noteMap[noteId]._length,
-                                  +noteMap[noteId]._velocity || 1,
+                                  velocity,
                                   this,
                                   +noteId);
 

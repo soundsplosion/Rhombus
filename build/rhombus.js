@@ -3323,7 +3323,7 @@ Rhombus.Note = function(pitch, start, length, velocity, r, id) {
   this._pitch    = +pitch;
   this._start    = +start    || 0;
   this._length   = +length   || 0;
-  this._velocity = +velocity || 0.5;
+  this._velocity = +velocity;
   this._selected = false;
 
   return this;
@@ -4105,10 +4105,14 @@ Rhombus.prototype.importSong = function(json, readyToPlayCallback) {
     }
 
     for (var noteId in noteMap) {
+      var velocity = +noteMap[noteId]._velocity;
+      if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+        velocity = 0.5;
+      }
       var note = new Rhombus.Note(+noteMap[noteId]._pitch,
                                   +noteMap[noteId]._start,
                                   +noteMap[noteId]._length,
-                                  +noteMap[noteId]._velocity || 1,
+                                  velocity,
                                   this,
                                   +noteId);
 
@@ -4903,21 +4907,12 @@ Rhombus.prototype.getSong = function() {
         return false;
       }
 
-      var oldVelocities = new Array(notes.length);
-
       for (var i = 0; i < notes.length; i++) {
-        oldVelocities[i] = notes[i]._velocity;
         if (onlySelected && !notes[i]._selected) {
           continue;
         }
         notes[i]._velocity = velocity;
       }
-
-      r.Undo._addUndoAction(function() {
-        for (var i = 0; i < notes.length; i++) {
-          notes[i]._velocity = oldVelocities[i];
-        }
-      });
 
       return true;
     };
@@ -5426,7 +5421,7 @@ Rhombus.prototype.getSong = function() {
  * @constructor
  */
 Rhombus.Undo = function() {
-  this._stackSize = 20;
+  this._stackSize = 1024;
   this._undoStack = [];
 };
 
