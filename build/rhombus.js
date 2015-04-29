@@ -942,7 +942,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   Rhombus._map.synthFilterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch"),
               rawDisplay, 0],
-    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
@@ -950,7 +950,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   Rhombus._map.filterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch",
                                        "lowshelf", "highshelf", "peaking"), rawDisplay, 0],
-    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
