@@ -903,7 +903,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   Rhombus._map.cutoffMapFn = Rhombus._map.mapExp(25, 22100);
   Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);
   Rhombus._map.exponentMapFn = Rhombus._map.mapExp(0.1, 10);
-  Rhombus._map.harmMapFn = Rhombus._map.mapLinear(-2000, 2000);
+  Rhombus._map.harmMapFn = Rhombus._map.mapLinear(-200, 200);
 
   function secondsDisplay(v) {
     return v + " s";
@@ -2780,7 +2780,7 @@ Rhombus._addEffectFunctions(Rhombus._Chorus);
 
 Rhombus._Chorus.prototype._unnormalizeMap = Rhombus._makeEffectMap({
   "rate" : [Rhombus._map.mapLinear(0.1, 10), Rhombus._map.hzDisplay, 2.0],
-  "delayTime" : [Rhombus._map.mapExp(1, 100), Rhombus._map.millisecondsDisplay, 0.25],
+  "delayTime" : [Rhombus._map.mapExp(1, 10), Rhombus._map.millisecondsDisplay, 0.25],
   "depth" : [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 0.35],
   "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), Rhombus._map.rawDisplay, 0.0],
   "feedback" : [Rhombus._map.mapLinear(-0.25, 0.25), Rhombus._map.rawDisplay, 0.5]
@@ -4403,14 +4403,13 @@ Rhombus.prototype.getSong = function() {
               var ev = events[i];
 
               // Lots of this copied from the note loop below...
-
               var time = ev.getTime() + itemStart;
 
               if (!loopOverride && r.getLoopEnabled() && start < loopStart) {
                 continue;
               }
 
-              if (start >= itemEnd) {
+              if (time >= itemEnd) {
                 continue;
               }
 

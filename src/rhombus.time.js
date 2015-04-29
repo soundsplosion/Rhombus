@@ -121,14 +121,13 @@
               var ev = events[i];
 
               // Lots of this copied from the note loop below...
-
               var time = ev.getTime() + itemStart;
 
               if (!loopOverride && r.getLoopEnabled() && start < loopStart) {
                 continue;
               }
 
-              if (start >= itemEnd) {
+              if (time >= itemEnd) {
                 continue;
               }
 
