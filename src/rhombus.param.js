@@ -39,7 +39,7 @@ Rhombus._addParamFunctions = function(ctr) {
     }
 
     var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, curValue);
-    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap);
+    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap, false);
 
     curValue = realObj;
     for (var i = 0; i < pieces.length; i++) {
@@ -163,6 +163,10 @@ Rhombus._addParamFunctions = function(ctr) {
       div.appendChild(button);
       div.appendChild(document.createElement("br"));
     }
+
+    // For spacing
+    div.appendChild(document.createElement("br"));
+    div.appendChild(document.createElement("br"));
 
     return div;
   }

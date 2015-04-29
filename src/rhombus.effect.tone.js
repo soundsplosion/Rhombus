@@ -86,9 +86,11 @@ Rhombus._Filter.prototype.displayName = function() {
   return "Filter";
 };
 
-Rhombus._Filter.prototype.setAutomationValueAtTime = function(value, time) {
-  var toSet = this._unnormalizeMap["frequency"][0](value);
-  this._filter.frequency.setValueAtTime(toSet, time);
+Rhombus._Filter.prototype._setAutomationValueAtTime = function(value, time) {
+  var base = this._currentParams.cutoff;
+  var finalNormalized = this._getAutomationModulatedValue(base, value);
+  var finalVal = this._unnormalizeMap.cutoff[0](finalNormalized);
+  this._filter.frequency.setValueAtTime(finalVal, time);
 };
 
 // EQ
@@ -172,7 +174,7 @@ Rhombus._addEffectFunctions(Rhombus._Chorus);
 
 Rhombus._Chorus.prototype._unnormalizeMap = Rhombus._makeEffectMap({
   "rate" : [Rhombus._map.mapLinear(0.1, 10), Rhombus._map.hzDisplay, 2.0],
-  "delayTime" : [Rhombus._map.shortTimeMapFn, Rhombus._map.secondsDisplay, 0.25],
+  "delayTime" : [Rhombus._map.mapExp(1, 100), Rhombus._map.millisecondsDisplay, 0.25],
   "depth" : [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 0.35],
   "type" : [Rhombus._map.mapDiscrete("sine", "square", "sawtooth", "triangle"), Rhombus._map.rawDisplay, 0.0],
   "feedback" : [Rhombus._map.mapLinear(-0.25, 0.25), Rhombus._map.rawDisplay, 0.5]

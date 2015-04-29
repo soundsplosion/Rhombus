@@ -6,10 +6,8 @@
 //! license: MIT
 Rhombus._ToneInstrument = function(type, options, r, id) {
   var mono = Tone.MonoSynth;
-  var noise = Tone.NoiseSynth;
   var typeMap = {
     "mono" : mono,
-    "noise": noise
   };
 
   var secondsDisplay = Rhombus._map.secondsDisplay;
@@ -18,7 +16,6 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   var hzDisplay = Rhombus._map.hzDisplay;
 
   var monoSynthMap = {
-    "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
     "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
     "oscillator" : {
       "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
@@ -30,55 +27,12 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   };
 
   var unnormalizeMaps = {
-    "mono" : monoSynthMap,
-
-    "am" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      // TODO: verify this is good
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      "carrier" : monoSynthMap,
-      "modulator" : monoSynthMap
-    },
-
-    "fm" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      // TODO: verify this is good
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      // TODO: verify this is good
-      "modulationIndex" : [Rhombus._map.mapLinear(-5, 5), rawDisplay, 0.5],
-      "carrier" : monoSynthMap,
-      "modulator" : monoSynthMap
-    },
-
-    "noise" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      "noise" : {
-        "type" : [Rhombus._map.mapDiscrete("white", "pink", "brown"), rawDisplay, 0.0]
-      },
-      "envelope" : Rhombus._map.envelopeMap,
-      "filter" : Rhombus._map.filterMap,
-      "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-    },
-
-    "duo" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      "vibratoAmount" : [Rhombus._map.mapLinear(0, 20), rawDisplay, 0.025],
-      "vibratoRate" : [Rhombus._map.freqMapFn, hzDisplay, 0.1],
-      "vibratoDelay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      "voice0" : monoSynthMap,
-      "voice1" : monoSynthMap
-    }
+    "mono" : monoSynthMap
   };
 
+  for (var key in unnormalizeMaps) {
+    unnormalizeMaps[key] = Rhombus._makeAudioNodeMap(unnormalizeMaps[key]);
+  }
 
   this._r = r;
   var ctr = typeMap[type];
@@ -109,9 +63,7 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   this._normalizedObjectSet(options, true);
 };
 Tone.extend(Rhombus._ToneInstrument, Tone.PolySynth);
-Rhombus._addGraphFunctions(Rhombus._ToneInstrument);
-Rhombus._addParamFunctions(Rhombus._ToneInstrument);
-Rhombus._addAudioNodeFunctions(Rhombus._ToneInstrument);
+Rhombus._addInstrumentFunctions(Rhombus._ToneInstrument);
 
 Rhombus._ToneInstrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
   // Don't play out-of-range notes
@@ -181,9 +133,17 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
     });
   }
   this._trackParams(params);
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   this.set(unnormalized);
 };
+
+Rhombus._ToneInstrument.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  for (var vIdx = 0; vIdx < this._voices.length; vIdx++) {
+    var voice = this._voices[vIdx];
+    voice.filter.frequency.setValueAtTime(freq, time);
+  }
+};
+
 
 Rhombus._ToneInstrument.prototype.displayName = function() {
   return Rhombus._synthNameMap[this._type];

@@ -541,7 +541,7 @@
     return count;
   };
 
-  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap) {
+  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap, useAliases) {
     if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
@@ -560,8 +560,15 @@
           if (isDefined(thisLevelMap)) {
             var entry = thisLevelMap[key];
             if (isDefined(entry) && isDefined(entry[0])) {
+              var setKey;
+              if (useAliases && isDefined(entry[3])) {
+                setKey = entry[3];
+              } else {
+                setKey = key;
+              }
+
               var ctrXformer = entry[0];
-              returnObj[key] = ctrXformer(value);
+              returnObj[setKey] = ctrXformer(value);
             }
           } else {
             returnObj[key] = value;
@@ -737,6 +744,11 @@
   }
   Rhombus._map.secondsDisplay = secondsDisplay;
 
+  function millisecondsDisplay(v) {
+    return v + " ms";
+  }
+  Rhombus._map.millisecondsDisplay = millisecondsDisplay;
+
   function dbDisplay(v) {
     return v + " dB";
   }
@@ -762,7 +774,7 @@
   Rhombus._map.synthFilterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch"),
               rawDisplay, 0],
-    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0, "frequency"],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
@@ -770,7 +782,7 @@
   Rhombus._map.filterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch",
                                        "lowshelf", "highshelf", "peaking"), rawDisplay, 0],
-    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0, "frequency"],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
