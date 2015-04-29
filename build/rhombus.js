@@ -174,7 +174,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
     newObj[key] = obj[key];
   }
   newObj.automation = {};
-  newObj.automation.depth = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  newObj.automation.depth = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0];
   return newObj;
 };
 
