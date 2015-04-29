@@ -18,7 +18,6 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   var hzDisplay = Rhombus._map.hzDisplay;
 
   var monoSynthMap = {
-    "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
     "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
     "oscillator" : {
       "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
@@ -31,51 +30,14 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
 
   var unnormalizeMaps = {
     "mono" : monoSynthMap,
-
-    "am" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      // TODO: verify this is good
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      "carrier" : monoSynthMap,
-      "modulator" : monoSynthMap
-    },
-
-    "fm" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      // TODO: verify this is good
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      // TODO: verify this is good
-      "modulationIndex" : [Rhombus._map.mapLinear(-5, 5), rawDisplay, 0.5],
-      "carrier" : monoSynthMap,
-      "modulator" : monoSynthMap
-    },
-
     "noise" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
-      // TODO: verify this is good
       "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
       "noise" : {
         "type" : [Rhombus._map.mapDiscrete("white", "pink", "brown"), rawDisplay, 0.0]
       },
       "envelope" : Rhombus._map.envelopeMap,
-      "filter" : Rhombus._map.filterMap,
+      "filter" : Rhombus._map.synthFilterMap,
       "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-    },
-
-    "duo" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      "vibratoAmount" : [Rhombus._map.mapLinear(0, 20), rawDisplay, 0.025],
-      "vibratoRate" : [Rhombus._map.freqMapFn, hzDisplay, 0.1],
-      "vibratoDelay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      "voice0" : monoSynthMap,
-      "voice1" : monoSynthMap
     }
   };
 
