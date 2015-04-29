@@ -370,7 +370,9 @@ Rhombus.Pattern.prototype._automationEventsJSON = function() {
 
     // There should only be one per time, i.e. per node.
     var autoEv = node.data[0];
-    events.push(autoEv);
+    if (isDefined(autoEv) && autoEv !== null && autoEv.constructor === Rhombus.AutomationEvent) {
+      events.push(autoEv);
+    }
   });
   return events;
 };
