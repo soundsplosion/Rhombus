@@ -182,12 +182,13 @@ Rhombus.prototype.removeEffect = function(effectOrId) {
 };
 
 Rhombus._makeEffectMap = function(obj) {
-  var newObj = Rhombus._makeAudioNodeMap(obj);
+  var newObj = {};
   for (var key in obj) {
     newObj[key] = obj[key];
   }
   newObj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
   newObj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
+  newObj = Rhombus._makeAudioNodeMap(newObj);
   return newObj;
 };
 

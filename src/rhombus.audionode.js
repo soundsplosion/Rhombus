@@ -50,7 +50,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
 
   function getAutomationModulatedValue(base, automation) {
-    var delta = this._currentParams.automationDepth * 2.0 * (automation - 0.5);
+    var delta = this._currentParams.automation.depth * 2.0 * (automation - 0.5);
     var preClamp = base + delta;
     if (preClamp < 0.0) {
       preClamp = 0.0;
@@ -68,6 +68,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   for (var key in obj) {
     newObj[key] = obj[key];
   }
-  newObj["automationDepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  newObj.automation = {};
+  newObj.automation.depth = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
   return newObj;
 };

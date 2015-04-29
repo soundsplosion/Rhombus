@@ -155,7 +155,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
 
   function getAutomationModulatedValue(base, automation) {
-    var delta = this._currentParams.automationDepth * 2.0 * (automation - 0.5);
+    var delta = this._currentParams.automation.depth * 2.0 * (automation - 0.5);
     var preClamp = base + delta;
     if (preClamp < 0.0) {
       preClamp = 0.0;
@@ -173,7 +173,8 @@ Rhombus._makeAudioNodeMap = function(obj) {
   for (var key in obj) {
     newObj[key] = obj[key];
   }
-  newObj["automationDepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  newObj.automation = {};
+  newObj.automation.depth = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
   return newObj;
 };
 
@@ -2565,12 +2566,13 @@ Rhombus.prototype.removeEffect = function(effectOrId) {
 };
 
 Rhombus._makeEffectMap = function(obj) {
-  var newObj = Rhombus._makeAudioNodeMap(obj);
+  var newObj = {};
   for (var key in obj) {
     newObj[key] = obj[key];
   }
   newObj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
   newObj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
+  newObj = Rhombus._makeAudioNodeMap(newObj);
   return newObj;
 };
 
