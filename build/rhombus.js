@@ -113,10 +113,10 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   function internalGraphConnect(output, b, bInput) {
     // TODO: use the slots when connecting
     var type = this._graphOutputs[output].type;
+    var connector = this.isInstrument() ? this._rhombusStereo : this;
+
     if (type === "audio") {
-      this.connect(b);
-    } else if (type === "control") {
-      // TODO: implement control routing
+      connector.connect(b);
     }
   }
   ctr.prototype._internalGraphConnect = internalGraphConnect;
@@ -124,23 +124,19 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   function internalGraphDisconnect(output, b, bInput) {
     // TODO: use the slots when disconnecting
     var type = this._graphOutputs[output].type;
+    var connector = this.isInstrument() ? this._rhombusStereo : this;
     if (type === "audio") {
       // TODO: this should be replaced in such a way that we
       // don't break all the outgoing connections every time we
       // disconnect from one thing. Put gain nodes in the middle
       // or something.
+
       console.log("removing audio connection");
-      this.disconnect();
+      connector.disconnect();
       var that = this;
       this._graphOutputs[output].to.forEach(function(port) {
-        that.connect(that._r.graphLookup(port.node));
+        connector.connect(that._r.graphLookup(port.node));
       });
-    } else if (type === "control") {
-      // TODO: implement control routing
-      console.log("removing control connection");
-    }
-    else {
-      console.log("removing unknown connection");
     }
   }
   ctr.prototype._internalGraphDisconnect = internalGraphDisconnect;
@@ -153,6 +149,29 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
     }
   }
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+
+  function getAutomationModulatedValue(base, automation) {
+    var delta = this._currentParams.automation.depth * 2.0 * (automation - 0.5);
+    var preClamp = base + delta;
+    if (preClamp < 0.0) {
+      preClamp = 0.0;
+    } else if (preClamp > 1.0) {
+      preClamp = 1.0;
+    }
+    return preClamp;
+  }
+
+  ctr.prototype._getAutomationModulatedValue = getAutomationModulatedValue;
+};
+
+Rhombus._makeAudioNodeMap = function(obj) {
+  var newObj = {};
+  for (var key in obj) {
+    newObj[key] = obj[key];
+  }
+  newObj.automation = {};
+  newObj.automation.depth = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0];
+  return newObj;
 };
 
 //! rhombus.util.js
@@ -698,7 +717,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
     return count;
   };
 
-  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap) {
+  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap, useAliases) {
     if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
@@ -717,8 +736,15 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
           if (isDefined(thisLevelMap)) {
             var entry = thisLevelMap[key];
             if (isDefined(entry) && isDefined(entry[0])) {
+              var setKey;
+              if (useAliases && isDefined(entry[3])) {
+                setKey = entry[3];
+              } else {
+                setKey = key;
+              }
+
               var ctrXformer = entry[0];
-              returnObj[key] = ctrXformer(value);
+              returnObj[setKey] = ctrXformer(value);
             }
           } else {
             returnObj[key] = value;
@@ -919,7 +945,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   Rhombus._map.synthFilterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch"),
               rawDisplay, 0],
-    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0, "frequency"],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
@@ -927,7 +953,7 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   Rhombus._map.filterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch",
                                        "lowshelf", "highshelf", "peaking"), rawDisplay, 0],
-    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0, "frequency"],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
@@ -1396,7 +1422,7 @@ Rhombus._addParamFunctions = function(ctr) {
     }
 
     var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, curValue);
-    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap);
+    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap, false);
 
     curValue = realObj;
     for (var i = 0; i < pieces.length; i++) {
@@ -1701,6 +1727,7 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
+  Rhombus._routeToStereo(instr);
 
   instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
@@ -1906,6 +1933,27 @@ Rhombus.prototype.killAllPreviewNotes = function() {
   console.log("[Rhombus] - killed all preview notes");
 };
 
+Rhombus._addInstrumentFunctions = function(ctr) {
+  Rhombus._addParamFunctions(ctr);
+  Rhombus._addGraphFunctions(ctr);
+  Rhombus._addAudioNodeFunctions(ctr);
+
+  function setAutomationValueAtTime(value, time) {
+    var base = this._currentParams.filter.cutoff;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.filter.cutoff[0](finalNormalized);
+
+    this._applyInstrumentFilterValueAtTime(finalVal, time);
+  }
+  ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+};
+
+// Needed for stereo effects to work.
+Rhombus._routeToStereo = function(instr) {
+  instr._rhombusStereo = new Tone.Mono();
+  instr.output.connect(instr._rhombusStereo);
+};
+
 //! rhombus.instrument.sampler.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
@@ -1945,13 +1993,13 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
 };
 
 Rhombus._Sampler = function(options, r, sampleCallback, id) {
-  var samplerUnnormalizeMap = {
+  var samplerUnnormalizeMap = Rhombus._makeAudioNodeMap({
     "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.56],
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
     "envelope" : Rhombus._map.envelopeMap,
     "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-    "filter" : Rhombus._map.filterMap
-  };
+    "filter" : Rhombus._map.synthFilterMap
+  });
 
   this._r = r;
   if (isNull(id) || notDefined(id)) {
@@ -2002,9 +2050,7 @@ Rhombus._Sampler = function(options, r, sampleCallback, id) {
   }
 };
 Tone.extend(Rhombus._Sampler, Tone.Instrument);
-Rhombus._addParamFunctions(Rhombus._Sampler);
-Rhombus._addGraphFunctions(Rhombus._Sampler);
-Rhombus._addAudioNodeFunctions(Rhombus._Sampler);
+Rhombus._addInstrumentFunctions(Rhombus._Sampler);
 
 Rhombus._Sampler.prototype.setBuffers = function(bufferMap) {
   if (notDefined(bufferMap)) {
@@ -2126,11 +2172,19 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
   }
   this._trackParams(params);
 
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   var samplerKeys = Object.keys(this.samples);
   for (var idx in samplerKeys) {
     var sampler = this.samples[samplerKeys[idx]];
     sampler.set(unnormalized);
+  }
+};
+
+Rhombus._Sampler.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  var samplerKeys = Object.keys(this.samples);
+  for (var idx in samplerKeys) {
+    var sampler = this.samples[samplerKeys[idx]];
+    sampler.filter.frequency.setValueAtTime(freq, time);
   }
 };
 
@@ -2146,10 +2200,8 @@ Rhombus._Sampler.prototype.displayName = function() {
 //! license: MIT
 Rhombus._ToneInstrument = function(type, options, r, id) {
   var mono = Tone.MonoSynth;
-  var noise = Tone.NoiseSynth;
   var typeMap = {
     "mono" : mono,
-    "noise": noise
   };
 
   var secondsDisplay = Rhombus._map.secondsDisplay;
@@ -2158,7 +2210,6 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   var hzDisplay = Rhombus._map.hzDisplay;
 
   var monoSynthMap = {
-    "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
     "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
     "oscillator" : {
       "type" : [Rhombus._map.mapDiscrete("square", "sawtooth", "triangle", "sine", "pulse", "pwm"), rawDisplay, 0.0],
@@ -2170,55 +2221,12 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   };
 
   var unnormalizeMaps = {
-    "mono" : monoSynthMap,
-
-    "am" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      // TODO: verify this is good
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      "carrier" : monoSynthMap,
-      "modulator" : monoSynthMap
-    },
-
-    "fm" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), secondsDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      // TODO: verify this is good
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      // TODO: verify this is good
-      "modulationIndex" : [Rhombus._map.mapLinear(-5, 5), rawDisplay, 0.5],
-      "carrier" : monoSynthMap,
-      "modulator" : monoSynthMap
-    },
-
-    "noise" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      "noise" : {
-        "type" : [Rhombus._map.mapDiscrete("white", "pink", "brown"), rawDisplay, 0.0]
-      },
-      "envelope" : Rhombus._map.envelopeMap,
-      "filter" : Rhombus._map.filterMap,
-      "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-    },
-
-    "duo" : {
-      "portamento" : [Rhombus._map.mapLinear(0, 10), rawDisplay, 0],
-      // TODO: verify this is good
-      "volume" : [Rhombus._map.mapLog(-96.32, 0), dbDisplay, 0.1],
-      "vibratoAmount" : [Rhombus._map.mapLinear(0, 20), rawDisplay, 0.025],
-      "vibratoRate" : [Rhombus._map.freqMapFn, hzDisplay, 0.1],
-      "vibratoDelay" : [Rhombus._map.timeMapFn, secondsDisplay, 0.1],
-      "harmonicity" : [Rhombus._map.harmMapFn, rawDisplay, 0.5],
-      "voice0" : monoSynthMap,
-      "voice1" : monoSynthMap
-    }
+    "mono" : monoSynthMap
   };
 
+  for (var key in unnormalizeMaps) {
+    unnormalizeMaps[key] = Rhombus._makeAudioNodeMap(unnormalizeMaps[key]);
+  }
 
   this._r = r;
   var ctr = typeMap[type];
@@ -2249,9 +2257,7 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   this._normalizedObjectSet(options, true);
 };
 Tone.extend(Rhombus._ToneInstrument, Tone.PolySynth);
-Rhombus._addGraphFunctions(Rhombus._ToneInstrument);
-Rhombus._addParamFunctions(Rhombus._ToneInstrument);
-Rhombus._addAudioNodeFunctions(Rhombus._ToneInstrument);
+Rhombus._addInstrumentFunctions(Rhombus._ToneInstrument);
 
 Rhombus._ToneInstrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
   // Don't play out-of-range notes
@@ -2321,9 +2327,17 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
     });
   }
   this._trackParams(params);
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   this.set(unnormalized);
 };
+
+Rhombus._ToneInstrument.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  for (var vIdx = 0; vIdx < this._voices.length; vIdx++) {
+    var voice = this._voices[vIdx];
+    voice.filter.frequency.setValueAtTime(freq, time);
+  }
+};
+
 
 Rhombus._ToneInstrument.prototype.displayName = function() {
   return Rhombus._synthNameMap[this._type];
@@ -2519,6 +2533,7 @@ Rhombus._makeEffectMap = function(obj) {
   }
   newObj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
   newObj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
+  newObj = Rhombus._makeAudioNodeMap(newObj);
   return newObj;
 };
 
@@ -2536,7 +2551,7 @@ Rhombus._addEffectFunctions = function(ctr) {
       });
     }
     this._trackParams(params);
-    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
     this.set(unnormalized);
   }
 
@@ -2585,6 +2600,13 @@ Rhombus._addEffectFunctions = function(ctr) {
       }
     }
   };
+
+  ctr.prototype._setAutomationValueAtTime = function(value, time) {
+    var base = this._currentParams.gain;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.gain[0](finalNormalized);
+    this.output.gain.setValueAtTime(finalVal, time);
+  }
 };
 
 //! rhombus.effect.tone.js
@@ -2676,8 +2698,10 @@ Rhombus._Filter.prototype.displayName = function() {
 };
 
 Rhombus._Filter.prototype._setAutomationValueAtTime = function(value, time) {
-  var toSet = this._unnormalizeMap["frequency"][0](value);
-  this._filter.frequency.setValueAtTime(toSet, time);
+  var base = this._currentParams.cutoff;
+  var finalNormalized = this._getAutomationModulatedValue(base, value);
+  var finalVal = this._unnormalizeMap.cutoff[0](finalNormalized);
+  this._filter.frequency.setValueAtTime(finalVal, time);
 };
 
 // EQ

@@ -87,8 +87,10 @@ Rhombus._Filter.prototype.displayName = function() {
 };
 
 Rhombus._Filter.prototype._setAutomationValueAtTime = function(value, time) {
-  var toSet = this._unnormalizeMap["frequency"][0](value);
-  this._filter.frequency.setValueAtTime(toSet, time);
+  var base = this._currentParams.cutoff;
+  var finalNormalized = this._getAutomationModulatedValue(base, value);
+  var finalVal = this._unnormalizeMap.cutoff[0](finalNormalized);
+  this._filter.frequency.setValueAtTime(finalVal, time);
 };
 
 // EQ

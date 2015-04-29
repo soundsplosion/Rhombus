@@ -101,6 +101,7 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
+  Rhombus._routeToStereo(instr);
 
   instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
@@ -304,4 +305,25 @@ Rhombus.prototype.killAllPreviewNotes = function() {
   this._killRtNotes(deadNoteIds, targets);
 
   console.log("[Rhombus] - killed all preview notes");
+};
+
+Rhombus._addInstrumentFunctions = function(ctr) {
+  Rhombus._addParamFunctions(ctr);
+  Rhombus._addGraphFunctions(ctr);
+  Rhombus._addAudioNodeFunctions(ctr);
+
+  function setAutomationValueAtTime(value, time) {
+    var base = this._currentParams.filter.cutoff;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.filter.cutoff[0](finalNormalized);
+
+    this._applyInstrumentFilterValueAtTime(finalVal, time);
+  }
+  ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+};
+
+// Needed for stereo effects to work.
+Rhombus._routeToStereo = function(instr) {
+  instr._rhombusStereo = new Tone.Mono();
+  instr.output.connect(instr._rhombusStereo);
 };

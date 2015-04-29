@@ -188,6 +188,7 @@ Rhombus._makeEffectMap = function(obj) {
   }
   newObj["dry/wet"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 1.0];
   newObj["gain"] = [Rhombus._map.mapLinear(0, 2), Rhombus._map.rawDisplay, 1.0/2.0];
+  newObj = Rhombus._makeAudioNodeMap(newObj);
   return newObj;
 };
 
@@ -205,7 +206,7 @@ Rhombus._addEffectFunctions = function(ctr) {
       });
     }
     this._trackParams(params);
-    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
     this.set(unnormalized);
   }
 
@@ -254,4 +255,11 @@ Rhombus._addEffectFunctions = function(ctr) {
       }
     }
   };
+
+  ctr.prototype._setAutomationValueAtTime = function(value, time) {
+    var base = this._currentParams.gain;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.gain[0](finalNormalized);
+    this.output.gain.setValueAtTime(finalVal, time);
+  }
 };
