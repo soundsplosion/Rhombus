@@ -312,9 +312,9 @@ Rhombus._addInstrumentFunctions = function(ctr) {
   Rhombus._addAudioNodeFunctions(ctr);
 
   function setAutomationValueAtTime(value, time) {
-    var base = this._currentParams.filter.frequency;
+    var base = this._currentParams.filter.cutoff;
     var finalNormalized = this._getAutomationModulatedValue(base, value);
-    var finalVal = this._unnormalizeMap.filter.frequency[0](finalNormalized);
+    var finalVal = this._unnormalizeMap.filter.cutoff[0](finalNormalized);
 
     this._applyInstrumentFilterValueAtTime(finalVal, time);
   }
