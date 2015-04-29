@@ -5654,14 +5654,13 @@ Rhombus.prototype.getMidiAccess = function() {
 
     // check for note-off messages
     if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
-      console.log("[MidiIn] - Note-Off, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
+      console.log("[MidiIn] - Note-Off, pitch: " + pitch + "; velocity: " + vel);
       that.stopPreviewNote(pitch);
     }
 
     // check for note-on messages
     else if (cmd === 0x90 && vel > 0) {
-      vel /= 127;
-      console.log("[MidiIn] - Note-On, pitch: " + pitch + "; velocity: " + vel.toFixed(2));
+      console.log("[MidiIn] - Note-On, pitch: " + pitch + "; velocity: " + vel);
       that.startPreviewNote(pitch, vel);
     }
 
