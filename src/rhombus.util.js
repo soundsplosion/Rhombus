@@ -744,6 +744,11 @@
   }
   Rhombus._map.secondsDisplay = secondsDisplay;
 
+  function millisecondsDisplay(v) {
+    return v + " ms";
+  }
+  Rhombus._map.millisecondsDisplay = millisecondsDisplay;
+
   function dbDisplay(v) {
     return v + " dB";
   }
