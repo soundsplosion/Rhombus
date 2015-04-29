@@ -116,6 +116,8 @@ Rhombus.prototype.addEffect = function(type, json) {
     eff._graphSetup(1, 1, 1, 0);
   }
 
+  eff._graphType = "effect";
+
   if (isDefined(go)) {
     Rhombus.Util.numberifyOutputs(go);
     eff._graphOutputs = go;
@@ -133,9 +135,6 @@ Rhombus.prototype.addEffect = function(type, json) {
   });
 
   effects[eff._id] = eff;
-
-  eff._graphType = "effect";
-
   return eff._id;
 };
 

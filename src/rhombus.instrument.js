@@ -101,12 +101,14 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
-  Rhombus._routeToStereo(instr);
 
-  instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
     return;
   }
+
+  Rhombus._routeToStereo(instr);
+  instr._graphType = "instrument";
+  instr._graphSetup(0, 1, 1, 0);
 
   instr.setGraphX(graphX);
   instr.setGraphY(graphY);
@@ -129,8 +131,6 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
     that.removeInstrument(idToRemove, true);
   });
   this._song._instruments.addObj(instr, idx);
-
-  instr._graphType = "instrument";
 
   return instr._id;
 };
