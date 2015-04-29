@@ -6,7 +6,6 @@ Rhombus._instMap = [];
 
 Rhombus._synthNameList = [
   ["mono",  "PolySynth"],
-  ["noise", "Noise Synth"]
 ];
 
 Rhombus._synthNameMap = {};
