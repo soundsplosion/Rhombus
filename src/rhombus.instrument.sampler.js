@@ -37,13 +37,13 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
 };
 
 Rhombus._Sampler = function(options, r, sampleCallback, id) {
-  var samplerUnnormalizeMap = {
+  var samplerUnnormalizeMap = Rhombus._makeAudioNodeMap({
     "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.56],
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
     "envelope" : Rhombus._map.envelopeMap,
     "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
     "filter" : Rhombus._map.synthFilterMap
-  };
+  });
 
   this._r = r;
   if (isNull(id) || notDefined(id)) {
