@@ -737,7 +737,7 @@
   Rhombus._map.cutoffMapFn = Rhombus._map.mapExp(25, 22100);
   Rhombus._map.lowFreqMapFn = Rhombus._map.mapExp(1, 100);
   Rhombus._map.exponentMapFn = Rhombus._map.mapExp(0.1, 10);
-  Rhombus._map.harmMapFn = Rhombus._map.mapLinear(-2000, 2000);
+  Rhombus._map.harmMapFn = Rhombus._map.mapLinear(-200, 200);
 
   function secondsDisplay(v) {
     return v + " s";
