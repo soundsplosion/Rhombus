@@ -2905,20 +2905,21 @@ Rhombus._Script = function(code) {
   if (isDefined(code)) {
     this.setCode(code);
   } else {
-    this.setCode('\n' +
-    'function() {\n' +
-    '  var toRet = [];\n' +
-    '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
-    '    var inpData = M.inputSamples(chan);\n' +
-    '    var outData = [];\n' +
-    '    outData[inpData.length-1] = undefined;\n' +
-    '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
-    '      outData[samp] = Math.random() * inpData[samp];\n' +
-    '    }\n' +
-    '    toRet.push(outData);\n' +
-    '  }\n' +
-    '  return toRet;\n' +
-    '}\n');
+    this.setCode(
+      'function() {\n' +
+      '  var toRet = [];\n' +
+      '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
+      '    var inpData = M.inputSamples(chan);\n' +
+      '    var outData = [];\n' +
+      '    outData[inpData.length-1] = undefined;\n' +
+      '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
+      '      var weight = (1 - M.param0) * 1 + M.param0 * Math.random();\n' +
+      '      outData[samp] = weight * inpData[samp];\n' +
+      '    }\n' +
+      '    toRet.push(outData);\n' +
+      '  }\n' +
+      '  return toRet;\n' +
+      '}\n');
   }
 
   this.connectEffect(this._processorNode);
