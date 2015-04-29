@@ -101,6 +101,7 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
+  Rhombus._routeToStereo(instr);
 
   instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
@@ -319,4 +320,10 @@ Rhombus._addInstrumentFunctions = function(ctr) {
     this._applyInstrumentFilterValueAtTime(finalVal, time);
   }
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+};
+
+// Needed for stereo effects to work.
+Rhombus._routeToStereo = function(instr) {
+  instr._rhombusStereo = new Tone.Mono();
+  instr.output.connect(instr._rhombusStereo);
 };
