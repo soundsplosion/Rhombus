@@ -49,3 +49,12 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   }
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
 };
+
+Rhombus._makeAudioNodeMap = function(obj) {
+  var newObj = {};
+  for (var key in obj) {
+    newObj[key] = obj[key];
+  }
+  newObj["automationdepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  return newObj;
+};

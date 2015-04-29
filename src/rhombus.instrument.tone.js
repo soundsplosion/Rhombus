@@ -79,6 +79,9 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
     }
   };
 
+  for (var key in unnormalizeMaps) {
+    unnormalizeMaps[key] = Rhombus._makeAudioNodeMap(unnormalizeMaps[key]);
+  }
 
   this._r = r;
   var ctr = typeMap[type];

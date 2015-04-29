@@ -155,6 +155,15 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
 };
 
+Rhombus._makeAudioNodeMap = function(obj) {
+  var newObj = {};
+  for (var key in obj) {
+    newObj[key] = obj[key];
+  }
+  newObj["automationdepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  return newObj;
+};
+
 //! rhombus.util.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
@@ -2219,6 +2228,9 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
     }
   };
 
+  for (var key in unnormalizeMaps) {
+    unnormalizeMaps[key] = Rhombus._makeAudioNodeMap(unnormalizeMaps[key]);
+  }
 
   this._r = r;
   var ctr = typeMap[type];
@@ -2513,7 +2525,7 @@ Rhombus.prototype.removeEffect = function(effectOrId) {
 };
 
 Rhombus._makeEffectMap = function(obj) {
-  var newObj = {};
+  var newObj = Rhombus._makeAudioNodeMap(obj);
   for (var key in obj) {
     newObj[key] = obj[key];
   }

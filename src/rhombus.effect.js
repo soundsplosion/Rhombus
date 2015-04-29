@@ -182,7 +182,7 @@ Rhombus.prototype.removeEffect = function(effectOrId) {
 };
 
 Rhombus._makeEffectMap = function(obj) {
-  var newObj = {};
+  var newObj = Rhombus._makeAudioNodeMap(obj);
   for (var key in obj) {
     newObj[key] = obj[key];
   }
