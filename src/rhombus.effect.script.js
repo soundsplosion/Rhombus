@@ -24,6 +24,10 @@ Rhombus._Script = function(code) {
     log: log
   };
 
+  for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+    this._M["param" + paramIdx.toString()] = 0.5;
+  }
+
   this._tamedM = undefined;
   this._processor = undefined;
 
@@ -78,6 +82,7 @@ Rhombus._Script = function(code) {
   this.connectEffect(this._processorNode);
 };
 Tone.extend(Rhombus._Script, Tone.Effect);
+Rhombus._Script.paramCount = 5;
 
 Rhombus._Script.prototype.setCode = function(str) {
   var that = this;
@@ -102,9 +107,30 @@ Rhombus._Script.prototype.setCode = function(str) {
 Rhombus._Script.prototype.getCode = function() {
   return this._code;
 };
+
+Rhombus._Script.prototype.set = function(options) {
+  Tone.Effect.prototype.set.call(this, options);
+  if (isDefined(options)) {
+    for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+      var paramString = "param" + paramIdx.toString();
+      var paramVal = options[paramString];
+      if (isDefined(paramVal)) {
+        this._M[paramString] = paramVal;
+      }
+    }
+  }
+};
+
 Rhombus._addEffectFunctions(Rhombus._Script);
 
-Rhombus._Script.prototype._unnormalizeMap = Rhombus._makeEffectMap({});
+Rhombus._Script.prototype._unnormalizeMap = Rhombus._makeEffectMap((function() {
+  var map = {};
+  for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+    map["param" + paramIdx.toString()] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  }
+  return map;
+})());
+
 Rhombus._Script.prototype.displayName = function() {
   return "Script";
 };
