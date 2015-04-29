@@ -42,7 +42,7 @@ Rhombus._Sampler = function(options, r, sampleCallback, id) {
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
     "envelope" : Rhombus._map.envelopeMap,
     "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-    "filter" : Rhombus._map.filterMap
+    "filter" : Rhombus._map.synthFilterMap
   };
 
   this._r = r;
@@ -94,9 +94,7 @@ Rhombus._Sampler = function(options, r, sampleCallback, id) {
   }
 };
 Tone.extend(Rhombus._Sampler, Tone.Instrument);
-Rhombus._addParamFunctions(Rhombus._Sampler);
-Rhombus._addGraphFunctions(Rhombus._Sampler);
-Rhombus._addAudioNodeFunctions(Rhombus._Sampler);
+Rhombus._addInstrumentFunctions(Rhombus._Sampler);
 
 Rhombus._Sampler.prototype.setBuffers = function(bufferMap) {
   if (notDefined(bufferMap)) {
@@ -223,6 +221,14 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
   for (var idx in samplerKeys) {
     var sampler = this.samples[samplerKeys[idx]];
     sampler.set(unnormalized);
+  }
+};
+
+Rhombus._Sampler.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  var samplerKeys = Object.keys(this.samples);
+  for (var idx in samplerKeys) {
+    var sampler = this.samples[samplerKeys[idx]];
+    sampler.filter.frequency.setValueAtTime(freq, time);
   }
 };
 

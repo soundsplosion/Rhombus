@@ -48,6 +48,19 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
     }
   }
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+
+  function getAutomationModulatedValue(base, automation) {
+    var delta = this._currentParams.automationDepth * 2.0 * (automation - 0.5);
+    var preClamp = base + delta;
+    if (preClamp < 0.0) {
+      preClamp = 0.0;
+    } else if (preClamp > 1.0) {
+      preClamp = 1.0;
+    }
+    return preClamp;
+  }
+
+  ctr.prototype._getAutomationModulatedValue = getAutomationModulatedValue;
 };
 
 Rhombus._makeAudioNodeMap = function(obj) {
@@ -55,6 +68,6 @@ Rhombus._makeAudioNodeMap = function(obj) {
   for (var key in obj) {
     newObj[key] = obj[key];
   }
-  newObj["automationdepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  newObj["automationDepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
   return newObj;
 };

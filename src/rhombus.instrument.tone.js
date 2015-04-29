@@ -112,9 +112,7 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   this._normalizedObjectSet(options, true);
 };
 Tone.extend(Rhombus._ToneInstrument, Tone.PolySynth);
-Rhombus._addGraphFunctions(Rhombus._ToneInstrument);
-Rhombus._addParamFunctions(Rhombus._ToneInstrument);
-Rhombus._addAudioNodeFunctions(Rhombus._ToneInstrument);
+Rhombus._addInstrumentFunctions(Rhombus._ToneInstrument);
 
 Rhombus._ToneInstrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
   // Don't play out-of-range notes
@@ -187,6 +185,14 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
   var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
   this.set(unnormalized);
 };
+
+Rhombus._ToneInstrument.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  for (var vIdx = 0; vIdx < this._voices.length; vIdx++) {
+    var voice = this._voices[vIdx];
+    voice.filter.frequency.setValueAtTime(freq, time);
+  }
+};
+
 
 Rhombus._ToneInstrument.prototype.displayName = function() {
   return Rhombus._synthNameMap[this._type];

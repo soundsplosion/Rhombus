@@ -305,3 +305,18 @@ Rhombus.prototype.killAllPreviewNotes = function() {
 
   console.log("[Rhombus] - killed all preview notes");
 };
+
+Rhombus._addInstrumentFunctions = function(ctr) {
+  Rhombus._addParamFunctions(ctr);
+  Rhombus._addGraphFunctions(ctr);
+  Rhombus._addAudioNodeFunctions(ctr);
+
+  function setAutomationValueAtTime(value, time) {
+    var base = this._currentParams.filter.frequency;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.filter.frequency[0](finalNormalized);
+
+    this._applyInstrumentFilterValueAtTime(finalVal, time);
+  }
+  ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+};

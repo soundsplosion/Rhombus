@@ -153,6 +153,19 @@ Rhombus._addAudioNodeFunctions = function(ctr) {
     }
   }
   ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+
+  function getAutomationModulatedValue(base, automation) {
+    var delta = this._currentParams.automationDepth * 2.0 * (automation - 0.5);
+    var preClamp = base + delta;
+    if (preClamp < 0.0) {
+      preClamp = 0.0;
+    } else if (preClamp > 1.0) {
+      preClamp = 1.0;
+    }
+    return preClamp;
+  }
+
+  ctr.prototype._getAutomationModulatedValue = getAutomationModulatedValue;
 };
 
 Rhombus._makeAudioNodeMap = function(obj) {
@@ -160,7 +173,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   for (var key in obj) {
     newObj[key] = obj[key];
   }
-  newObj["automationdepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  newObj["automationDepth"] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
   return newObj;
 };
 
@@ -1915,6 +1928,21 @@ Rhombus.prototype.killAllPreviewNotes = function() {
   console.log("[Rhombus] - killed all preview notes");
 };
 
+Rhombus._addInstrumentFunctions = function(ctr) {
+  Rhombus._addParamFunctions(ctr);
+  Rhombus._addGraphFunctions(ctr);
+  Rhombus._addAudioNodeFunctions(ctr);
+
+  function setAutomationValueAtTime(value, time) {
+    var base = this._currentParams.filter.frequency;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.filter.frequency[0](finalNormalized);
+
+    this._applyInstrumentFilterValueAtTime(finalVal, time);
+  }
+  ctr.prototype._setAutomationValueAtTime = setAutomationValueAtTime;
+};
+
 //! rhombus.instrument.sampler.js
 //! authors: Spencer Phippen, Tim Grant
 //! license: MIT
@@ -1959,7 +1987,7 @@ Rhombus._Sampler = function(options, r, sampleCallback, id) {
     "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
     "envelope" : Rhombus._map.envelopeMap,
     "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
-    "filter" : Rhombus._map.filterMap
+    "filter" : Rhombus._map.synthFilterMap
   };
 
   this._r = r;
@@ -2011,9 +2039,7 @@ Rhombus._Sampler = function(options, r, sampleCallback, id) {
   }
 };
 Tone.extend(Rhombus._Sampler, Tone.Instrument);
-Rhombus._addParamFunctions(Rhombus._Sampler);
-Rhombus._addGraphFunctions(Rhombus._Sampler);
-Rhombus._addAudioNodeFunctions(Rhombus._Sampler);
+Rhombus._addInstrumentFunctions(Rhombus._Sampler);
 
 Rhombus._Sampler.prototype.setBuffers = function(bufferMap) {
   if (notDefined(bufferMap)) {
@@ -2143,6 +2169,14 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
   }
 };
 
+Rhombus._Sampler.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  var samplerKeys = Object.keys(this.samples);
+  for (var idx in samplerKeys) {
+    var sampler = this.samples[samplerKeys[idx]];
+    sampler.filter.frequency.setValueAtTime(freq, time);
+  }
+};
+
 Rhombus._Sampler.prototype.displayName = function() {
   return Rhombus._sampleNameMap[this._sampleSet];
 };
@@ -2261,9 +2295,7 @@ Rhombus._ToneInstrument = function(type, options, r, id) {
   this._normalizedObjectSet(options, true);
 };
 Tone.extend(Rhombus._ToneInstrument, Tone.PolySynth);
-Rhombus._addGraphFunctions(Rhombus._ToneInstrument);
-Rhombus._addParamFunctions(Rhombus._ToneInstrument);
-Rhombus._addAudioNodeFunctions(Rhombus._ToneInstrument);
+Rhombus._addInstrumentFunctions(Rhombus._ToneInstrument);
 
 Rhombus._ToneInstrument.prototype.triggerAttack = function(id, pitch, delay, velocity) {
   // Don't play out-of-range notes
@@ -2336,6 +2368,14 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
   var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
   this.set(unnormalized);
 };
+
+Rhombus._ToneInstrument.prototype._applyInstrumentFilterValueAtTime = function(freq, time) {
+  for (var vIdx = 0; vIdx < this._voices.length; vIdx++) {
+    var voice = this._voices[vIdx];
+    voice.filter.frequency.setValueAtTime(freq, time);
+  }
+};
+
 
 Rhombus._ToneInstrument.prototype.displayName = function() {
   return Rhombus._synthNameMap[this._type];
@@ -2597,6 +2637,13 @@ Rhombus._addEffectFunctions = function(ctr) {
       }
     }
   };
+
+  ctr.prototype._setAutomationValueAtTime = function(value, time) {
+    var base = this._currentParams.gain;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.gain[0](finalNormalized);
+    this.output.gain.setValueAtTime(finalVal, time);
+  }
 };
 
 //! rhombus.effect.tone.js
@@ -2688,8 +2735,10 @@ Rhombus._Filter.prototype.displayName = function() {
 };
 
 Rhombus._Filter.prototype._setAutomationValueAtTime = function(value, time) {
-  var toSet = this._unnormalizeMap["frequency"][0](value);
-  this._filter.frequency.setValueAtTime(toSet, time);
+  var base = this._currentParams.frequency;
+  var finalNormalized = this._getAutomationModulatedValue(base, value);
+  var finalVal = this._unnormalizeMap.frequency[0](finalNormalized);
+  this._filter.frequency.setValueAtTime(finalVal, time);
 };
 
 // EQ

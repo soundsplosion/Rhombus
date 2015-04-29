@@ -254,4 +254,11 @@ Rhombus._addEffectFunctions = function(ctr) {
       }
     }
   };
+
+  ctr.prototype._setAutomationValueAtTime = function(value, time) {
+    var base = this._currentParams.gain;
+    var finalNormalized = this._getAutomationModulatedValue(base, value);
+    var finalVal = this._unnormalizeMap.gain[0](finalNormalized);
+    this.output.gain.setValueAtTime(finalVal, time);
+  }
 };
