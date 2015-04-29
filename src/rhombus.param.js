@@ -164,6 +164,10 @@ Rhombus._addParamFunctions = function(ctr) {
       div.appendChild(document.createElement("br"));
     }
 
+    // For spacing
+    div.appendChild(document.createElement("br"));
+    div.appendChild(document.createElement("br"));
+
     return div;
   }
   ctr.prototype.getInterface = getInterface;

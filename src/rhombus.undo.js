@@ -10,9 +10,19 @@
 Rhombus.Undo = function() {
   this._stackSize = 1024;
   this._undoStack = [];
+  this._addedListeners = [];
+};
+
+Rhombus.Undo.prototype._registerUndoAddedCallback = function(f) {
+  this._addedListeners.push(f);
 };
 
 Rhombus.Undo.prototype._addUndoAction = function(f) {
+  for (var listenerIdx = 0; listenerIdx < this._addedListeners.length; listenerIdx++) {
+    var listener = this._addedListeners[listenerIdx];
+    listener();
+  }
+
   var insertIndex = this._undoStack.length;
   if (this._undoStack.length == this._stackSize) {
     this._undoStack.shift();

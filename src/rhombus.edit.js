@@ -384,6 +384,53 @@
       return true;
     };
 
+    var noteChangesStarted = false;
+    var oldNotes;
+    var noteChangesPtnId;
+    function undoAddedCallback() {
+      if (noteChangesStarted) {
+        noteChangesStarted = false;
+        oldNotes = undefined;
+        noteChangesPtnId = undefined;
+
+        console.log("[Rhomb.Edit] - note changes interrupted by another undo action");
+      }
+    }
+    r.Undo._registerUndoAddedCallback(undoAddedCallback);
+    r.Edit.startNoteChanges = function(ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      if (notDefined(pattern)) {
+        return;
+      }
+
+      noteChangesStarted = true;
+      noteChangesPtnId = ptnId;
+      var oldNoteMap = JSON.parse(JSON.stringify(pattern))._noteMap;
+      oldNotes = r._noteArrayFromJSONNoteMap(oldNoteMap);
+    };
+
+    r.Edit.endNoteChanges = function() {
+      if (!noteChangesStarted) {
+        console.log("[Rhombus.Edit.endNoteChanges] - note changes not started or were canceled");
+        return;
+      }
+
+      var changedPtnId = noteChangesPtnId;
+      var changedNotes = oldNotes;
+
+      noteChangesStarted = false;
+      oldNotes = undefined;
+      noteChangesPtnId = undefined;
+      r.Undo._addUndoAction(function() {
+        var pattern = r._song._patterns[changedPtnId];
+        pattern.deleteNotes(pattern.getAllNotes());
+        for (var noteIdx = 0; noteIdx < changedNotes.length; noteIdx++) {
+          var note = changedNotes[noteIdx];
+          pattern.addNote(note);
+        }
+      });
+    };
+
     function findEventInArray(id, eventArray) {
       for (var i = 0; i < eventArray.length; i++) {
         if (eventArray[i]._id === id) {

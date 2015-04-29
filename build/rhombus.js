@@ -1521,6 +1521,10 @@ Rhombus._addParamFunctions = function(ctr) {
       div.appendChild(document.createElement("br"));
     }
 
+    // For spacing
+    div.appendChild(document.createElement("br"));
+    div.appendChild(document.createElement("br"));
+
     return div;
   }
   ctr.prototype.getInterface = getInterface;
@@ -2671,7 +2675,7 @@ Rhombus._Filter.prototype.displayName = function() {
   return "Filter";
 };
 
-Rhombus._Filter.prototype.setAutomationValueAtTime = function(value, time) {
+Rhombus._Filter.prototype._setAutomationValueAtTime = function(value, time) {
   var toSet = this._unnormalizeMap["frequency"][0](value);
   this._filter.frequency.setValueAtTime(toSet, time);
 };
@@ -3293,6 +3297,25 @@ Rhombus.Pattern.prototype.toJSON = function() {
     "_noteMap" : this._noteMap.toJSON()
   };
   return jsonObj;
+};
+
+Rhombus.prototype._noteArrayFromJSONNoteMap = function(noteMap) {
+  var notes = [];
+  for (var noteId in noteMap) {
+    var velocity = +noteMap[noteId]._velocity;
+    if (notDefined(velocity) || velocity < 0 || velocity > 1) {
+      velocity = 0.5;
+    }
+
+    var note = new Rhombus.Note(+noteMap[noteId]._pitch,
+                                +noteMap[noteId]._start,
+                                +noteMap[noteId]._length,
+                                velocity,
+                                this,
+                                +noteId);
+    notes.push(note);
+  }
+  return notes;
 };
 
 // TODO: Note should probably have its own source file
@@ -4108,19 +4131,9 @@ Rhombus.prototype.importSong = function(json, readyToPlayCallback) {
       newPattern.setColor(pattern._color);
     }
 
-    for (var noteId in noteMap) {
-      var velocity = +noteMap[noteId]._velocity;
-      if (notDefined(velocity) || velocity < 0 || velocity > 1) {
-        velocity = 0.5;
-      }
-      var note = new Rhombus.Note(+noteMap[noteId]._pitch,
-                                  +noteMap[noteId]._start,
-                                  +noteMap[noteId]._length,
-                                  velocity,
-                                  this,
-                                  +noteId);
-
-      newPattern.addNote(note);
+    var notes = this._noteArrayFromJSONNoteMap(noteMap);
+    for (var noteIdx = 0; noteIdx < notes.length; noteIdx++) {
+      newPattern.addNote(notes[noteIdx]);
     }
 
     this._song._patterns[+ptnId] = newPattern;
@@ -5105,6 +5118,53 @@ Rhombus.prototype.getSong = function() {
       return true;
     };
 
+    var noteChangesStarted = false;
+    var oldNotes;
+    var noteChangesPtnId;
+    function undoAddedCallback() {
+      if (noteChangesStarted) {
+        noteChangesStarted = false;
+        oldNotes = undefined;
+        noteChangesPtnId = undefined;
+
+        console.log("[Rhomb.Edit] - note changes interrupted by another undo action");
+      }
+    }
+    r.Undo._registerUndoAddedCallback(undoAddedCallback);
+    r.Edit.startNoteChanges = function(ptnId) {
+      var pattern = r._song._patterns[ptnId];
+      if (notDefined(pattern)) {
+        return;
+      }
+
+      noteChangesStarted = true;
+      noteChangesPtnId = ptnId;
+      var oldNoteMap = JSON.parse(JSON.stringify(pattern))._noteMap;
+      oldNotes = r._noteArrayFromJSONNoteMap(oldNoteMap);
+    };
+
+    r.Edit.endNoteChanges = function() {
+      if (!noteChangesStarted) {
+        console.log("[Rhombus.Edit.endNoteChanges] - note changes not started or were canceled");
+        return;
+      }
+
+      var changedPtnId = noteChangesPtnId;
+      var changedNotes = oldNotes;
+
+      noteChangesStarted = false;
+      oldNotes = undefined;
+      noteChangesPtnId = undefined;
+      r.Undo._addUndoAction(function() {
+        var pattern = r._song._patterns[changedPtnId];
+        pattern.deleteNotes(pattern.getAllNotes());
+        for (var noteIdx = 0; noteIdx < changedNotes.length; noteIdx++) {
+          var note = changedNotes[noteIdx];
+          pattern.addNote(note);
+        }
+      });
+    };
+
     function findEventInArray(id, eventArray) {
       for (var i = 0; i < eventArray.length; i++) {
         if (eventArray[i]._id === id) {
@@ -5427,9 +5487,19 @@ Rhombus.prototype.getSong = function() {
 Rhombus.Undo = function() {
   this._stackSize = 1024;
   this._undoStack = [];
+  this._addedListeners = [];
+};
+
+Rhombus.Undo.prototype._registerUndoAddedCallback = function(f) {
+  this._addedListeners.push(f);
 };
 
 Rhombus.Undo.prototype._addUndoAction = function(f) {
+  for (var listenerIdx = 0; listenerIdx < this._addedListeners.length; listenerIdx++) {
+    var listener = this._addedListeners[listenerIdx];
+    listener();
+  }
+
   var insertIndex = this._undoStack.length;
   if (this._undoStack.length == this._stackSize) {
     this._undoStack.shift();
