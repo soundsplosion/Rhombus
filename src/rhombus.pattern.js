@@ -138,14 +138,22 @@ Rhombus.AutomationEvent.prototype.getTime = function() {
     this._time = 0;
   }
   return this._time;
-}
+};
 
 Rhombus.AutomationEvent.prototype.getValue = function() {
   if (notNumber(this._value)) {
     this._value = 0.5;
   }
   return this._value;
-}
+};
+
+Rhombus.AutomationEvent.prototype.toJSON = function() {
+  return {
+    "_id"    : this._id,
+    "_time"  : this._time,
+    "_value" : this._value
+  };
+};
 
 Rhombus.Pattern = function(r, id) {
   this._r = r;
@@ -353,13 +361,30 @@ Rhombus.Pattern.prototype.getAutomationEventsInRange = function(start, end) {
   return this._automation.betweenBounds({ $lt: end, $gte: start });
 };
 
+Rhombus.Pattern.prototype._automationEventsJSON = function() {
+  var events = [];
+  this._automation.executeOnEveryNode(function(node) {
+    if (node.length === 0) {
+      return;
+    }
+
+    // There should only be one per time, i.e. per node.
+    var autoEv = node.data[0];
+    if (isDefined(autoEv) && autoEv !== null && autoEv.constructor === Rhombus.AutomationEvent) {
+      events.push(autoEv);
+    }
+  });
+  return events;
+};
+
 Rhombus.Pattern.prototype.toJSON = function() {
   var jsonObj = {
     "_id"      : this._id,
     "_name"    : this._name,
     "_color"   : this._color,
     "_length"  : this._length,
-    "_noteMap" : this._noteMap.toJSON()
+    "_noteMap" : this._noteMap.toJSON(),
+    "_automation" : this._automationEventsJSON()
   };
   return jsonObj;
 };

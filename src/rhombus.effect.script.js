@@ -24,6 +24,10 @@ Rhombus._Script = function(code) {
     log: log
   };
 
+  for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+    this._M["param" + paramIdx.toString()] = 0.5;
+  }
+
   this._tamedM = undefined;
   this._processor = undefined;
 
@@ -59,25 +63,27 @@ Rhombus._Script = function(code) {
   if (isDefined(code)) {
     this.setCode(code);
   } else {
-    this.setCode('\n' +
-    'function() {\n' +
-    '  var toRet = [];\n' +
-    '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
-    '    var inpData = M.inputSamples(chan);\n' +
-    '    var outData = [];\n' +
-    '    outData[inpData.length-1] = undefined;\n' +
-    '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
-    '      outData[samp] = Math.random() * inpData[samp];\n' +
-    '    }\n' +
-    '    toRet.push(outData);\n' +
-    '  }\n' +
-    '  return toRet;\n' +
-    '}\n');
+    this.setCode(
+      'function() {\n' +
+      '  var toRet = [];\n' +
+      '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
+      '    var inpData = M.inputSamples(chan);\n' +
+      '    var outData = [];\n' +
+      '    outData[inpData.length-1] = undefined;\n' +
+      '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
+      '      var weight = (1 - M.param0) * 1 + M.param0 * Math.random();\n' +
+      '      outData[samp] = weight * inpData[samp];\n' +
+      '    }\n' +
+      '    toRet.push(outData);\n' +
+      '  }\n' +
+      '  return toRet;\n' +
+      '}\n');
   }
 
   this.connectEffect(this._processorNode);
 };
 Tone.extend(Rhombus._Script, Tone.Effect);
+Rhombus._Script.paramCount = 5;
 
 Rhombus._Script.prototype.setCode = function(str) {
   var that = this;
@@ -102,9 +108,30 @@ Rhombus._Script.prototype.setCode = function(str) {
 Rhombus._Script.prototype.getCode = function() {
   return this._code;
 };
+
+Rhombus._Script.prototype.set = function(options) {
+  Tone.Effect.prototype.set.call(this, options);
+  if (isDefined(options)) {
+    for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+      var paramString = "param" + paramIdx.toString();
+      var paramVal = options[paramString];
+      if (isDefined(paramVal)) {
+        this._M[paramString] = paramVal;
+      }
+    }
+  }
+};
+
 Rhombus._addEffectFunctions(Rhombus._Script);
 
-Rhombus._Script.prototype._unnormalizeMap = Rhombus._makeEffectMap({});
+Rhombus._Script.prototype._unnormalizeMap = Rhombus._makeEffectMap((function() {
+  var map = {};
+  for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+    map["param" + paramIdx.toString()] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  }
+  return map;
+})());
+
 Rhombus._Script.prototype.displayName = function() {
   return "Script";
 };

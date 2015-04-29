@@ -411,7 +411,6 @@
 
     r.Edit.endNoteChanges = function() {
       if (!noteChangesStarted) {
-        console.log("[Rhombus.Edit.endNoteChanges] - note changes not started or were canceled");
         return;
       }
 

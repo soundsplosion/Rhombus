@@ -1627,7 +1627,6 @@ Rhombus._instMap = [];
 
 Rhombus._synthNameList = [
   ["mono",  "PolySynth"],
-  ["noise", "Noise Synth"]
 ];
 
 Rhombus._synthNameMap = {};
@@ -1722,12 +1721,14 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
   else {
     instr = new Rhombus._ToneInstrument(type, options, this, id);
   }
-  Rhombus._routeToStereo(instr);
 
-  instr._graphSetup(0, 1, 1, 0);
   if (isNull(instr) || notDefined(instr)) {
     return;
   }
+
+  Rhombus._routeToStereo(instr);
+  instr._graphType = "instrument";
+  instr._graphSetup(0, 1, 1, 0);
 
   instr.setGraphX(graphX);
   instr.setGraphY(graphY);
@@ -1750,8 +1751,6 @@ Rhombus.prototype.addInstrument = function(type, json, idx, sampleSet, addCallba
     that.removeInstrument(idToRemove, true);
   });
   this._song._instruments.addObj(instr, idx);
-
-  instr._graphType = "instrument";
 
   return instr._id;
 };
@@ -1980,8 +1979,8 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
   if (isDefined(params.volume)) {
     this.player.setVolume(params.volume);
   }
-  if (isDefined(params.playbackRate)) {
-    this._playbackRate = params.playbackRate;
+  if (isDefined(params.rate)) {
+    this._playbackRate = params.rate;
   }
 
   Tone.Sampler.prototype.set.call(this, params);
@@ -1990,7 +1989,7 @@ Rhombus._SuperToneSampler.prototype.set = function(params) {
 Rhombus._Sampler = function(options, r, sampleCallback, id) {
   var samplerUnnormalizeMap = Rhombus._makeAudioNodeMap({
     "volume" : [Rhombus._map.mapLog(-96.32, 0), Rhombus._map.dbDisplay, 0.56],
-    "playbackRate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
+    "rate" : [Rhombus._map.mapExp(0.25, 4), Rhombus._map.rawDisplay, 0.5],
     "envelope" : Rhombus._map.envelopeMap,
     "filterEnvelope" : Rhombus._map.filterEnvelopeMap,
     "filter" : Rhombus._map.synthFilterMap
@@ -2456,6 +2455,8 @@ Rhombus.prototype.addEffect = function(type, json) {
     eff._graphSetup(1, 1, 1, 0);
   }
 
+  eff._graphType = "effect";
+
   if (isDefined(go)) {
     Rhombus.Util.numberifyOutputs(go);
     eff._graphOutputs = go;
@@ -2473,9 +2474,6 @@ Rhombus.prototype.addEffect = function(type, json) {
   });
 
   effects[eff._id] = eff;
-
-  eff._graphType = "effect";
-
   return eff._id;
 };
 
@@ -2867,6 +2865,10 @@ Rhombus._Script = function(code) {
     log: log
   };
 
+  for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+    this._M["param" + paramIdx.toString()] = 0.5;
+  }
+
   this._tamedM = undefined;
   this._processor = undefined;
 
@@ -2902,25 +2904,27 @@ Rhombus._Script = function(code) {
   if (isDefined(code)) {
     this.setCode(code);
   } else {
-    this.setCode('\n' +
-    'function() {\n' +
-    '  var toRet = [];\n' +
-    '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
-    '    var inpData = M.inputSamples(chan);\n' +
-    '    var outData = [];\n' +
-    '    outData[inpData.length-1] = undefined;\n' +
-    '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
-    '      outData[samp] = Math.random() * inpData[samp];\n' +
-    '    }\n' +
-    '    toRet.push(outData);\n' +
-    '  }\n' +
-    '  return toRet;\n' +
-    '}\n');
+    this.setCode(
+      'function() {\n' +
+      '  var toRet = [];\n' +
+      '  for (var chan = 0; chan < M.channelCount; chan++) {\n' +
+      '    var inpData = M.inputSamples(chan);\n' +
+      '    var outData = [];\n' +
+      '    outData[inpData.length-1] = undefined;\n' +
+      '    for (var samp = 0; samp < inpData.length; samp++) {\n' +
+      '      var weight = (1 - M.param0) * 1 + M.param0 * Math.random();\n' +
+      '      outData[samp] = weight * inpData[samp];\n' +
+      '    }\n' +
+      '    toRet.push(outData);\n' +
+      '  }\n' +
+      '  return toRet;\n' +
+      '}\n');
   }
 
   this.connectEffect(this._processorNode);
 };
 Tone.extend(Rhombus._Script, Tone.Effect);
+Rhombus._Script.paramCount = 5;
 
 Rhombus._Script.prototype.setCode = function(str) {
   var that = this;
@@ -2945,9 +2949,30 @@ Rhombus._Script.prototype.setCode = function(str) {
 Rhombus._Script.prototype.getCode = function() {
   return this._code;
 };
+
+Rhombus._Script.prototype.set = function(options) {
+  Tone.Effect.prototype.set.call(this, options);
+  if (isDefined(options)) {
+    for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+      var paramString = "param" + paramIdx.toString();
+      var paramVal = options[paramString];
+      if (isDefined(paramVal)) {
+        this._M[paramString] = paramVal;
+      }
+    }
+  }
+};
+
 Rhombus._addEffectFunctions(Rhombus._Script);
 
-Rhombus._Script.prototype._unnormalizeMap = Rhombus._makeEffectMap({});
+Rhombus._Script.prototype._unnormalizeMap = Rhombus._makeEffectMap((function() {
+  var map = {};
+  for (var paramIdx = 0; paramIdx < Rhombus._Script.paramCount; paramIdx++) {
+    map["param" + paramIdx.toString()] = [Rhombus._map.mapIdentity, Rhombus._map.rawDisplay, 0.5];
+  }
+  return map;
+})());
+
 Rhombus._Script.prototype.displayName = function() {
   return "Script";
 };
@@ -3092,14 +3117,22 @@ Rhombus.AutomationEvent.prototype.getTime = function() {
     this._time = 0;
   }
   return this._time;
-}
+};
 
 Rhombus.AutomationEvent.prototype.getValue = function() {
   if (notNumber(this._value)) {
     this._value = 0.5;
   }
   return this._value;
-}
+};
+
+Rhombus.AutomationEvent.prototype.toJSON = function() {
+  return {
+    "_id"    : this._id,
+    "_time"  : this._time,
+    "_value" : this._value
+  };
+};
 
 Rhombus.Pattern = function(r, id) {
   this._r = r;
@@ -3307,13 +3340,30 @@ Rhombus.Pattern.prototype.getAutomationEventsInRange = function(start, end) {
   return this._automation.betweenBounds({ $lt: end, $gte: start });
 };
 
+Rhombus.Pattern.prototype._automationEventsJSON = function() {
+  var events = [];
+  this._automation.executeOnEveryNode(function(node) {
+    if (node.length === 0) {
+      return;
+    }
+
+    // There should only be one per time, i.e. per node.
+    var autoEv = node.data[0];
+    if (isDefined(autoEv) && autoEv !== null && autoEv.constructor === Rhombus.AutomationEvent) {
+      events.push(autoEv);
+    }
+  });
+  return events;
+};
+
 Rhombus.Pattern.prototype.toJSON = function() {
   var jsonObj = {
     "_id"      : this._id,
     "_name"    : this._name,
     "_color"   : this._color,
     "_length"  : this._length,
-    "_noteMap" : this._noteMap.toJSON()
+    "_noteMap" : this._noteMap.toJSON(),
+    "_automation" : this._automationEventsJSON()
   };
   return jsonObj;
 };
@@ -4155,6 +4205,22 @@ Rhombus.prototype.importSong = function(json, readyToPlayCallback) {
       newPattern.addNote(notes[noteIdx]);
     }
 
+    var autoEvents = pattern._automation;
+    if (Array.isArray(autoEvents)) {
+      for (var eventIdx = 0; eventIdx < autoEvents.length; eventIdx++) {
+        var autoEventJson = autoEvents[eventIdx];
+        var isValidAutoEv = isDefined(autoEventJson) && autoEventJson !== null && isDefined(autoEventJson._time) && isDefined(autoEventJson._value) && isDefined(autoEventJson._id);
+        if (!isValidAutoEv) {
+          continue;
+        }
+        var time = +autoEventJson._time;
+        var value = +autoEventJson._value;
+        var id = +autoEventJson._id;
+        var autoEvent = new Rhombus.AutomationEvent(time, value, this, id);
+        newPattern._automation.insert(time, autoEvent);
+      }
+    }
+
     this._song._patterns[+ptnId] = newPattern;
   }
 
@@ -4405,7 +4471,7 @@ Rhombus.prototype.getSong = function() {
               // Lots of this copied from the note loop below...
               var time = ev.getTime() + itemStart;
 
-              if (!loopOverride && r.getLoopEnabled() && start < loopStart) {
+              if (!loopOverride && r.getLoopEnabled() && time < loopStart) {
                 continue;
               }
 
@@ -5163,7 +5229,6 @@ Rhombus.prototype.getSong = function() {
 
     r.Edit.endNoteChanges = function() {
       if (!noteChangesStarted) {
-        console.log("[Rhombus.Edit.endNoteChanges] - note changes not started or were canceled");
         return;
       }
 
