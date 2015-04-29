@@ -721,7 +721,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
     return count;
   };
 
-  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap) {
+  Rhombus._map.unnormalizedParams = function(params, unnormalizeMap, useAliases) {
     if (isNull(params) || notDefined(params) ||
         typeof(params) !== "object") {
       return params;
@@ -740,8 +740,15 @@ Rhombus._makeAudioNodeMap = function(obj) {
           if (isDefined(thisLevelMap)) {
             var entry = thisLevelMap[key];
             if (isDefined(entry) && isDefined(entry[0])) {
+              var setKey;
+              if (useAliases && isDefined(entry[3])) {
+                setKey = entry[3];
+              } else {
+                setKey = key;
+              }
+
               var ctrXformer = entry[0];
-              returnObj[key] = ctrXformer(value);
+              returnObj[setKey] = ctrXformer(value);
             }
           } else {
             returnObj[key] = value;
@@ -942,7 +949,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   Rhombus._map.synthFilterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch"),
               rawDisplay, 0],
-    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0, "frequency"],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
@@ -950,7 +957,7 @@ Rhombus._makeAudioNodeMap = function(obj) {
   Rhombus._map.filterMap = {
     "type" : [Rhombus._map.mapDiscrete("lowpass", "bandpass", "highpass", "notch",
                                        "lowshelf", "highshelf", "peaking"), rawDisplay, 0],
-    "frequency" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0],
+    "cutoff" : [Rhombus._map.cutoffMapFn, hzDisplay, 1.0, "frequency"],
     "Q" : [Rhombus._map.mapLinear(1, 15), rawDisplay, 0],
     "gain" : [Rhombus._map.mapIdentity, rawDisplay, 0]
   };
@@ -1419,7 +1426,7 @@ Rhombus._addParamFunctions = function(ctr) {
     }
 
     var setObj = Rhombus._map.generateSetObjectByName(this._unnormalizeMap, paramName, curValue);
-    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap);
+    var realObj = Rhombus._map.unnormalizedParams(setObj, this._unnormalizeMap, false);
 
     curValue = realObj;
     for (var i = 0; i < pieces.length; i++) {
@@ -2162,7 +2169,7 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
   }
   this._trackParams(params);
 
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   var samplerKeys = Object.keys(this.samples);
   for (var idx in samplerKeys) {
     var sampler = this.samples[samplerKeys[idx]];
@@ -2328,7 +2335,7 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
     });
   }
   this._trackParams(params);
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   this.set(unnormalized);
 };
 
@@ -2552,7 +2559,7 @@ Rhombus._addEffectFunctions = function(ctr) {
       });
     }
     this._trackParams(params);
-    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
     this.set(unnormalized);
   }
 

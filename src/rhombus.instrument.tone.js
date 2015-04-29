@@ -144,7 +144,7 @@ Rhombus._ToneInstrument.prototype._normalizedObjectSet = function(params, intern
     });
   }
   this._trackParams(params);
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   this.set(unnormalized);
 };
 

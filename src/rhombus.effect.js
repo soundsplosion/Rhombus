@@ -206,7 +206,7 @@ Rhombus._addEffectFunctions = function(ctr) {
       });
     }
     this._trackParams(params);
-    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+    var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
     this.set(unnormalized);
   }
 

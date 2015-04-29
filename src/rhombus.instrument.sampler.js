@@ -216,7 +216,7 @@ Rhombus._Sampler.prototype._normalizedObjectSet = function(params, internal) {
   }
   this._trackParams(params);
 
-  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap);
+  var unnormalized = Rhombus._map.unnormalizedParams(params, this._unnormalizeMap, true);
   var samplerKeys = Object.keys(this.samples);
   for (var idx in samplerKeys) {
     var sampler = this.samples[samplerKeys[idx]];
